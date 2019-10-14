@@ -16,8 +16,14 @@ public:
   bool PushEvent(const std::wstring &msi, const std::wstring &outdir,
                  void *data);
 
+  // callback real
+  int Callback(uint32_t type, const wchar_t *msg);
+  void Cancel() { canceled = true; }
+
 private:
   std::shared_ptr<std::thread> t;
+  std::atomic_bool initialized{false};
+  std::atomic_bool canceled{false};
   std::condition_variable cv;
 };
 
