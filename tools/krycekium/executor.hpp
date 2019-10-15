@@ -9,6 +9,11 @@
 #include <thread>
 
 namespace krycekium {
+enum class Status {
+  None,
+  Completed,
+  Failure //
+};
 // task Packet
 struct Packet {
   std::wstring msi;
