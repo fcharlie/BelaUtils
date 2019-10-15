@@ -5,26 +5,45 @@
 #include <condition_variable>
 #include <memory>
 #include <string>
+#include <queue>
 #include <thread>
 
 namespace krycekium {
+// task Packet
+struct Packet {
+  std::wstring msi;
+  std::wstring outdir;
+};
+
+// single thread executor
 class Executor {
 public:
   Executor() = default;
   Executor(const Executor &) = delete;
   Executor &operator=(const Executor &) = delete;
+  //
+  ~Executor() {
+    exited = true;
+    cv.notify_all();
+    if (t) {
+      t->join();
+    }
+  }
+  bool InitializeExecutor();
   bool PushEvent(const std::wstring &msi, const std::wstring &outdir,
                  void *data);
-
-  // callback real
-  int Callback(uint32_t type, const wchar_t *msg);
+  // cancel current task
   void Cancel() { canceled = true; }
 
 private:
+  void run();
+  bool empty() const;
   std::shared_ptr<std::thread> t;
-  std::atomic_bool initialized{false};
+  std::atomic_bool exited{false};
   std::atomic_bool canceled{false};
   std::condition_variable cv;
+  std::mutex mtx;
+  std::queue<Packet> packets;
 };
 
 } // namespace krycekium

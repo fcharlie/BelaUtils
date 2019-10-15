@@ -4,11 +4,22 @@
 #include <Msi.h>
 
 namespace krycekium {
+// sender
+class Sender {
+public:
+  Sender() = default;
+  Sender(const Sender &) = delete;
+  Sender &operator=(const Sender &) = delete;
+
+private:
+};
+
 // install_ui_callback
 INT WINAPI install_ui_callback(LPVOID ctx, UINT iMessageType,
                                LPCWSTR szMessage) {
   auto executor = reinterpret_cast<Executor *>(ctx);
-  return executor->Callback(iMessageType, szMessage);
+
+  return 0;
 }
 // https://docs.microsoft.com/zh-cn/windows/win32/msi/handling-progress-messages-using-msisetexternalui
 struct ProgressFileds {
@@ -74,21 +85,27 @@ bool ParseProgressString(LPWSTR sz, ProgressFileds &fileds) {
   return true;
 }
 
-int Executor::Callback(uint32_t type, const wchar_t *msg) {
+bool Executor::empty() const {
+  std::lock_guard<std::mutex> lock(mtx);
+  return packets.empty();
+}
+
+void Executor::run() {
+
   //
-  return 0;
+}
+
+bool Executor::InitializeExecutor() {
+  t = std::make_shared<std::thread>([this]() {
+    //
+    run();
+  });
+  return false;
 }
 
 bool Executor::PushEvent(const std::wstring &msi, const std::wstring &outdir,
                          void *data) {
-  if (initialized) {
-    return false;
-  }
   canceled = false;
-  t = std::make_shared<std::thread>([this]() {
-    //
-    initialized = true;
-  });
   (void)msi;
   (void)outdir;
   (void)data;
