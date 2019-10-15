@@ -42,7 +42,7 @@ public:
 
 private:
   void run();
-  bool empty() const;
+  bool empty();
   std::shared_ptr<std::thread> t;
   std::atomic_bool exited{false};
   std::atomic_bool canceled{false};

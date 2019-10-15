@@ -1,7 +1,7 @@
 # BelaUtils cmake
 cmake_minimum_required(VERSION 3.12)
 
-project(BelaUtils CXX)
+project(BelaUtils CXX C)
 
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
   message(FATAL_ERROR "In-source builds are not allowed.

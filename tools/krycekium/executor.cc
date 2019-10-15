@@ -60,7 +60,7 @@ bool ParseProgressString(LPWSTR sz, ProgressFileds &fileds) {
   }
 
   while (*pch != 0) {
-    char chField = *pch++;
+    wchar_t chField = *pch++;
     pch++; // for ':'
     pch++; // for sp
     switch (chField) {
@@ -94,7 +94,7 @@ bool ParseProgressString(LPWSTR sz, ProgressFileds &fileds) {
   return true;
 }
 
-bool Executor::empty() const {
+bool Executor::empty() {
   std::lock_guard<std::mutex> lock(mtx);
   return packets.empty();
 }
