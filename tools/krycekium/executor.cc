@@ -8,7 +8,7 @@ namespace krycekium {
 // PostMessageW
 class Sender {
 public:
-  Sender(HWND wnd) : wnd_(wnd) {
+  Sender(HWND hWnd) : hWnd_(hWnd) {
     //
   }
   Sender(const Sender &) = delete;
@@ -16,11 +16,11 @@ public:
   void Progress();
   void Notify(Status status, DWORD errcode) {
     //
-    PostMessageW(wnd_, WM_EXECUTOR_NOTIFY, (WPARAM)status, (LPARAM)errcode);
+    PostMessageW(hWnd_, WM_EXECUTOR_NOTIFY, (WPARAM)status, (LPARAM)errcode);
   }
 
 private:
-  HWND wnd_;
+  HWND hWnd_;
 };
 
 // install_ui_callback
