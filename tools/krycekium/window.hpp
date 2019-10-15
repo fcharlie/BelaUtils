@@ -17,13 +17,7 @@ using WindowTraits =
                WS_EX_APPWINDOW | WS_EX_WINDOWEDGE>;
 
 class Window : public CWindowImpl<Window, CWindow, WindowTraits> {
-public:
-  Window();
-  ~Window();
-  bool WindowInitialize();
-  bool Show();
-
-protected:
+private:
   DECLARE_WND_CLASS(WindowName)
   BEGIN_MSG_MAP(Window)
   MESSAGE_HANDLER(WM_CREATE, OnCreate)
@@ -56,8 +50,20 @@ protected:
                            BOOL &bHandle);
   LRESULT OnExecutorProgress(UINT nMsg, WPARAM wParam, LPARAM lParam,
                              BOOL &bHandle);
+  // Command Handle
+
+  // UI function
+
+  //  Feature
+public:
+  Window();
+  ~Window();
+  bool WindowInitialize();
+  bool Show();
 
 private:
   HINSTANCE hInst;
+  ID2D1Factory *factory{nullptr};
+  ID2D1HwndRenderTarget *renderTarget{nullptr};
 };
 } // namespace krycekium

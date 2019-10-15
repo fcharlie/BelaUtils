@@ -4,13 +4,22 @@
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 namespace krycekium {
+
+template <typename T> void Free(T *t) {
+  if (*t != nullptr) {
+    (*t)->Release();
+    *t = nullptr;
+  }
+}
+
 Window::Window() {
   //
   hInst = reinterpret_cast<HINSTANCE>(&__ImageBase);
 }
 
 Window::~Window() {
-  //
+  Free(&renderTarget);
+  Free(&factory);
 }
 
 bool Window::WindowInitialize() {
