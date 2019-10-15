@@ -20,6 +20,9 @@ bool Window::WindowInitialize() {
 
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                          BOOL &bHandle) {
+  auto dpiX = GetDpiForWindow(m_hWnd);
+  // Resize window with dpi
+
   return S_OK;
 }
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam,
@@ -28,6 +31,27 @@ LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam,
 }
 LRESULT Window::OnClose(UINT nMsg, WPARAM wParam, LPARAM lParam,
                         BOOL &bHandle) {
+  return S_OK;
+}
+
+LRESULT Window::OnSize(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
+  return S_OK;
+}
+LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
+                        BOOL &bHandle) {
+  return S_OK;
+}
+LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
+                             BOOL &bHandle) {
+  return S_OK;
+}
+LRESULT Window::OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam,
+                                BOOL &bHandled) {
+  return S_OK;
+}
+LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam,
+                            BOOL &bHandled) {
+
   return S_OK;
 }
 

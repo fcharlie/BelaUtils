@@ -5,6 +5,7 @@ add_executable(krycekium WIN32
   executor.cc
   window.cc
   krycekium.rc
+  krycekium.manifest
 )
 
 target_link_libraries(krycekium
