@@ -9,12 +9,15 @@
 #include <dwrite.h>
 
 namespace krycekium {
+
 using namespace ATL;
 constexpr const wchar_t *WindowName = L"Krycekium.Window";
 using WindowTraits =
     CWinTraits<WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN |
                    WS_CLIPSIBLINGS & ~WS_MAXIMIZEBOX,
                WS_EX_APPWINDOW | WS_EX_WINDOWEDGE>;
+
+// Per-Monitor DPI Aware
 
 class Window : public CWindowImpl<Window, CWindow, WindowTraits> {
 private:

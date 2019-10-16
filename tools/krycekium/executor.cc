@@ -13,7 +13,10 @@ public:
   }
   Sender(const Sender &) = delete;
   Sender &operator=(const Sender &) = delete;
-  void Progress();
+  void Progress(UINT msg, WPARAM wParam, LPARAM lParam) {
+    // we don't known child control
+    PostMessageW(hWnd_, WM_EXECUTOR_PROGRESS, wParam, lParam);
+  }
   void Notify(Status status, DWORD errcode) {
     //
     PostMessageW(hWnd_, WM_EXECUTOR_NOTIFY, (WPARAM)status, (LPARAM)errcode);
