@@ -26,6 +26,17 @@ Formats:
   bela::FPrintF(stderr, L"%s\n", ua);
 }
 
+struct kisasum_options {
+  std::wstring_view alg{L"SHA256"};
+  std::wstring_view format{L"json"};
+  std::wstring_view path;
+};
+
+bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
+  //
+  return true;
+}
+
 int wmain(int argc, wchar_t **argv) {
   usage();
   (void)argc;
