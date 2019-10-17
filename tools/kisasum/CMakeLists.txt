@@ -1,18 +1,11 @@
 # kisasum
 
-# kisasumlib
-
-add_library(kisasumlib STATIC
-  kisasumlib.cc
-)
-
-
 add_executable(kisasum-ui WIN32
   kisasum-ui.cc
 )
 
 target_link_libraries(kisasum-ui
-  kisasumlib
+  hashlib
 )
 
 add_executable(kisasum
@@ -20,5 +13,5 @@ add_executable(kisasum
 )
 
 target_link_libraries(kisasum
-  kisasumlib
+  hashlib
 )

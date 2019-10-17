@@ -1,5 +1,4 @@
 ///
-#include <belautils.hpp>
 #include "../../vendor/rhash/librhash/md5.h"
 #include "../../vendor/rhash/librhash/sha1.h"
 #include "../../vendor/rhash/librhash/sha256.h"
@@ -92,7 +91,7 @@ public:
     return 0;
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[sha1_hash_size + 1];
+    unsigned char buf[sha256_hash_size + 1];
     rhash_sha256_final(&ctx, buf);
     binary_to_hex(buf, width / 8, hex, uc);
     return 0;
