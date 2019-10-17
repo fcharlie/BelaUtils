@@ -10,8 +10,8 @@
 
 namespace belautils {
 // hashlib feature
-constexpr inline void binary_to_hex(const unsigned char *b, size_t len,
-                                    std::wstring &hex, bool uppercase = false) {
+inline void binary_to_hex(const unsigned char *b, size_t len, std::wstring &hex,
+                          bool uppercase = false) {
   hex.resize(len * 2);
   auto p = hex.data();
   constexpr char lower_hex[] = "0123456789abcdef";
