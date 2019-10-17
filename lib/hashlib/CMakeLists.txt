@@ -12,4 +12,5 @@ include_directories(hashlib
 target_link_libraries(hashlib
   rhash
   blake2
+  bela
 )
