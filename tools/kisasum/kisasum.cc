@@ -1,7 +1,12 @@
 ///
 #include <bela/parseargv.hpp>
 #include <bela/stdwriter.hpp>
+#include <bela/match.hpp>
+#include <bela/ascii.hpp>
+#include <bela/codecvt.hpp>
 #include <vector>
+#include <optional>
+#include <json.hpp>
 #include "../../lib/hashlib/sumizer.hpp"
 
 void usage() {
@@ -31,6 +36,11 @@ struct kisasum_options {
   std::wstring_view alg{L"SHA256"};
   std::wstring_view format{L"json"};
   std::vector<std::wstring_view> files;
+};
+
+struct kisasum_result {
+  std::wstring filename;
+  std::wstring hashhex;
 };
 
 bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
@@ -73,11 +83,54 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
   return true;
 }
 
-bool sumfiles(const kisasum_options &opt) {
+std::optional<kisasum_result> kisasum_one_json(std::wstring_view file,
+                                               belautils::algorithm::hash_t h) {
+  //
+  return std::nullopt;
+}
+
+bool kisasum_execute_json(const kisasum_options &opt,
+                          belautils::algorithm::hash_t h) {
+  bool ok = true;
+  try {
+    nlohmann::json j;
+    j["algorithm"] = belautils::string_cast(bela::AsciiStrToUpper(opt.alg));
+    j["files"] = nlohmann::json::array();
+    auto &jfiles = j["files"];
+    for (auto file : opt.files) {
+      auto result = kisasum_one_json(file, h);
+      if (!result) {
+        ok = false;
+        continue;
+      }
+      nlohmann::json sj;
+      sj["name"] = bela::ToNarrow(result->filename);
+      sj["hash"] = belautils::string_cast(result->hashhex);
+      jfiles.emplace_back(std::move(sj));
+      bela::FPrintF(stdout, L"%s\n", j.dump(4)); /// output
+    }
+  } catch (std::exception &e) {
+    bela::FPrintF(stderr, L"unable dump json: %s\n", e.what());
+    return false;
+  }
+  return ok;
+}
+
+void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
+  //
+}
+
+bool kisasum_execute(const kisasum_options &opt) {
   auto h = belautils::lookup_algorithm(opt.alg);
   if (h == belautils::algorithm::NONE) {
     bela::FPrintF(stderr, L"unsupported hash algorithm: %s\n", opt.alg);
     return false;
+  }
+  if (bela::EqualsIgnoreCase(opt.format, L"JSON")) {
+    return kisasum_execute_json(opt, h);
+  }
+  for (auto file : opt.files) {
+    kisasum_one_text(file, h);
   }
   return true;
 }
@@ -85,6 +138,9 @@ bool sumfiles(const kisasum_options &opt) {
 int wmain(int argc, wchar_t **argv) {
   kisasum_options opt;
   if (!parse_options(argc, argv, opt)) {
+    return 1;
+  }
+  if (!kisasum_execute(opt)) {
     return 1;
   }
   return 0;
