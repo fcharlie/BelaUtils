@@ -104,13 +104,17 @@ bool Executor::empty() {
 
 void Executor::run() {
   for (;;) {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [this] { return this->exited || !this->empty(); });
-    if (this->exited) {
-      return;
+    packets pack;
+    {
+      std::unique_lock<std::mutex> lock(mtx);
+      cv.wait(lock, [this] { return this->exited || !this->empty(); });
+      if (this->exited) {
+        return;
+      }
+      pack = std::move(packets.front());
+      packets.pop();
     }
-    auto pack = std::move(packets.front());
-    packets.pop();
+    // real  todo
   }
   //
 }
