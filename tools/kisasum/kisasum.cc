@@ -73,6 +73,15 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
   return true;
 }
 
+bool sumfiles(const kisasum_options &opt) {
+  auto h = belautils::lookup_algorithm(opt.alg);
+  if (h == belautils::algorithm::NONE) {
+    bela::FPrintF(stderr, L"unsupported hash algorithm: %s\n", opt.alg);
+    return false;
+  }
+  return true;
+}
+
 int wmain(int argc, wchar_t **argv) {
   kisasum_options opt;
   if (!parse_options(argc, argv, opt)) {

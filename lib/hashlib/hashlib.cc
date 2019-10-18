@@ -271,6 +271,7 @@ std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
   }
   return sumizer;
 }
+
 std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
   using namespace algorithm;
   constexpr struct hash_algorithm_map {
@@ -298,6 +299,35 @@ std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
     }
   }
   return nullptr;
+}
+
+algorithm::hash_t lookup_algorithm(std::wstring_view alg) {
+  using namespace algorithm;
+  constexpr struct hash_algorithm_map {
+    std::wstring_view s;
+    hash_t h;
+  } hav[] = {
+      //
+      {L"MD5", MD5},
+      {L"SHA1", SHA1},
+      {L"SHA224", SHA224},
+      {L"SHA256", SHA256},
+      {L"SHA384", SHA384},
+      {L"SHA512", SHA512},
+      {L"SHA3-224", SHA3_224},
+      {L"SHA3-256", SHA3_256},
+      {L"SHA3-384", SHA3_384},
+      {L"SHA3-512", SHA3_512},
+      {L"BLAKE2s", BLAKE2S},
+      {L"BLAKE2b", BLAKE2B}
+      //
+  };
+  for (const auto &h : hav) {
+    if (bela::EqualsIgnoreCase(h.s, alg)) {
+      return h.h;
+    }
+  }
+  return NONE;
 }
 
 } // namespace belautils

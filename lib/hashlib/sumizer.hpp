@@ -38,14 +38,15 @@ enum hash_t : int {
   SHA3_384,
   SHA3_512,
   BLAKE2S,
-  BLAKE2B
+  BLAKE2B,
+  NONE = 999
 };
 }
 
 // md5 sha1 sha224 sha256 sha384 sha512
 // sha3-224 sha3-256 sha3-384 sha3-512
 // blake2s blake2b
-
+algorithm::hash_t lookup_algorithm(std::wstring_view alg);
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg);
 std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg);
 } // namespace belautils
