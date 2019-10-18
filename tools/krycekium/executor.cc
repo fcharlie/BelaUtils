@@ -103,13 +103,21 @@ bool Executor::empty() {
 }
 
 void Executor::run() {
-
+  for (;;) {
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait(lock, [this] { return this->exited || !this->empty(); });
+    if (this->exited) {
+      return;
+    }
+    auto pack = std::move(packets.front());
+    packets.pop();
+  }
   //
 }
 
 bool Executor::InitializeExecutor() {
   t = std::make_shared<std::thread>([this]() {
-    //
+    // run some thing
     run();
   });
   return false;
@@ -118,9 +126,11 @@ bool Executor::InitializeExecutor() {
 bool Executor::PushEvent(const std::wstring &msi, const std::wstring &outdir,
                          void *data) {
   canceled = false;
-  (void)msi;
-  (void)outdir;
-  (void)data;
-  return false;
+  {
+    std::unique_lock<std::mutex> lock(mtx);
+    packets.emplace({msi, outdir, data});
+  }
+  cv.notify_one();
+  return true;
 }
 } // namespace krycekium

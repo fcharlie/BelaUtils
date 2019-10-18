@@ -18,6 +18,7 @@ enum class Status {
 struct Packet {
   std::wstring msi;
   std::wstring outdir;
+  void *data;
 };
 
 // single thread executor
