@@ -104,7 +104,7 @@ bool Executor::empty() {
 
 void Executor::run() {
   for (;;) {
-    packets pack;
+    Packet pack;
     {
       std::unique_lock<std::mutex> lock(mtx);
       cv.wait(lock, [this] { return this->exited || !this->empty(); });
@@ -132,7 +132,7 @@ bool Executor::PushEvent(const std::wstring &msi, const std::wstring &outdir,
   canceled = false;
   {
     std::unique_lock<std::mutex> lock(mtx);
-    packets.emplace({msi, outdir, data});
+    packets.emplace(Packet{msi, outdir, data});
   }
   cv.notify_one();
   return true;
