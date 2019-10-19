@@ -8,6 +8,16 @@
 #include <d2d1helper.h>
 #include <dwrite.h>
 
+#ifndef SYSCOMMAND_ID_HANDLER
+#define SYSCOMMAND_ID_HANDLER(id, func)                                        \
+  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                         \
+    bHandled = TRUE;                                                           \
+    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);    \
+    if (bHandled)                                                              \
+      return TRUE;                                                             \
+  }
+#endif
+
 namespace krycekium {
 
 using namespace ATL;
@@ -54,9 +64,18 @@ private:
   LRESULT OnExecutorProgress(UINT nMsg, WPARAM wParam, LPARAM lParam,
                              BOOL &bHandle);
   // Command Handle
-
+  LRESULT OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
+                           BOOL &bHandled);
   // UI function
-
+  HRESULT CreateDeviceIndependentResources();
+  HRESULT Initialize();
+  HRESULT CreateDeviceResources();
+  void DiscardDeviceResources();
+  HRESULT OnRender();
+  D2D1_SIZE_U CalculateD2DWindowSize();
+  void OnResize(UINT width, UINT height);
+  //
+  bool RefreshWindow();
   //  Feature
 public:
   Window();
@@ -68,5 +87,12 @@ private:
   HINSTANCE hInst;
   ID2D1Factory *factory{nullptr};
   ID2D1HwndRenderTarget *renderTarget{nullptr};
+  HWND hSource;
+  HWND hFolder;
+  HWND hPicker;
+  HWND hDirPicker;
+  HWND hProgress;
+  HWND hExecute;
+  HWND hCancel;
 };
 } // namespace krycekium
