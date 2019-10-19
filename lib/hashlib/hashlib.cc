@@ -216,54 +216,54 @@ private:
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
   using namespace algorithm;
   // Sumizer *sumizer = nullptr;
-  std::shared_ptr<Sumizer> sumizer;
+  std::shared_ptr<Sumizer> sumizer(nullptr);
   switch (alg) {
   case MD5:
-    sumizer = std::shared_ptr<md5sumizer>();
+    sumizer = std::make_shared<md5sumizer>();
     sumizer->Initialize();
     break;
   case SHA1:
-    sumizer = std::shared_ptr<sha1sumizer>();
+    sumizer = std::make_shared<sha1sumizer>();
     sumizer->Initialize();
     break;
   case SHA224:
-    sumizer = std::shared_ptr<sha256sumizer>();
+    sumizer = std::make_shared<sha256sumizer>();
     sumizer->Initialize(224);
     break;
   case SHA256:
-    sumizer = std::shared_ptr<sha256sumizer>();
+    sumizer = std::make_shared<sha256sumizer>();
     sumizer->Initialize(256);
     break;
   case SHA384:
-    sumizer = std::shared_ptr<sha512sumizer>();
+    sumizer = std::make_shared<sha512sumizer>();
     sumizer->Initialize(384);
     break;
   case SHA512:
-    sumizer = std::shared_ptr<sha512sumizer>();
+    sumizer = std::make_shared<sha512sumizer>();
     sumizer->Initialize(512);
     break;
   case SHA3_224:
-    sumizer = std::shared_ptr<sha3sumizer>();
+    sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(224);
     break;
   case SHA3_256:
-    sumizer = std::shared_ptr<sha3sumizer>();
+    sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(256);
     break;
   case SHA3_384:
-    sumizer = std::shared_ptr<sha3sumizer>();
+    sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(384);
     break;
   case SHA3_512:
-    sumizer = std::shared_ptr<sha3sumizer>();
+    sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(512);
     break;
   case BLAKE2S:
-    sumizer = std::shared_ptr<blake2ssumizer>();
+    sumizer = std::make_shared<blake2ssumizer>();
     sumizer->Initialize();
     break;
   case BLAKE2B:
-    sumizer = std::shared_ptr<blake2bsumizer>();
+    sumizer = std::make_shared<blake2bsumizer>();
     sumizer->Initialize();
     break;
   default:

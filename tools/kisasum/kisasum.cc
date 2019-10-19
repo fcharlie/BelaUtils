@@ -4,10 +4,12 @@
 #include <bela/match.hpp>
 #include <bela/ascii.hpp>
 #include <bela/codecvt.hpp>
+#include <bela/path.hpp>
 #include <vector>
 #include <optional>
 #include <json.hpp>
 #include "../../lib/hashlib/sumizer.hpp"
+#include "fileutils.hpp"
 
 void usage() {
   const std::wstring_view ua = LR"(OVERVIEW: kisasum 1.0
@@ -34,7 +36,7 @@ Formats:
 
 struct kisasum_options {
   std::wstring_view alg{L"SHA256"};
-  std::wstring_view format{L"json"};
+  std::wstring_view format;
   std::vector<std::wstring_view> files;
 };
 
@@ -47,6 +49,7 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
   bela::ParseArgv pa(argc, argv);
   pa.Add(L"algorithm", bela::required_argument, 'a')
       .Add(L"format", bela::required_argument, 'f')
+      .Add(L"json", bela::no_argument, 'j')
       .Add(L"help", bela::no_argument, 'h')
       .Add(L"version", bela::no_argument, 'v');
   bela::error_code ec;
@@ -58,6 +61,9 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
           break;
         case 'f':
           opt.format = oa;
+          break;
+        case 'j':
+          opt.format = L"json";
           break;
         case 'h':
           usage();
@@ -85,8 +91,43 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
 
 std::optional<kisasum_result> kisasum_one_json(std::wstring_view file,
                                                belautils::algorithm::hash_t h) {
-  //
-  return std::nullopt;
+  auto filex = bela::PathCat(file);
+  kisasum::FileUtils fu;
+  bela::error_code ec;
+  if (!fu.Open(filex, ec)) {
+    bela::FPrintF(stderr, L"unable open '%s' error: %s\n", filex, ec.message);
+    return std::nullopt;
+  }
+  auto filename = kisasum::BaseName(filex);
+  auto sumizer = belautils::make_sumizer(h);
+  if (!sumizer) {
+    bela::FPrintF(stderr, L"unable initialize hash sumizer\n");
+    return std::nullopt;
+  }
+  unsigned char buffer[8192];
+  int64_t total = 0;
+  for (;;) {
+    DWORD dw = 0;
+    if (ReadFile(fu.P(), buffer, sizeof(buffer), &dw, nullptr) != TRUE) {
+      break;
+    }
+    if (dw == 0) {
+      break;
+    }
+    total += dw;
+    sumizer->Update(buffer, dw);
+  }
+  if (total != fu.FileSize()) {
+    bela::FPrintF(stderr, L"sum file hash error, file size: %d but read %d\n",
+                  fu.FileSize(), total);
+    return std::nullopt;
+  }
+  std::wstring hashhex;
+  if (sumizer->Final(hashhex) != 0) {
+    bela::FPrintF(stderr, L"hash sumizer unable final\n");
+    return std::nullopt;
+  }
+  return std::make_optional(kisasum_result{filename, hashhex});
 }
 
 bool kisasum_execute_json(const kisasum_options &opt,
@@ -107,8 +148,8 @@ bool kisasum_execute_json(const kisasum_options &opt,
       sj["name"] = bela::ToNarrow(result->filename);
       sj["hash"] = belautils::string_cast(result->hashhex);
       jfiles.emplace_back(std::move(sj));
-      bela::FPrintF(stdout, L"%s\n", j.dump(4)); /// output
     }
+    bela::FPrintF(stdout, L"%s\n", j.dump(4)); /// output
   } catch (std::exception &e) {
     bela::FPrintF(stderr, L"unable dump json: %s\n", e.what());
     return false;
@@ -118,6 +159,8 @@ bool kisasum_execute_json(const kisasum_options &opt,
 
 void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
   //
+  auto filename = kisasum::BaseName(file);
+  bela::FPrintF(stderr, L"Filename %s --> %s\n", file, filename);
 }
 
 bool kisasum_execute(const kisasum_options &opt) {

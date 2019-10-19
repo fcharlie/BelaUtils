@@ -6,6 +6,7 @@ add_executable(kisasum-ui WIN32
 
 target_link_libraries(kisasum-ui
   hashlib
+  belawin
 )
 
 add_executable(kisasum
@@ -14,4 +15,5 @@ add_executable(kisasum
 
 target_link_libraries(kisasum
   hashlib
+  belawin
 )
