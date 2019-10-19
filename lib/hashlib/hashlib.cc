@@ -200,7 +200,7 @@ public:
     return blake2b_update(&ctx, b, len);
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[BLAKE2S_OUTBYTES];
+    unsigned char buf[BLAKE2B_OUTBYTES];
     auto n = blake2b_final(&ctx, buf, BLAKE2B_OUTBYTES);
     if (n != 0) {
       return n;
