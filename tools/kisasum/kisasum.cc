@@ -10,6 +10,7 @@
 #include <json.hpp>
 #include "../../lib/hashlib/sumizer.hpp"
 #include "fileutils.hpp"
+#include "progressbar.hpp"
 
 void usage() {
   const std::wstring_view ua = LR"(OVERVIEW: kisasum 1.0
@@ -158,9 +159,49 @@ bool kisasum_execute_json(const kisasum_options &opt,
 }
 
 void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
-  //
-  auto filename = kisasum::BaseName(file);
-  bela::FPrintF(stderr, L"Filename %s --> %s\n", file, filename);
+  auto filex = bela::PathCat(file);
+  kisasum::FileUtils fu;
+  bela::error_code ec;
+  if (!fu.Open(filex, ec)) {
+    bela::FPrintF(stderr, L"unable open '%s' error: %s\n", filex, ec.message);
+    return;
+  }
+  auto filename = kisasum::BaseName(filex);
+  auto sumizer = belautils::make_sumizer(h);
+  if (!sumizer) {
+    bela::FPrintF(stderr, L"unable initialize hash sumizer\n");
+    return;
+  }
+  kisasum::ProgressBar pb;
+  pb.Initialize(fu.FileSize());
+  unsigned char buffer[8192];
+  int64_t total = 0;
+  for (;;) {
+    DWORD dw = 0;
+    if (ReadFile(fu.P(), buffer, sizeof(buffer), &dw, nullptr) != TRUE) {
+      break;
+    }
+    if (dw == 0) {
+      break;
+    }
+    total += dw;
+    pb.Update(dw);
+    sumizer->Update(buffer, dw);
+  }
+  if (total != fu.FileSize()) {
+    pb.Refresh();
+    bela::FPrintF(stderr, L"\nsum file hash error, file size: %d but read %d\n",
+                  fu.FileSize(), total);
+    return;
+  }
+  std::wstring hashhex;
+  if (sumizer->Final(hashhex) != 0) {
+    pb.Refresh();
+    bela::FPrintF(stderr, L"\nhash sumizer unable final\n");
+    return;
+  }
+  pb.Refresh();
+  bela::FPrintF(stdout, L"\r%s %s\n", hashhex, filename);
 }
 
 bool kisasum_execute(const kisasum_options &opt) {
