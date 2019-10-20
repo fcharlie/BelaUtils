@@ -13,4 +13,5 @@ target_link_libraries(krycekium
   belashl
   d2d1
   dwrite
+  Shell32
 )

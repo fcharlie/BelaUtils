@@ -76,6 +76,7 @@ public:
   D2D1_SIZE_U CalculateD2DWindowSize();
   void OnResize(UINT32 width, UINT32 height);
   HRESULT RefreshDxFont();
+  HRESULT RefreshGdiFont();
   //  Feature
 public:
   Window();
@@ -96,6 +97,7 @@ private:
   HWND hProgress;
   HWND hExecute;
   HWND hCancel;
+  HFONT hFont{nullptr}; // GDI font
   UINT32 dpiX{96};
 };
 } // namespace krycekium

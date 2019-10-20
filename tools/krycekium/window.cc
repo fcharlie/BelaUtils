@@ -1,6 +1,7 @@
 ///
 #include <bela/picker.hpp>
 #include <bela/strcat.hpp>
+#include <shellapi.h>
 #include "window.hpp"
 #include "resource.h"
 
@@ -26,6 +27,13 @@ namespace krycekium {
 template <typename T> void Free(T *t) {
   if (*t != nullptr) {
     (*t)->Release();
+    *t = nullptr;
+  }
+}
+
+template <typename T> void FreeObj(T *t) {
+  if (*t != nullptr) {
+    DeleteObject(*t);
     *t = nullptr;
   }
 }
@@ -63,6 +71,7 @@ Window::~Window() {
   Free(&lineBrush);
   Free(&dwFactory);
   Free(&dwFormat);
+  FreeObj(&hFont);
 }
 #define WS_NORESIZEWINDOW                                                      \
   (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX)
@@ -77,6 +86,20 @@ bool Window::MakeWindow() {
   return true;
 }
 
+HRESULT Window::RefreshGdiFont() {
+  FreeObj(&hFont);
+  hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  LOGFONT logFont = {0};
+  GetObjectW(hFont, sizeof(logFont), &logFont);
+  DeleteObject(hFont);
+  hFont = nullptr;
+  logFont.lfHeight = MulDiv(20, dpiX, 96);
+  logFont.lfWeight = FW_NORMAL;
+  wcscpy_s(logFont.lfFaceName, L"Segoe UI");
+  hFont = CreateFontIndirectW(&logFont);
+  return true;
+}
+
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                          BOOL &bHandle) {
   auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
@@ -85,8 +108,16 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   ::SetWindowPos(m_hWnd, nullptr, MulDiv(100, dpiX, 96), MulDiv(100, dpiX, 96),
                  MulDiv(700, dpiX, 96), MulDiv(440, dpiX, 96),
                  SWP_NOZORDER | SWP_NOACTIVATE);
-  // Resize window with dpi
-
+  // Draw Window ICON
+  auto hIcon = LoadIconW(GetModuleHandleW(nullptr),
+                         MAKEINTRESOURCEW(IDI_KRYCEKIUM_ICON));
+  SetIcon(hIcon, TRUE);
+  // Enable Drag files
+  ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+  ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
+  ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+  ::DragAcceptFiles(m_hWnd, TRUE);
+  RefreshGdiFont();
   return S_OK;
 }
 
