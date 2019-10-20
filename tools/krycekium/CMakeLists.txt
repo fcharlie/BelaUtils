@@ -11,4 +11,6 @@ add_executable(krycekium WIN32
 target_link_libraries(krycekium
   belawin
   belashl
+  d2d1
+  dwrite
 )

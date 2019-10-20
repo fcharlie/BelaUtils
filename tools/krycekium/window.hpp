@@ -7,6 +7,7 @@
 #include <d2d1.h>
 #include <d2d1helper.h>
 #include <dwrite.h>
+#include <dwrite_3.h>
 
 #ifndef SYSCOMMAND_ID_HANDLER
 #define SYSCOMMAND_ID_HANDLER(id, func)                                        \
@@ -73,20 +74,22 @@ private:
   void DiscardDeviceResources();
   HRESULT OnRender();
   D2D1_SIZE_U CalculateD2DWindowSize();
-  void OnResize(UINT width, UINT height);
-  //
-  bool RefreshWindow();
+  void OnResize(UINT32 width, UINT32 height);
+  HRESULT RefreshDxFont();
   //  Feature
 public:
   Window();
   ~Window();
-  bool WindowInitialize();
+  bool MakeWindow();
   bool Show();
 
 private:
   HINSTANCE hInst;
   ID2D1Factory *factory{nullptr};
   ID2D1HwndRenderTarget *renderTarget{nullptr};
+  ID2D1SolidColorBrush *lineBrush{nullptr};
+  IDWriteFactory *dwFactory{nullptr};
+  IDWriteTextFormat *dwFormat{nullptr};
   HWND hSource;
   HWND hFolder;
   HWND hPicker;
@@ -94,5 +97,6 @@ private:
   HWND hProgress;
   HWND hExecute;
   HWND hCancel;
+  UINT32 dpiX{96};
 };
 } // namespace krycekium

@@ -11,7 +11,8 @@ extern "C" IMAGE_DOS_HEADER __ImageBase;
 // LoadIconWithScaleDown
 // https://github.com/tringi/win32-dpi
 // https://github.com/microsoft/Windows-classic-samples/tree/master/Samples/DPIAwarenessPerWindow
-// https://blogs.windows.com/windowsdeveloper/2017/05/19/improving-high-dpi-experience-gdi-based-desktop-apps/#Uwv9gY1SvpbgQ4dK.97
+// https://blogs.windows.com/windowsdeveloper/2017/05/19/improving-high-dpi-experience-gdi-based-desktop-apps/
+// https://docs.microsoft.com/zh-cn/windows/win32/hidpi/high-dpi-desktop-application-development-on-windows
 /*
 #define DPI_AWARENESS_CONTEXT_UNAWARE              ((DPI_AWARENESS_CONTEXT)-1)
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE         ((DPI_AWARENESS_CONTEXT)-2)
@@ -59,49 +60,65 @@ Window::Window() {
 Window::~Window() {
   Free(&renderTarget);
   Free(&factory);
+  Free(&lineBrush);
+  Free(&dwFactory);
+  Free(&dwFormat);
 }
 
-bool Window::WindowInitialize() {
+bool Window::MakeWindow() {
   //
-  return true;
-}
-
-bool Window::RefreshWindow() {
-  auto dpiX = GetDpiForWindow(m_hWnd);
-  if (dpiX == 0) {
-    return false;
-  }
-
   return true;
 }
 
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                          BOOL &bHandle) {
-  auto dpiX = GetDpiForWindow(m_hWnd);
+  auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
+  dpiX = GetDpiForWindow(m_hWnd);
   // Resize window with dpi
 
   return S_OK;
 }
+
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam,
                           BOOL &bHandle) {
+  PostQuitMessage(0);
   return S_OK;
 }
+
 LRESULT Window::OnClose(UINT nMsg, WPARAM wParam, LPARAM lParam,
                         BOOL &bHandle) {
+  ::DestroyWindow(m_hWnd);
   return S_OK;
 }
 
 LRESULT Window::OnSize(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
-  return S_OK;
-}
-LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
-                        BOOL &bHandle) {
+  UINT width = LOWORD(lParam);
+  UINT height = HIWORD(lParam);
+  OnResize(width, height);
   return S_OK;
 }
 
+LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
+                        BOOL &bHandle) {
+  OnRender();
+  ValidateRect(NULL);
+  return S_OK;
+}
+
+// https://docs.microsoft.com/zh-cn/windows/win32/hidpi/wm-dpichanged todo
 LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
                              BOOL &bHandle) {
-  //
+  dpiX = static_cast<UINT32>(wParam);
+  auto prcNewWindow = reinterpret_cast<RECT *const>(lParam);
+  // resize window with new DPI
+  ::SetWindowPos(m_hWnd, nullptr, prcNewWindow->left, prcNewWindow->top,
+                 prcNewWindow->right - prcNewWindow->left,
+                 prcNewWindow->bottom - prcNewWindow->top,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+  if (!SUCCEEDED(RefreshDxFont())) {
+    //
+  }
+  //::SetWindowPos()
   return S_OK;
 }
 
@@ -110,6 +127,7 @@ LRESULT Window::OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam,
   ::InvalidateRect(m_hWnd, NULL, FALSE);
   return S_OK;
 }
+
 LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam,
                             BOOL &bHandled) {
 
@@ -137,9 +155,26 @@ LRESULT Window::OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
 
 ///
 
+HRESULT Window::RefreshDxFont() {
+  Free(&dwFormat);
+  auto fontsize = MulDiv(12 * 96 / 72, dpiX, 96);
+  return dwFactory->CreateTextFormat(
+      L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(fontsize), L"zh-CN",
+      &dwFormat);
+}
+
 HRESULT Window::CreateDeviceIndependentResources() {
-  //
-  return S_OK;
+  auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+                           reinterpret_cast<IUnknown **>(&dwFactory));
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  return RefreshDxFont();
 }
 
 HRESULT Window::Initialize() {
@@ -148,7 +183,19 @@ HRESULT Window::Initialize() {
 }
 
 HRESULT Window::CreateDeviceResources() {
-  //
+  if (renderTarget != nullptr) {
+    return S_OK;
+  }
+  RECT rc;
+  ::GetClientRect(m_hWnd, &rc);
+  auto size = D2D1::SizeU(static_cast<UINT>(rc.right - rc.left),
+                          static_cast<UINT>(rc.bottom = rc.top));
+  auto hr = factory->CreateHwndRenderTarget(
+      D2D1::RenderTargetProperties(),
+      D2D1::HwndRenderTargetProperties(m_hWnd, size), &renderTarget);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
   return S_OK;
 }
 
@@ -164,11 +211,11 @@ HRESULT Window::OnRender() {
 D2D1_SIZE_U Window::CalculateD2DWindowSize() {
   RECT rc;
   ::GetClientRect(m_hWnd, &rc);
-  return D2D1_SIZE_U{static_cast<UINT32>(rc.right),
-                     static_cast<UINT32>(rc.bottom)};
+  return D2D1::SizeU(static_cast<UINT32>(rc.right),
+                     static_cast<UINT32>(rc.bottom));
 }
 
-void Window::OnResize(UINT width, UINT height) {
+void Window::OnResize(UINT32 width, UINT32 height) {
   //
 }
 
