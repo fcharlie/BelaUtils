@@ -64,9 +64,16 @@ Window::~Window() {
   Free(&dwFactory);
   Free(&dwFormat);
 }
+#define WS_NORESIZEWINDOW                                                      \
+  (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX)
+
+// https://docs.microsoft.com/en-us/windows/win32/api/_hidpi/
 
 bool Window::MakeWindow() {
-  //
+  // dpiX = ::GetSystemDpiForProcess(GetCurrentProcess());
+  RECT rect = {100, 100, 100, 540};
+  Create(nullptr, rect, L"Krycekium", WS_NORESIZEWINDOW,
+         WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
   return true;
 }
 
@@ -74,6 +81,10 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                          BOOL &bHandle) {
   auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
   dpiX = GetDpiForWindow(m_hWnd);
+  // Refresh Window use real DPI
+  ::SetWindowPos(m_hWnd, nullptr, MulDiv(100, dpiX, 96), MulDiv(100, dpiX, 96),
+                 MulDiv(700, dpiX, 96), MulDiv(440, dpiX, 96),
+                 SWP_NOZORDER | SWP_NOACTIVATE);
   // Resize window with dpi
 
   return S_OK;

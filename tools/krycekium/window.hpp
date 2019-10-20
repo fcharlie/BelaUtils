@@ -31,7 +31,7 @@ using WindowTraits =
 // Per-Monitor DPI Aware
 
 class Window : public CWindowImpl<Window, CWindow, WindowTraits> {
-private:
+public:
   DECLARE_WND_CLASS(WindowName)
   BEGIN_MSG_MAP(Window)
   MESSAGE_HANDLER(WM_CREATE, OnCreate)
@@ -81,7 +81,6 @@ public:
   Window();
   ~Window();
   bool MakeWindow();
-  bool Show();
 
 private:
   HINSTANCE hInst;

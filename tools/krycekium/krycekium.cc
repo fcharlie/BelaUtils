@@ -36,6 +36,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
                          nullptr, bela::mbs_t::FATAL);
     return 1;
   }
+  window.ShowWindow(SW_SHOW);
+  window.UpdateWindow();
   MSG msg;
   while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
     TranslateMessage(&msg);
