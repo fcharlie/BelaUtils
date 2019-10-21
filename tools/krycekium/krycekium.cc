@@ -17,6 +17,7 @@ public:
 };
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
+  dotcom_initializer di;
   if (!IsWindows10OrGreater()) {
     bela::BelaMessageBox(nullptr, L"You need at least Windows 10",
                          L"Please upgrade Your OS to Windows 10", nullptr,
@@ -28,7 +29,6 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
                                ICC_TREEVIEW_CLASSES | ICC_COOL_CLASSES |
                                    ICC_LISTVIEW_CLASSES};
   InitCommonControlsEx(&info);
-  dotcom_initializer di;
   krycekium::Window window;
   if (!window.MakeWindow()) {
     auto ec = bela::make_system_error_code();

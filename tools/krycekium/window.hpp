@@ -8,6 +8,9 @@
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <dwrite_3.h>
+#include <string>
+#include <string_view>
+#include <vector>
 
 // UI Index
 #define IDM_KRYCEKIUM_ABOUT 1001
@@ -30,14 +33,40 @@
 #endif
 
 namespace krycekium {
-
 using namespace ATL;
+
+struct Label {
+  Label() = default;
+  Label(LONG left, LONG top, LONG right, LONG bottom, std::wstring_view sv) {
+    layout.left = left;
+    layout.top = top;
+    layout.right = right;
+    layout.bottom = bottom;
+    text = sv;
+  }
+  Label &operator=(const Label &o) {
+    text = o.text;
+    layout.left = o.layout.left;
+    layout.top = o.layout.top;
+    layout.right = o.layout.right;
+    layout.bottom = o.layout.bottom;
+    return *this;
+  }
+  bool empty() const { return text.empty(); }
+  const wchar_t *data() const { return text.data(); };
+  UINT32 length() const { return static_cast<UINT32>(text.size()); }
+  D2D1_RECT_F FR() const {
+    return D2D1::RectF(
+        static_cast<float>(layout.left), static_cast<float>(layout.top),
+        static_cast<float>(layout.right), static_cast<float>(layout.bottom));
+  }
+  RECT layout;
+  std::wstring text;
+};
+
 constexpr const wchar_t *WindowName = L"Krycekium.Window";
 using WindowTraits =
-    CWinTraits<WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN |
-                   WS_CLIPSIBLINGS & ~WS_MAXIMIZEBOX,
-               WS_EX_APPWINDOW | WS_EX_WINDOWEDGE>;
-
+    CWinTraits<WS_OVERLAPPEDWINDOW, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE>;
 // Per-Monitor DPI Aware
 
 class Window : public CWindowImpl<Window, CWindow, WindowTraits> {
@@ -55,11 +84,11 @@ public:
   // User defined message
   MESSAGE_HANDLER(WM_EXECUTOR_NOTIFY, OnExecutorNotify)
   MESSAGE_HANDLER(WM_EXECUTOR_PROGRESS, OnExecutorProgress)
-  //   SYSCOMMAND_ID_HANDLER(IDM_KRYCEKIUM_ABOUT, OnKrycekiumAbout)
-  //   COMMAND_ID_HANDLER(IDC_PACKAGE_VIEW_BUTTON, OnDiscoverPackage)
-  //   COMMAND_ID_HANDLER(IDC_FOLDER_URI_BUTTON, OnDiscoverFolder)
-  //   COMMAND_ID_HANDLER(IDC_OPTION_BUTTON_OK, OnStartTask)
-  //   COMMAND_ID_HANDLER(IDC_OPTION_BUTTON_CANCEL, OnCancelTask)
+  SYSCOMMAND_ID_HANDLER(IDM_KRYCEKIUM_ABOUT, OnKrycekiumAbout)
+  COMMAND_ID_HANDLER(IDB_SOURCE_VIEW, OnSourceView)
+  COMMAND_ID_HANDLER(IDB_FOLDER_VIEW, OnFolderView)
+  COMMAND_ID_HANDLER(IDB_EXECUTE_TASK, OnExecuteTask)
+  COMMAND_ID_HANDLER(IDB_CANCEL_TASK, OnCancelTask)
   END_MSG_MAP()
   LRESULT OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
   LRESULT OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
@@ -77,9 +106,16 @@ public:
   // Command Handle
   LRESULT OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                            BOOL &bHandled);
+  LRESULT OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
+                       BOOL &bHandled);
+  LRESULT OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
+                       BOOL &bHandled);
+  LRESULT OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
+                        BOOL &bHandled);
+  LRESULT OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
+                       BOOL &bHandled);
   // UI function
   HRESULT CreateDeviceIndependentResources();
-  HRESULT Initialize();
   HRESULT CreateDeviceResources();
   void DiscardDeviceResources();
   HRESULT OnRender();
@@ -98,6 +134,7 @@ private:
   ID2D1Factory *factory{nullptr};
   ID2D1HwndRenderTarget *renderTarget{nullptr};
   ID2D1SolidColorBrush *lineBrush{nullptr};
+  ID2D1SolidColorBrush *textBrush{nullptr};
   IDWriteFactory *dwFactory{nullptr};
   IDWriteTextFormat *dwFormat{nullptr};
   HWND hSource;
@@ -109,5 +146,7 @@ private:
   HWND hCancel;
   HFONT hFont{nullptr}; // GDI font
   UINT32 dpiX{96};
+  std::vector<Label> labels;
+  Label notice;
 };
 } // namespace krycekium
