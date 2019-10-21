@@ -35,10 +35,13 @@
   L"href=\"https://github.com/fcharlie/BelaUtils\">Krycekium</a>\nVisit: <a "  \
   L"href=\"https://forcemz.net/\">forcemz.net</a>"
 
-#define IDI_KRYCEKIUM_ICON 1001
-
-
 #define COPYRIGHT L"Copyright \xA9 2019 Force Charlie, All Rights Reserved."
 #define FULL_COPYRIGHT                                                         \
   L"Prerelease: 2.0\nCopyright \xA9 2019, Force Charlie. All Rights Reserved."
+
+// ICON
+#define IDI_KRYCEKIUM_ICON 500
+
+// about
+
 #endif

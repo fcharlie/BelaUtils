@@ -9,6 +9,16 @@
 #include <dwrite.h>
 #include <dwrite_3.h>
 
+// UI Index
+#define IDM_KRYCEKIUM_ABOUT 1001
+#define IDE_SOURCE_URI 1002
+#define IDE_FOLDER_URI 1003
+#define IDB_SOURCE_VIEW 1004
+#define IDB_FOLDER_VIEW 1005
+#define IDP_PROGRESS_STATE 1006
+#define IDB_EXECUTE_TASK 1007
+#define IDB_CANCEL_TASK 1008
+
 #ifndef SYSCOMMAND_ID_HANDLER
 #define SYSCOMMAND_ID_HANDLER(id, func)                                        \
   if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                         \
