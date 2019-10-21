@@ -86,17 +86,28 @@ bool Window::MakeWindow() {
   return true;
 }
 
+// Safely reset fonts.
 HRESULT Window::RefreshGdiFont() {
-  FreeObj(&hFont);
-  hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  auto dfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  if (dfont == nullptr) {
+    return false;
+  }
   LOGFONT logFont = {0};
-  GetObjectW(hFont, sizeof(logFont), &logFont);
-  DeleteObject(hFont);
-  hFont = nullptr;
+  auto dwsize = GetObjectW(hFont, sizeof(logFont), &logFont);
+  DeleteObject(dfont);
+  if (dwsize == 0) {
+    return false;
+  }
+  LOGFONT logFont = {0};
   logFont.lfHeight = MulDiv(20, dpiX, 96);
   logFont.lfWeight = FW_NORMAL;
   wcscpy_s(logFont.lfFaceName, L"Segoe UI");
-  hFont = CreateFontIndirectW(&logFont);
+  auto newFont = CreateFontIndirectW(&logFont);
+  if (newFont == nullptr) {
+    return false;
+  }
+  FreeObj(&hFont);
+  hFont = newFont;
   return true;
 }
 
@@ -118,6 +129,9 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
   ::DragAcceptFiles(m_hWnd, TRUE);
   RefreshGdiFont();
+  if (hFont == nullptr) {
+    hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  }
   return S_OK;
 }
 
