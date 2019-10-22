@@ -71,8 +71,8 @@ bool Window::MakeWindow() {
   if (CreateDeviceIndependentResources() < 0) {
     return false;
   }
-  const auto noresizewindow =
-      WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+  const auto noresizewindow = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
+                              WS_CLIPCHILDREN | WS_MINIMIZEBOX;
   // dpiX = ::GetSystemDpiForProcess(GetCurrentProcess());
   // RECT rect = {MulDiv(100, dpiX, 96), MulDiv(100, dpiX, 96),
   //              MulDiv(800, dpiX, 96), MulDiv(540, dpiX, 96)};
@@ -104,6 +104,101 @@ HRESULT Window::RefreshGdiFont() {
   FreeObj(&hFont);
   hFont = newFont;
   return true;
+}
+
+HRESULT Window::RefreshDxFont() {
+  Free(&dwFormat);
+  auto fontsize = MulDiv(12 * 96 / 72, dpiX, 96);
+  return dwFactory->CreateTextFormat(
+      L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(fontsize), L"zh-CN",
+      &dwFormat);
+}
+
+HRESULT Window::CreateDeviceIndependentResources() {
+  auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  return DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
+                             __uuidof(IDWriteFactory),
+                             reinterpret_cast<IUnknown **>(&dwFactory));
+}
+
+//
+HRESULT Window::CreateDeviceResources() {
+  if (renderTarget != nullptr) {
+    return S_OK;
+  }
+  RECT rc;
+  ::GetClientRect(m_hWnd, &rc);
+  auto size = D2D1::SizeU(static_cast<UINT>(rc.right - rc.left),
+                          static_cast<UINT>(rc.bottom - rc.top));
+  auto hr = factory->CreateHwndRenderTarget(
+      D2D1::RenderTargetProperties(),
+      D2D1::HwndRenderTargetProperties(m_hWnd, size), &renderTarget);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
+  // https://hashtagcolor.com/
+  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
+                                           &textBrush);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  return renderTarget->CreateSolidColorBrush(
+      D2D1::ColorF(D2D1::ColorF::DarkSalmon), &lineBrush);
+}
+
+void Window::DiscardDeviceResources() {
+  Free(&renderTarget); // free renderTarget will recreate
+  Free(&lineBrush);
+  Free(&textBrush);
+}
+
+HRESULT Window::OnRender() {
+  auto hr = CreateDeviceResources();
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  if ((renderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED) != 0) {
+    return S_OK;
+  }
+  renderTarget->BeginDraw();
+  renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+  renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::WhiteSmoke, 1.0f));
+  auto size = renderTarget->GetSize();
+  renderTarget->DrawRectangle(D2D1::RectF(20, 10, size.width - 20, 155),
+                              lineBrush, 1.0);
+  renderTarget->DrawRectangle(
+      D2D1::RectF(20, 155, size.width - 20, size.height - 20), lineBrush, 1.0);
+  // D2D1_DRAW_TEXT_OPTIONS_NONE
+  for (auto &label : labels) {
+    if (label.empty()) {
+      continue;
+    }
+    renderTarget->DrawTextW(label.data(), label.length(), dwFormat, label.FR(),
+                            textBrush, D2D1_DRAW_TEXT_OPTIONS_NONE,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  if (!notice.empty()) {
+    renderTarget->DrawTextW(notice.data(), notice.length(), dwFormat,
+                            notice.FR(), textBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  hr = renderTarget->EndDraw();
+  if (hr == D2DERR_RECREATE_TARGET) {
+    DiscardDeviceResources();
+  }
+  return hr;
+} // namespace krycekium
+
+void Window::OnResize(UINT32 width, UINT32 height) {
+  if (renderTarget != nullptr) {
+    renderTarget->Resize(D2D1::SizeU(width, height));
+  }
 }
 
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
@@ -284,102 +379,7 @@ LRESULT Window::OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
   return S_OK;
 }
 
-///
-
-HRESULT Window::RefreshDxFont() {
-  Free(&dwFormat);
-  auto fontsize = MulDiv(12 * 96 / 72, dpiX, 96);
-  return dwFactory->CreateTextFormat(
-      L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-      DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(fontsize), L"zh-CN",
-      &dwFormat);
-}
-
-HRESULT Window::CreateDeviceIndependentResources() {
-  auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory);
-  if (!SUCCEEDED(hr)) {
-    return hr;
-  }
-  return DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
-                             __uuidof(IDWriteFactory),
-                             reinterpret_cast<IUnknown **>(&dwFactory));
-}
-
 //
-HRESULT Window::CreateDeviceResources() {
-  if (renderTarget != nullptr) {
-    return S_OK;
-  }
-  RECT rc;
-  ::GetClientRect(m_hWnd, &rc);
-  auto size = D2D1::SizeU(static_cast<UINT>(rc.right - rc.left),
-                          static_cast<UINT>(rc.bottom - rc.top));
-  auto hr = factory->CreateHwndRenderTarget(
-      D2D1::RenderTargetProperties(),
-      D2D1::HwndRenderTargetProperties(m_hWnd, size), &renderTarget);
-  if (!SUCCEEDED(hr)) {
-    return hr;
-  }
-  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
-  // https://hashtagcolor.com/
-  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
-                                           &textBrush);
-  if (!SUCCEEDED(hr)) {
-    return hr;
-  }
-  return renderTarget->CreateSolidColorBrush(
-      D2D1::ColorF(D2D1::ColorF::DarkSalmon), &lineBrush);
-}
-
-void Window::DiscardDeviceResources() {
-  Free(&renderTarget); // free renderTarget will recreate
-  Free(&lineBrush);
-  Free(&textBrush);
-}
-
-HRESULT Window::OnRender() {
-  auto hr = CreateDeviceResources();
-  if (!SUCCEEDED(hr)) {
-    return hr;
-  }
-  if ((renderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED) != 0) {
-    return S_OK;
-  }
-  renderTarget->BeginDraw();
-  renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::WhiteSmoke, 1.0f));
-  auto size = renderTarget->GetSize();
-  renderTarget->DrawRectangle(D2D1::RectF(20, 10, size.width - 20, 155),
-                              lineBrush, 1.0);
-  renderTarget->DrawRectangle(
-      D2D1::RectF(20, 155, size.width - 20, size.height - 20), lineBrush, 1.0);
-  // D2D1_DRAW_TEXT_OPTIONS_NONE
-  for (auto &label : labels) {
-    if (label.empty()) {
-      continue;
-    }
-    renderTarget->DrawTextW(label.data(), label.length(), dwFormat, label.FR(),
-                            textBrush, D2D1_DRAW_TEXT_OPTIONS_NONE,
-                            DWRITE_MEASURING_MODE_NATURAL);
-  }
-  if (!notice.empty()) {
-    renderTarget->DrawTextW(notice.data(), notice.length(), dwFormat,
-                            notice.FR(), textBrush,
-                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
-  }
-  hr = renderTarget->EndDraw();
-  if (hr == D2DERR_RECREATE_TARGET) {
-    DiscardDeviceResources();
-  }
-  return hr;
-} // namespace krycekium
-
-void Window::OnResize(UINT32 width, UINT32 height) {
-  if (renderTarget != nullptr) {
-    renderTarget->Resize(D2D1::SizeU(width, height));
-  }
-}
 
 LRESULT Window::OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
