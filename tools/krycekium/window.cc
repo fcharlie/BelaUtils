@@ -193,7 +193,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_KRYCEKIUM_ABOUT,
               L"About Krycekium\tAlt+F1");
-  //Invalidate(TRUE);
+  // Invalidate(TRUE);
   int numArgc = 0;
   auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
   if (Argv) {
@@ -318,6 +318,7 @@ HRESULT Window::CreateDeviceResources() {
   if (!SUCCEEDED(hr)) {
     return hr;
   }
+  // https://hashtagcolor.com/f5f5f5
   hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
                                            &textBrush);
   if (!SUCCEEDED(hr)) {
