@@ -3,6 +3,7 @@
 #include <bela/strcat.hpp>
 #include <shellapi.h>
 #include "window.hpp"
+#include "kmutils.hpp"
 #include "resource.h"
 
 // PE BaseAddress
@@ -36,28 +37,6 @@ template <typename T> void FreeObj(T *t) {
     DeleteObject(*t);
     *t = nullptr;
   }
-}
-
-bool FolderIsEmpty(const std::wstring &dir) {
-  auto xdir = bela::StringCat(dir, L"\\*.*");
-  WIN32_FIND_DATA fdata;
-  auto hFind = FindFirstFileW(xdir.data(), &fdata);
-  if (hFind == INVALID_HANDLE_VALUE) {
-    return true;
-  }
-  constexpr std::wstring_view dot = L".";
-  constexpr std::wstring_view dotdot = L"..";
-  for (;;) {
-    if (dotdot != fdata.cFileName && dot != fdata.cFileName) {
-      FindClose(hFind);
-      return false;
-    }
-    if (FindNextFile(hFind, &fdata) != TRUE) {
-      break;
-    }
-  }
-  FindClose(hFind);
-  return true;
 }
 
 static inline int Year() {
@@ -190,7 +169,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                         HMENU(IDB_EXECUTE_TASK));
   hCancel = makeWindow(WC_BUTTONW, L"Cancel", bs, 340, 270, 205, 30,
                        HMENU(IDB_CANCEL_TASK));
-
+  ::EnableWindow(hCancel, FALSE);
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_KRYCEKIUM_ABOUT,
               L"About Krycekium\tAlt+F1");
@@ -261,7 +240,28 @@ LRESULT Window::OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam,
 
 LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam,
                             BOOL &bHandled) {
-
+  const LPCWSTR PackageSubffix[] = {L".msi", L".msp"};
+  HDROP hDrop = (HDROP)wParam;
+  UINT nfilecounts = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+  WCHAR dn[8192] = {0};
+  if (nfilecounts != 1) {
+    DragFinish(hDrop);
+    return S_OK;
+  }
+  auto n = DragQueryFileW(hDrop, 0, dn, 8192);
+  if (n == 0) {
+    DragFinish(hDrop);
+    return S_OK;
+  }
+  std::wstring_view sv(dn, n);
+  if (IsSuffixEnabled(sv)) {
+    ::SetWindowTextW(hSource, dn);
+    auto sameFolder = krycekium::SameFolder(sv);
+    if (sameFolder) {
+      ::SetWindowTextW(hFolder, sameFolder->data());
+    }
+  }
+  DragFinish(hDrop);
   return S_OK;
 }
 
@@ -383,17 +383,33 @@ void Window::OnResize(UINT32 width, UINT32 height) {
 
 LRESULT Window::OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
-  //
+  constexpr const bela::filter_t filters[] = {
+      {L"Windows Installer Package (*.msi;*.msp)", L"*.msi;*.msp"},
+      {L"All Files (*.*)", L"*.*"}};
+  auto file = bela::FilePicker(m_hWnd, L"Windows Installer Package", filters);
+  if (file) {
+    ::SetWindowTextW(hSource, file->data());
+    auto sameFolder = krycekium::SameFolder(*file);
+    if (sameFolder) {
+      ::SetWindowTextW(hFolder, sameFolder->data());
+    }
+  }
   return S_OK;
 }
+
 LRESULT Window::OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
-  //
+  auto folder = bela::FolderPicker(m_hWnd, L"Open Folder");
+  if (folder) {
+    ::SetWindowTextW(hFolder, folder->data());
+  }
   return S_OK;
 }
+
 LRESULT Window::OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                               BOOL &bHandled) {
-  //
+  ::EnableWindow(hExecute, FALSE);
+  ::EnableWindow(hCancel, TRUE);
   return S_OK;
 }
 LRESULT Window::OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
