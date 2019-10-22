@@ -312,7 +312,7 @@ LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
 // https://docs.microsoft.com/zh-cn/windows/win32/hidpi/wm-dpichanged todo
 LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
                              BOOL &bHandle) {
-  dpiX = static_cast<UINT32>(wParam);
+  dpiX = static_cast<UINT32>(LOWORD(wParam));
   auto prcNewWindow = reinterpret_cast<RECT *const>(lParam);
   // resize window with new DPI
   ::SetWindowPos(m_hWnd, nullptr, prcNewWindow->left, prcNewWindow->top,
