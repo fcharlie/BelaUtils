@@ -135,20 +135,21 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   ::SetWindowPos(m_hWnd, nullptr, MulDiv(100, dpiX, 96), MulDiv(100, dpiX, 96),
                  MulDiv(700, dpiX, 96), MulDiv(440, dpiX, 96),
                  SWP_NOZORDER | SWP_NOACTIVATE);
-  // Draw Window ICON
-  auto hIcon = LoadIconW(GetModuleHandleW(nullptr),
-                         MAKEINTRESOURCEW(IDI_KRYCEKIUM_ICON));
-  SetIcon(hIcon, TRUE);
   // Enable Drag files
   ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
   ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
   ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
   ::DragAcceptFiles(m_hWnd, TRUE);
+  // Draw Window ICON
+  auto hIcon = LoadIconW(GetModuleHandleW(nullptr),
+                         MAKEINTRESOURCEW(IDI_KRYCEKIUM_ICON));
+  SetIcon(hIcon, TRUE);
   RefreshDxFont();
   RefreshGdiFont();
   if (hFont == nullptr) {
     hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
   }
+  // child window styles
   constexpr const auto wndex = WS_EX_LEFT | WS_EX_LTRREADING |
                                WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
   constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
@@ -161,6 +162,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   constexpr const auto bs =
       BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
   constexpr const auto ps = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE;
+
   auto makeWindow = [&](LPCWSTR className, LPCWSTR windowName, DWORD dwStyle,
                         int X, int Y, int nWidth, int nHeight, HMENU hMenu,
                         bool edit = false) -> HWND {
@@ -173,8 +175,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
     }
     return hw;
   };
-  constexpr auto pb =
-      BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
+
   hSource = makeWindow(WC_EDITW, L"", es, 125, 50, 420, 27,
                        HMENU(IDE_SOURCE_URI), true);
   hFolder = makeWindow(WC_EDITW, L"", es, 125, 100, 420, 27,
@@ -193,7 +194,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_KRYCEKIUM_ABOUT,
               L"About Krycekium\tAlt+F1");
-  // Invalidate(TRUE);
+  //
   int numArgc = 0;
   auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
   if (Argv) {
@@ -227,12 +228,11 @@ LRESULT Window::OnSize(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
 
 LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
                         BOOL &bHandle) {
-  LRESULT hr = S_OK;
   PAINTSTRUCT ps;
   BeginPaint(&ps);
-  hr = OnRender();
+  OnRender();
   EndPaint(&ps);
-  return hr;
+  return S_OK;
 }
 
 // https://docs.microsoft.com/zh-cn/windows/win32/hidpi/wm-dpichanged todo
@@ -245,6 +245,7 @@ LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
                  prcNewWindow->right - prcNewWindow->left,
                  prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
+  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
   if (!SUCCEEDED(RefreshDxFont())) {
     //
   }
@@ -304,6 +305,7 @@ HRESULT Window::CreateDeviceIndependentResources() {
                              reinterpret_cast<IUnknown **>(&dwFactory));
 }
 
+//
 HRESULT Window::CreateDeviceResources() {
   if (renderTarget != nullptr) {
     return S_OK;
@@ -311,26 +313,26 @@ HRESULT Window::CreateDeviceResources() {
   RECT rc;
   ::GetClientRect(m_hWnd, &rc);
   auto size = D2D1::SizeU(static_cast<UINT>(rc.right - rc.left),
-                          static_cast<UINT>(rc.bottom = rc.top));
+                          static_cast<UINT>(rc.bottom - rc.top));
   auto hr = factory->CreateHwndRenderTarget(
       D2D1::RenderTargetProperties(),
       D2D1::HwndRenderTargetProperties(m_hWnd, size), &renderTarget);
   if (!SUCCEEDED(hr)) {
     return hr;
   }
-  // https://hashtagcolor.com/f5f5f5
+  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
+  // https://hashtagcolor.com/
   hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
                                            &textBrush);
   if (!SUCCEEDED(hr)) {
     return hr;
   }
-  hr = renderTarget->CreateSolidColorBrush(
+  return renderTarget->CreateSolidColorBrush(
       D2D1::ColorF(D2D1::ColorF::DarkSalmon), &lineBrush);
-  return hr;
 }
 
 void Window::DiscardDeviceResources() {
-  Free(&renderTarget);
+  Free(&renderTarget); // free renderTarget will recreate
   Free(&lineBrush);
   Free(&textBrush);
 }
@@ -338,15 +340,15 @@ void Window::DiscardDeviceResources() {
 HRESULT Window::OnRender() {
   auto hr = CreateDeviceResources();
   if (!SUCCEEDED(hr)) {
-    // auto ec = bela::make_system_error_code();
-    // bela::BelaMessageBox(nullptr, L"create device resources error",
-    //                      ec.message.data(), nullptr, bela::mbs_t::FATAL);
     return hr;
   }
-  auto size = renderTarget->GetSize();
+  if ((renderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED) != 0) {
+    return S_OK;
+  }
   renderTarget->BeginDraw();
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
   renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::WhiteSmoke, 1.0f));
+  auto size = renderTarget->GetSize();
   renderTarget->DrawRectangle(D2D1::RectF(20, 10, size.width - 20, 155),
                               lineBrush, 1.0);
   renderTarget->DrawRectangle(
@@ -368,21 +370,13 @@ HRESULT Window::OnRender() {
   }
   hr = renderTarget->EndDraw();
   if (hr == D2DERR_RECREATE_TARGET) {
-    hr = S_OK;
     DiscardDeviceResources();
   }
-  return S_OK;
+  return hr;
 } // namespace krycekium
 
-D2D1_SIZE_U Window::CalculateD2DWindowSize() {
-  RECT rc;
-  ::GetClientRect(m_hWnd, &rc);
-  return D2D1::SizeU(static_cast<UINT32>(rc.right),
-                     static_cast<UINT32>(rc.bottom));
-}
-
 void Window::OnResize(UINT32 width, UINT32 height) {
-  if (renderTarget) {
+  if (renderTarget != nullptr) {
     renderTarget->Resize(D2D1::SizeU(width, height));
   }
 }

@@ -119,7 +119,6 @@ public:
   HRESULT CreateDeviceResources();
   void DiscardDeviceResources();
   HRESULT OnRender();
-  D2D1_SIZE_U CalculateD2DWindowSize();
   void OnResize(UINT32 width, UINT32 height);
   HRESULT RefreshDxFont();
   HRESULT RefreshGdiFont();
