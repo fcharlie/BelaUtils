@@ -37,7 +37,8 @@ using namespace ATL;
 
 struct Label {
   Label() = default;
-  Label(LONG left, LONG top, LONG right, LONG bottom, std::wstring_view sv) {
+  Label(LONG left, LONG top, LONG right, LONG bottom,
+        std::wstring_view sv = L"") {
     layout.left = left;
     layout.top = top;
     layout.right = right;
@@ -119,7 +120,6 @@ public:
   HRESULT CreateDeviceResources();
   void DiscardDeviceResources();
   HRESULT OnRender();
-  void OnResize(UINT32 width, UINT32 height);
   HRESULT RefreshDxFont();
   HRESULT RefreshGdiFont();
   //  Feature

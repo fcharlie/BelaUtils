@@ -46,13 +46,13 @@ static inline int Year() {
 }
 
 Window::Window() {
-  //
   hInst = reinterpret_cast<HINSTANCE>(&__ImageBase);
+  // create
   labels.emplace_back(30, 50, 120, 75, L"Package:");
   labels.emplace_back(30, 100, 120, 125, L"Folder:");
-  auto msg = bela::StringCat(L"\xD83D\xDE0B \x2764 Copyright \x0A9 ", Year(),
-                             L", Force Charlie. All Rights Reserved.");
-  notice = Label(125, 345, 600, 370, msg);
+  notice = Label(125, 345, 600, 370);
+  notice.text = bela::StringCat(L"\xD83D\xDE0B \x2764 Copyright \x0A9 ", Year(),
+                                L", Force Charlie. All Rights Reserved.");
 }
 
 Window::~Window() {
@@ -193,12 +193,6 @@ HRESULT Window::OnRender() {
     DiscardDeviceResources();
   }
   return hr;
-} // namespace krycekium
-
-void Window::OnResize(UINT32 width, UINT32 height) {
-  if (renderTarget != nullptr) {
-    renderTarget->Resize(D2D1::SizeU(width, height));
-  }
 }
 
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
@@ -296,7 +290,9 @@ LRESULT Window::OnClose(UINT nMsg, WPARAM wParam, LPARAM lParam,
 LRESULT Window::OnSize(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
   UINT width = LOWORD(lParam);
   UINT height = HIWORD(lParam);
-  OnResize(width, height);
+  if (renderTarget != nullptr) {
+    renderTarget->Resize(D2D1::SizeU(width, height));
+  }
   return S_OK;
 }
 
@@ -307,6 +303,16 @@ LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
   OnRender();
   EndPaint(&ps);
   return S_OK;
+}
+
+// https://github.com/microsoft/Windows-classic-samples/blob/master/Samples/DPIAwarenessPerWindow/client/DpiAwarenessContext.cpp
+//
+bool GetParentRelativeWindowRect(HWND hWnd, RECT *childBounds) {
+  if (!GetWindowRect(hWnd, childBounds)) {
+    return false;
+  }
+  MapWindowRect(HWND_DESKTOP, GetAncestor(hWnd, GA_PARENT), childBounds);
+  return true;
 }
 
 // https://docs.microsoft.com/zh-cn/windows/win32/hidpi/wm-dpichanged todo
