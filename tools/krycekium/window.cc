@@ -1,6 +1,7 @@
 ///
 #include <bela/picker.hpp>
 #include <bela/strcat.hpp>
+#include <bela/stdwriter.hpp>
 #include <shellapi.h>
 #include "window.hpp"
 #include "kmutils.hpp"
@@ -108,7 +109,8 @@ HRESULT Window::RefreshGdiFont() {
 
 HRESULT Window::RefreshDxFont() {
   Free(&dwFormat);
-  auto fontsize = MulDiv(12 * 96 / 72, dpiX, 96);
+  // auto fontsize = MulDiv(12 * 96 / 72, dpiX, 96);
+  auto fontsize = 12 * 96 / 72;
   return dwFactory->CreateTextFormat(
       L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
       DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(fontsize), L"zh-CN",
@@ -194,7 +196,15 @@ HRESULT Window::OnRender() {
   }
   return hr;
 }
-
+constexpr const RECT layouts[] = {
+    {125, 50, 545, 77},   // msi
+    {125, 100, 545, 127}, // folder
+    {560, 50, 650, 77},   // button
+    {560, 100, 650, 127}, // button 2
+    {125, 180, 545, 207}, // progress
+    {125, 270, 325, 300}, // execute
+    {340, 270, 545, 300}  // cancel
+};
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                          BOOL &bHandle) {
   auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
@@ -232,32 +242,32 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   constexpr const auto ps = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE;
 
   auto makeWindow = [&](LPCWSTR className, LPCWSTR windowName, DWORD dwStyle,
-                        int X, int Y, int nWidth, int nHeight, HMENU hMenu,
-                        bool edit = false) -> HWND {
+                        const RECT &r, HMENU hMenu, bool edit = false) -> HWND {
     auto hw = ::CreateWindowExW(
-        edit ? eex : wndex, className, windowName, dwStyle, MulDiv(X, dpiX, 96),
-        MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
-        MulDiv(nHeight, dpiX, 96), m_hWnd, hMenu, hInst, nullptr);
+        edit ? eex : wndex, className, windowName, dwStyle,
+        MulDiv(r.left, dpiX, 96), MulDiv(r.top, dpiX, 96),
+        MulDiv(r.right - r.left, dpiX, 96), MulDiv(r.bottom - r.top, dpiX, 96),
+        m_hWnd, hMenu, hInst, nullptr);
     if (hw != nullptr) {
       ::SendMessageW(hw, WM_SETFONT, (WPARAM)hFont, lParam);
     }
     return hw;
   };
 
-  hSource = makeWindow(WC_EDITW, L"", es, 125, 50, 420, 27,
-                       HMENU(IDE_SOURCE_URI), true);
-  hFolder = makeWindow(WC_EDITW, L"", es, 125, 100, 420, 27,
-                       HMENU(IDE_FOLDER_URI), true);
-  hPicker = makeWindow(WC_BUTTONW, L"View...", bs, 560, 50, 90, 27,
+  hSource =
+      makeWindow(WC_EDITW, L"", es, layouts[0], HMENU(IDE_SOURCE_URI), true);
+  hFolder =
+      makeWindow(WC_EDITW, L"", es, layouts[1], HMENU(IDE_FOLDER_URI), true);
+  hPicker = makeWindow(WC_BUTTONW, L"View...", bs, layouts[2],
                        HMENU(IDB_SOURCE_VIEW));
-  hDirPicker = makeWindow(WC_BUTTONW, L"Folder...", bs, 560, 100, 90, 27,
+  hDirPicker = makeWindow(WC_BUTTONW, L"Folder...", bs, layouts[3],
                           HMENU(IDB_FOLDER_VIEW));
-  hProgress = makeWindow(PROGRESS_CLASSW, L"", ps, 125, 180, 420, 27,
+  hProgress = makeWindow(PROGRESS_CLASSW, L"", ps, layouts[4],
                          HMENU(IDP_PROGRESS_STATE));
-  hExecute = makeWindow(WC_BUTTONW, L"Start", bs, 125, 270, 205, 30,
-                        HMENU(IDB_EXECUTE_TASK));
-  hCancel = makeWindow(WC_BUTTONW, L"Cancel", bs, 340, 270, 205, 30,
-                       HMENU(IDB_CANCEL_TASK));
+  hExecute =
+      makeWindow(WC_BUTTONW, L"Start", bs, layouts[5], HMENU(IDB_EXECUTE_TASK));
+  hCancel =
+      makeWindow(WC_BUTTONW, L"Cancel", bs, layouts[6], HMENU(IDB_CANCEL_TASK));
   ::EnableWindow(hCancel, FALSE);
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_KRYCEKIUM_ABOUT,
@@ -326,9 +336,25 @@ LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
                  prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
-  if (!SUCCEEDED(RefreshDxFont())) {
-    //
-  }
+  RefreshGdiFont();
+  auto UpdateWindowPos = [&](HWND hWnd, const RECT &r) {
+    // auto
+    // rs=bela::StrFormat(L"%d-%d-%d-%d",rect.left,rect.top,rect.left,rect.bottom);
+    //::MessageBoxW(nullptr,rs.data(),L"Layout",MB_OK);
+    ::SetWindowPos(hWnd, NULL, MulDiv(r.left, dpiX, 96),
+                   MulDiv(r.top, dpiX, 96), MulDiv(r.right - r.left, dpiX, 96),
+                   MulDiv(r.bottom - r.top, dpiX, 96),
+                   SWP_NOZORDER | SWP_NOACTIVATE);
+    ::SendMessageW(hWnd, WM_SETFONT, (WPARAM)hFont, lParam);
+    return true;
+  };
+  UpdateWindowPos(hSource, layouts[0]);
+  UpdateWindowPos(hFolder, layouts[1]);
+  UpdateWindowPos(hPicker, layouts[2]);
+  UpdateWindowPos(hDirPicker, layouts[3]);
+  UpdateWindowPos(hProgress, layouts[4]);
+  UpdateWindowPos(hExecute, layouts[5]);
+  UpdateWindowPos(hCancel, layouts[6]);
   //::SetWindowPos()
   return S_OK;
 }

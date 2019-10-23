@@ -1,6 +1,7 @@
 ////
 #include "krycekium.hpp"
 #define _ATL_NO_AUTOMATIC_NAMESPACE
+#include <windowsx.h>
 #include <atlbase.h>
 #include <atlctl.h>
 #include <atlwin.h>
