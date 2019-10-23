@@ -339,8 +339,6 @@ LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
   RefreshGdiFont();
   auto UpdateWindowPos = [&](HWND hWnd, const RECT &r) {
     // auto
-    // rs=bela::StrFormat(L"%d-%d-%d-%d",rect.left,rect.top,rect.left,rect.bottom);
-    //::MessageBoxW(nullptr,rs.data(),L"Layout",MB_OK);
     ::SetWindowPos(hWnd, NULL, MulDiv(r.left, dpiX, 96),
                    MulDiv(r.top, dpiX, 96), MulDiv(r.right - r.left, dpiX, 96),
                    MulDiv(r.bottom - r.top, dpiX, 96),
@@ -438,12 +436,47 @@ LRESULT Window::OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
   return S_OK;
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
+inline std::wstring Content(HWND hWnd) {
+  auto n = GetWindowTextLengthW(hWnd);
+  if (n <= 0) {
+    return L"";
+  }
+  std::wstring str;
+  str.resize(n + 1);
+  auto k = GetWindowTextW(hWnd, str.data(), n + 1);
+  str.resize(k);
+  return str;
+}
+
 LRESULT Window::OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                               BOOL &bHandled) {
+  auto msi = Content(hSource);
+  if (msi.empty()) {
+    bela::BelaMessageBox(
+        m_hWnd, L"MSI package not input",
+        L"Please enter the path of the msi file to be extracted", nullptr,
+        bela::mbs_t::FATAL);
+    return S_OK;
+  }
+  if (!bela::PathExists(msi)) {
+    bela::BelaMessageBox(m_hWnd, L"MSI package not found", msi.data(), nullptr,
+                         bela::mbs_t::FATAL);
+    return S_OK;
+  }
+  auto folder = Content(hFolder);
+  if (folder.empty()) {
+    bela::BelaMessageBox(m_hWnd, L"Destination not input",
+                         L"Please set destination", nullptr,
+                         bela::mbs_t::FATAL);
+    return S_OK;
+  }
+
   ::EnableWindow(hExecute, FALSE);
   ::EnableWindow(hCancel, TRUE);
   return S_OK;
 }
+
 LRESULT Window::OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
   //

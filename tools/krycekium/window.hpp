@@ -116,6 +116,8 @@ public:
                         BOOL &bHandled);
   LRESULT OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                        BOOL &bHandled);
+
+private:
   // UI function
   HRESULT CreateDeviceIndependentResources();
   HRESULT CreateDeviceResources();
