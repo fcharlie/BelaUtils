@@ -74,9 +74,6 @@ bool Window::MakeWindow() {
   }
   const auto noresizewindow = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
                               WS_CLIPCHILDREN | WS_MINIMIZEBOX;
-  // dpiX = ::GetSystemDpiForProcess(GetCurrentProcess());
-  // RECT rect = {MulDiv(100, dpiX, 96), MulDiv(100, dpiX, 96),
-  //              MulDiv(800, dpiX, 96), MulDiv(540, dpiX, 96)};
   RECT rect = {100, 100, 800, 540};
   Create(nullptr, rect, L"Krycekium", noresizewindow,
          WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
@@ -196,16 +193,7 @@ HRESULT Window::OnRender() {
   }
   return hr;
 }
-/// widget layout
-constexpr const RECT layouts[] = {
-    {125, 50, 545, 77},   // msi
-    {125, 100, 545, 127}, // folder
-    {560, 50, 650, 77},   // button
-    {560, 100, 650, 127}, // button 2
-    {125, 180, 545, 207}, // progress
-    {125, 270, 325, 300}, // execute
-    {340, 270, 545, 300}  // cancel
-};
+
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
                          BOOL &bHandle) {
   auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
@@ -229,47 +217,24 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
     hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
   }
   // child window styles
-  constexpr const auto wndex = WS_EX_LEFT | WS_EX_LTRREADING |
-                               WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
-  constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
-                             WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY |
-                             WS_EX_CLIENTEDGE;
-  constexpr const auto es = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE |
-                            WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
-  constexpr const auto bex = WS_EX_LEFT | WS_EX_LTRREADING |
-                             WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
   constexpr const auto bs =
       BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
   constexpr const auto ps = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE;
 
-  auto makeWindow = [&](LPCWSTR className, LPCWSTR windowName, DWORD dwStyle,
-                        const RECT &r, HMENU hMenu, bool edit = false) -> HWND {
-    auto hw = ::CreateWindowExW(
-        edit ? eex : wndex, className, windowName, dwStyle,
-        MulDiv(r.left, dpiX, 96), MulDiv(r.top, dpiX, 96),
-        MulDiv(r.right - r.left, dpiX, 96), MulDiv(r.bottom - r.top, dpiX, 96),
-        m_hWnd, hMenu, hInst, nullptr);
-    if (hw != nullptr) {
-      ::SendMessageW(hw, WM_SETFONT, (WPARAM)hFont, lParam);
-    }
-    return hw;
-  };
+  MakeEdit(wSource, L"", 125, 50, 420, 27, IDE_SOURCE_URI);
+  MakeEdit(wFolder, L"", 125, 100, 420, 27, IDE_FOLDER_URI);
+  MakeWidget(wPicker, WC_BUTTONW, L"View...", bs, 560, 50, 90, 27,
+             IDB_SOURCE_VIEW);
+  MakeWidget(wPickerDir, WC_BUTTONW, L"Folder...", bs, 560, 100, 90, 27,
+             IDB_FOLDER_VIEW);
+  MakeWidget(wProgress, PROGRESS_CLASSW, L"", ps, 125, 180, 420, 27,
+             IDP_PROGRESS_STATE);
+  MakeWidget(wExecute, WC_BUTTONW, L"Start", bs, 125, 270, 200, 30,
+             IDB_EXECUTE_TASK);
+  MakeWidget(wCancel, WC_BUTTONW, L"Cancel", bs, 340, 270, 205, 30,
+             IDB_EXECUTE_TASK);
+  wCancel.Visible(FALSE);
 
-  hSource =
-      makeWindow(WC_EDITW, L"", es, layouts[0], HMENU(IDE_SOURCE_URI), true);
-  hFolder =
-      makeWindow(WC_EDITW, L"", es, layouts[1], HMENU(IDE_FOLDER_URI), true);
-  hPicker = makeWindow(WC_BUTTONW, L"View...", bs, layouts[2],
-                       HMENU(IDB_SOURCE_VIEW));
-  hDirPicker = makeWindow(WC_BUTTONW, L"Folder...", bs, layouts[3],
-                          HMENU(IDB_FOLDER_VIEW));
-  hProgress = makeWindow(PROGRESS_CLASSW, L"", ps, layouts[4],
-                         HMENU(IDP_PROGRESS_STATE));
-  hExecute =
-      makeWindow(WC_BUTTONW, L"Start", bs, layouts[5], HMENU(IDB_EXECUTE_TASK));
-  hCancel =
-      makeWindow(WC_BUTTONW, L"Cancel", bs, layouts[6], HMENU(IDB_CANCEL_TASK));
-  ::EnableWindow(hCancel, FALSE);
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_KRYCEKIUM_ABOUT,
               L"About Krycekium\tAlt+F1");
@@ -278,8 +243,14 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
   if (Argv) {
     if (numArgc >= 2 && PathFileExistsW(Argv[1])) {
-      /// ---> todo set value
-      //::SetWindowTextW(hSource, Argv[1]);
+      std::wstring sv(Argv[1]);
+      if (IsSuffixEnabled(sv)) {
+        wSource.Content(sv);
+        auto sameFolder = krycekium::SameFolder(sv);
+        if (sameFolder) {
+          wFolder.Content(*sameFolder);
+        }
+      }
     }
     LocalFree(Argv);
   }
@@ -316,16 +287,6 @@ LRESULT Window::OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam,
   return S_OK;
 }
 
-// https://github.com/microsoft/Windows-classic-samples/blob/master/Samples/DPIAwarenessPerWindow/client/DpiAwarenessContext.cpp
-//
-bool GetParentRelativeWindowRect(HWND hWnd, RECT *childBounds) {
-  if (!GetWindowRect(hWnd, childBounds)) {
-    return false;
-  }
-  MapWindowRect(HWND_DESKTOP, GetAncestor(hWnd, GA_PARENT), childBounds);
-  return true;
-}
-
 // https://docs.microsoft.com/zh-cn/windows/win32/hidpi/wm-dpichanged todo
 LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
                              BOOL &bHandle) {
@@ -338,22 +299,13 @@ LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam,
                  SWP_NOZORDER | SWP_NOACTIVATE);
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
   RefreshGdiFont();
-  auto UpdateWindowPos = [&](HWND hWnd, const RECT &r) {
-    // auto
-    ::SetWindowPos(hWnd, NULL, MulDiv(r.left, dpiX, 96),
-                   MulDiv(r.top, dpiX, 96), MulDiv(r.right - r.left, dpiX, 96),
-                   MulDiv(r.bottom - r.top, dpiX, 96),
-                   SWP_NOZORDER | SWP_NOACTIVATE);
-    ::SendMessageW(hWnd, WM_SETFONT, (WPARAM)hFont, lParam);
-    return true;
-  };
-  UpdateWindowPos(hSource, layouts[0]);
-  UpdateWindowPos(hFolder, layouts[1]);
-  UpdateWindowPos(hPicker, layouts[2]);
-  UpdateWindowPos(hDirPicker, layouts[3]);
-  UpdateWindowPos(hProgress, layouts[4]);
-  UpdateWindowPos(hExecute, layouts[5]);
-  UpdateWindowPos(hCancel, layouts[6]);
+  UpdateWidgetPos(wSource);
+  UpdateWidgetPos(wFolder);
+  UpdateWidgetPos(wPicker);
+  UpdateWidgetPos(wPickerDir);
+  UpdateWidgetPos(wProgress);
+  UpdateWidgetPos(wExecute);
+  UpdateWidgetPos(wCancel);
   //::SetWindowPos()
   return S_OK;
 }
@@ -381,10 +333,10 @@ LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam,
   }
   std::wstring_view sv(dn, n);
   if (IsSuffixEnabled(sv)) {
-    ::SetWindowTextW(hSource, dn);
+    wSource.Content(sv);
     auto sameFolder = krycekium::SameFolder(sv);
     if (sameFolder) {
-      ::SetWindowTextW(hFolder, sameFolder->data());
+      wFolder.Content(*sameFolder);
     }
   }
   DragFinish(hDrop);
@@ -419,10 +371,10 @@ LRESULT Window::OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
       {L"All Files (*.*)", L"*.*"}};
   auto file = bela::FilePicker(m_hWnd, L"Windows Installer Package", filters);
   if (file) {
-    ::SetWindowTextW(hSource, file->data());
+    wSource.Content(*file);
     auto sameFolder = krycekium::SameFolder(*file);
     if (sameFolder) {
-      ::SetWindowTextW(hFolder, sameFolder->data());
+      wFolder.Content(*sameFolder);
     }
   }
   return S_OK;
@@ -432,27 +384,14 @@ LRESULT Window::OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
   auto folder = bela::FolderPicker(m_hWnd, L"Open Folder");
   if (folder) {
-    ::SetWindowTextW(hFolder, folder->data());
+    wFolder.Content(*folder);
   }
   return S_OK;
 }
 
-// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
-inline std::wstring Content(HWND hWnd) {
-  auto n = GetWindowTextLengthW(hWnd);
-  if (n <= 0) {
-    return L"";
-  }
-  std::wstring str;
-  str.resize(n + 1);
-  auto k = GetWindowTextW(hWnd, str.data(), n + 1);
-  str.resize(k);
-  return str;
-}
-
 LRESULT Window::OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                               BOOL &bHandled) {
-  auto msi = Content(hSource);
+  auto msi = wSource.Content();
   if (msi.empty()) {
     bela::BelaMessageBox(
         m_hWnd, L"MSI package not input",
@@ -465,16 +404,15 @@ LRESULT Window::OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                          bela::mbs_t::FATAL);
     return S_OK;
   }
-  auto folder = Content(hFolder);
+  auto folder = wFolder.Content();
   if (folder.empty()) {
     bela::BelaMessageBox(m_hWnd, L"Destination not input",
                          L"Please set destination", nullptr,
                          bela::mbs_t::FATAL);
     return S_OK;
   }
-
-  ::EnableWindow(hExecute, FALSE);
-  ::EnableWindow(hCancel, TRUE);
+  wExecute.Visible(FALSE);
+  wCancel.Visible(TRUE);
   return S_OK;
 }
 
