@@ -196,6 +196,7 @@ HRESULT Window::OnRender() {
   }
   return hr;
 }
+/// widget layout
 constexpr const RECT layouts[] = {
     {125, 50, 545, 77},   // msi
     {125, 100, 545, 127}, // folder
