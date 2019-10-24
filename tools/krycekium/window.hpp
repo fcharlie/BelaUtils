@@ -169,7 +169,8 @@ private:
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }
-  bool MakeEdit(Widget &w, LPCWSTR text, int x, int y, int cx, int cy, ptrdiff_t id) {
+  bool MakeEdit(Widget &w, LPCWSTR text, int x, int y, int cx, int cy,
+                ptrdiff_t id) {
     constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
                                WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY |
                                WS_EX_CLIENTEDGE;
