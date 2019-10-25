@@ -77,7 +77,7 @@ bool Window::MakeWindow() {
   RECT rect = {100, 100, 800, 540};
   Create(nullptr, rect, L"Krycekium", noresizewindow,
          WS_EX_APPWINDOW | WS_EX_WINDOWEDGE);
-  return true;
+  return executor.InitializeExecutor();
 }
 
 // Safely reset fonts.
@@ -104,14 +104,13 @@ HRESULT Window::RefreshGdiFont() {
   return true;
 }
 
+// https://docs.microsoft.com/en-us/windows/win32/api/dwrite/nf-dwrite-idwritefactory-createtextformat
+// FontSize
 HRESULT Window::RefreshDxFont() {
   Free(&dwFormat);
-  // auto fontsize = MulDiv(12 * 96 / 72, dpiX, 96);
-  auto fontsize = 12 * 96 / 72;
   return dwFactory->CreateTextFormat(
       L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-      DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(fontsize), L"zh-CN",
-      &dwFormat);
+      DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN", &dwFormat);
 }
 
 HRESULT Window::CreateDeviceIndependentResources() {
@@ -346,6 +345,21 @@ LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam,
 // User defined message handler
 LRESULT Window::OnExecutorNotify(UINT nMsg, WPARAM wParam, LPARAM lParam,
                                  BOOL &bHandle) {
+  auto status = static_cast<krycekium::Status>(wParam);
+  switch (status) {
+  case krycekium::Status::None:
+    break;
+  case krycekium::Status::Completed:
+    break;
+  case krycekium::Status::Failure: {
+    auto ec = static_cast<DWORD>(lParam);
+    auto msg = bela::system_error_dump(ec);
+    bela::BelaMessageBox(m_hWnd, L"Unable to extract msi package", msg.data(),
+                         nullptr, bela::mbs_t::FATAL);
+  } break;
+  default:
+    break;
+  }
   return S_OK;
 }
 
@@ -395,7 +409,7 @@ LRESULT Window::OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
   if (msi.empty()) {
     bela::BelaMessageBox(
         m_hWnd, L"MSI package not input",
-        L"Please enter the path of the msi file to be extracted", nullptr,
+        L"Please enter the path of the msi package to be extracted", nullptr,
         bela::mbs_t::FATAL);
     return S_OK;
   }

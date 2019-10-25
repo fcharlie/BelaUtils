@@ -12,6 +12,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+//
+#include "executor.hpp"
 
 // UI Index
 #define IDM_KRYCEKIUM_ABOUT 1001
@@ -226,5 +228,7 @@ private:
   Widget wCancel;
   HFONT hFont{nullptr}; // GDI font
   UINT32 dpiX{96};
+  //
+  Executor executor;
 };
 } // namespace krycekium
