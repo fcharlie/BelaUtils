@@ -1,0 +1,4 @@
+test/*
+!test/*.c
+ui/*
+!ui/*.c

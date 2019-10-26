@@ -1,0 +1,4 @@
+# https://github.com/XMSS/xmss-reference/tree/fb7e3f8edce8d412a707f522d597ab3546863202
+add_library(XMSS STATIC
+  fips202.c
+)
