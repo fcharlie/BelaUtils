@@ -198,9 +198,12 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
   dpiX = GetDpiForWindow(m_hWnd);
   // Refresh Window use real DPI
-  ::SetWindowPos(m_hWnd, nullptr, MulDiv(100, dpiX, 96), MulDiv(100, dpiX, 96),
-                 MulDiv(700, dpiX, 96), MulDiv(440, dpiX, 96),
-                 SWP_NOZORDER | SWP_NOACTIVATE);
+  RECT rect;
+  SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+  int cx = rect.right - rect.left;
+  auto w = MulDiv(700, dpiX, 96);
+  ::SetWindowPos(m_hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w,
+                 MulDiv(440, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
   // Enable Drag files
   ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
   ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
