@@ -112,7 +112,6 @@ public:
   MESSAGE_HANDLER(WM_DROPFILES, OnDropfiles)
   // User defined message
   MESSAGE_HANDLER(WM_EXECUTOR_NOTIFY, OnExecutorNotify)
-  MESSAGE_HANDLER(WM_EXECUTOR_PROGRESS, OnExecutorProgress)
   SYSCOMMAND_ID_HANDLER(IDM_KRYCEKIUM_ABOUT, OnKrycekiumAbout)
   COMMAND_ID_HANDLER(IDB_SOURCE_VIEW, OnSourceView)
   COMMAND_ID_HANDLER(IDB_FOLDER_VIEW, OnFolderView)
@@ -130,8 +129,6 @@ public:
   LRESULT OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
   LRESULT OnExecutorNotify(UINT nMsg, WPARAM wParam, LPARAM lParam,
                            BOOL &bHandle);
-  LRESULT OnExecutorProgress(UINT nMsg, WPARAM wParam, LPARAM lParam,
-                             BOOL &bHandle);
   // Command Handle
   LRESULT OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                            BOOL &bHandled);

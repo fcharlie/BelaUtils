@@ -15,4 +15,5 @@ target_link_libraries(krycekium
   d2d1
   dwrite
   Shell32
+  Msi
 )

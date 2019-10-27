@@ -320,6 +320,7 @@ LRESULT Window::OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam,
 
 LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam,
                             BOOL &bHandled) {
+  ::SetWindowTextW(m_hWnd, L"Krycekium");
   const LPCWSTR PackageSubffix[] = {L".msi", L".msp"};
   HDROP hDrop = (HDROP)wParam;
   UINT nfilecounts = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
@@ -353,21 +354,28 @@ LRESULT Window::OnExecutorNotify(UINT nMsg, WPARAM wParam, LPARAM lParam,
   case krycekium::Status::None:
     break;
   case krycekium::Status::Completed:
+    wExecute.Visible(TRUE);
+    wPicker.Visible(TRUE);
+    wPickerDir.Visible(TRUE);
+    wCancel.Visible(FALSE);
+    ::MessageBeep(IDOK);
+    ::SetWindowTextW(m_hWnd, L"Krycekium (Completed)");
     break;
   case krycekium::Status::Failure: {
     auto ec = static_cast<DWORD>(lParam);
     auto msg = bela::system_error_dump(ec);
     bela::BelaMessageBox(m_hWnd, L"Unable to extract msi package", msg.data(),
                          nullptr, bela::mbs_t::FATAL);
+    ::MessageBeep(MB_ICONERROR);
+    ::SetWindowTextW(m_hWnd, L"Krycekium (Failure)");
+    wExecute.Visible(TRUE);
+    wPicker.Visible(TRUE);
+    wPickerDir.Visible(TRUE);
+    wCancel.Visible(FALSE);
   } break;
   default:
     break;
   }
-  return S_OK;
-}
-
-LRESULT Window::OnExecutorProgress(UINT nMsg, WPARAM wParam, LPARAM lParam,
-                                   BOOL &bHandle) {
   return S_OK;
 }
 
@@ -383,6 +391,7 @@ LRESULT Window::OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
 
 LRESULT Window::OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
+  ::SetWindowTextW(m_hWnd, L"Krycekium");
   constexpr const bela::filter_t filters[] = {
       {L"Windows Installer Package (*.msi;*.msp)", L"*.msi;*.msp"},
       {L"All Files (*.*)", L"*.*"}};
@@ -399,6 +408,7 @@ LRESULT Window::OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
 
 LRESULT Window::OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
+  ::SetWindowTextW(m_hWnd, L"Krycekium");
   auto folder = bela::FolderPicker(m_hWnd, L"Open Folder");
   if (folder) {
     wFolder.Content(*folder);
@@ -428,14 +438,40 @@ LRESULT Window::OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                          bela::mbs_t::FATAL);
     return S_OK;
   }
+  // check directory is exists and empty
+  if (bela::PathExists(folder, bela::FileAttribute::Dir)) {
+    if (!krycekium::FolderIsEmpty(folder)) {
+      if (::MessageBoxW(
+              m_hWnd,
+              L"Destination is not empty, whether to overwrite the file",
+              L"Destination is not empty",
+              MB_OKCANCEL | MB_ICONWARNING) != MB_OK) {
+        return S_OK;
+      }
+    }
+  } else {
+    if (CreateDirectoryW(folder.data(), nullptr) != TRUE) {
+      auto ec = bela::make_system_error_code();
+      bela::BelaMessageBox(m_hWnd, L"Destination cannot be created", ec.data(),
+                           nullptr, bela::mbs_t::FATAL);
+      return S_OK;
+    }
+  }
+  if (!executor.PushEvent(msi, folder, m_hWnd, wProgress.hWnd)) {
+    return S_OK;
+  }
+  wPicker.Visible(FALSE);
+  wPickerDir.Visible(FALSE);
   wExecute.Visible(FALSE);
   wCancel.Visible(TRUE);
+  ::SetWindowTextW(m_hWnd, L"Krycekium (Running...)");
   return S_OK;
 }
 
 LRESULT Window::OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
                              BOOL &bHandled) {
-  //
+  executor.Cancel();
+  ::SetWindowTextW(m_hWnd, L"Krycekium (Canceled)");
   return S_OK;
 }
 

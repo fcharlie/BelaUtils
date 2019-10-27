@@ -11,7 +11,6 @@
 #endif
 
 #define WM_EXECUTOR_NOTIFY WM_USER + 10
-#define WM_EXECUTOR_PROGRESS WM_USER + 11
 // defined user message todo
 
 #endif
