@@ -125,7 +125,21 @@ HRESULT Window::CreateDeviceResources() {
   return hr;
 }
 
-HRESULT Window::OnRender() { return S_OK; }
+HRESULT Window::OnRender() {
+  auto hr = CreateDeviceResources();
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  auto dsz = renderTarget->GetSize();
+  renderTarget->BeginDraw();
+  renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+  renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 1.0f));
+  return S_OK;
+}
+
+void Window::AttributesTablesDraw() {
+  //
+}
 
 LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
                                   WPARAM const wparam,

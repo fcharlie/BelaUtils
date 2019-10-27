@@ -40,6 +40,7 @@ private:
   // HRESULT is LONG when AMD64 4byte
   HRESULT CreateDeviceResources();
   HRESULT OnRender();
+  void AttributesTablesDraw();
 
 public:
   Window();
