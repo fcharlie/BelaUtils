@@ -23,6 +23,26 @@ template <typename T> void FreeObj(T *t) {
   }
 }
 
+bool RefreshFont(HFONT &hFont, int dpiY) {
+  if (hFont == nullptr) {
+    hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  }
+  LOGFONTW logFont = {0};
+  if (GetObjectW(hFont, sizeof(logFont), &logFont) == 0) {
+    return false;
+  }
+  logFont.lfHeight = -MulDiv(14, dpiY, 96);
+  logFont.lfWeight = FW_NORMAL;
+  wcscpy_s(logFont.lfFaceName, L"Segoe UI");
+  auto hNewFont = CreateFontIndirectW(&logFont);
+  if (hNewFont == nullptr) {
+    return false;
+  }
+  DeleteObject(hFont);
+  hFont = hNewFont;
+  return true;
+}
+
 Window::Window() {
   //
 }
@@ -39,7 +59,28 @@ Window::~Window() {
   }
 }
 
+template <class Factory>
+HRESULT DWriteCreateFactory(_In_ DWRITE_FACTORY_TYPE factoryType,
+                            _Out_ Factory **factory) {
+  return ::DWriteCreateFactory(factoryType, __uuidof(Factory),
+                               reinterpret_cast<void **>(factory));
+}
+
 bool Window::MakeWindow() {
+  // initialize d2d1 factory and dwrite factory
+  if (!SUCCEEDED(
+          D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory))) {
+    return false;
+  }
+  if (!SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &dwFactory))) {
+    return false;
+  }
+  if (!SUCCEEDED(dwFactory->CreateTextFormat(
+          L"Segeo UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
+          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
+          reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
+    return false;
+  }
   constexpr const auto wndclassname = L"Caelum.Window";
   WNDCLASSEXW wc{};
   wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -58,6 +99,33 @@ bool Window::MakeWindow() {
 
   return true;
 }
+
+HRESULT Window::CreateDeviceResources() {
+  if (renderTarget != nullptr) {
+    return S_OK;
+  }
+  HRESULT hr = S_OK;
+  RECT rect;
+  ::GetClientRect(hWnd, &rect);
+  auto size = D2D1::SizeU(rect.right - rect.left, rect.bottom - rect.top);
+  hr = factory->CreateHwndRenderTarget(
+      D2D1::RenderTargetProperties(),
+      D2D1::HwndRenderTargetProperties(hWnd, size), &renderTarget);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
+  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
+                                           &textBrush);
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFC300),
+                                           &streaksbrush);
+  return hr;
+}
+
+HRESULT Window::OnRender() { return S_OK; }
 
 LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
                                   WPARAM const wparam,
@@ -88,8 +156,6 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
     return OnPaint(wparam, lparam);
   case WM_SIZE:
     return OnSize(wparam, lparam);
-  case WM_DISPLAYCHANGE:
-    return OnDisplayChange(wparam, lparam);
   case WM_DROPFILES:
     return OnDropfiles(wparam, lparam);
   case WM_CTLCOLORSTATIC:
@@ -123,12 +189,21 @@ LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
 }
 
 LRESULT Window::OnSize(WPARAM const wparam, LPARAM const lparam) noexcept {
-  //
+  UINT width = LOWORD(lparam);
+  UINT height = HIWORD(lparam);
+  if (renderTarget != nullptr) {
+    renderTarget->Resize(D2D1::SizeU(width, height));
+  }
   return S_OK;
 }
 
 LRESULT Window::OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept {
-  //
+  PAINTSTRUCT ps;
+  BeginPaint(hWnd, &ps);
+  if (!SUCCEEDED(OnRender())) {
+    //
+  }
+  EndPaint(hWnd, &ps);
   return S_OK;
 }
 
@@ -142,12 +217,6 @@ LRESULT Window::OnDpiChanged(WPARAM const wparam,
                  prcNewWindow->right - prcNewWindow->left,
                  prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
-  return S_OK;
-}
-
-LRESULT Window::OnDisplayChange(WPARAM const wparam,
-                                LPARAM const lparam) noexcept {
-  //
   return S_OK;
 }
 

@@ -31,12 +31,15 @@ private:
   LRESULT OnSize(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnDpiChanged(WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnDisplayChange(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnDropfiles(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnStaticColor(WPARAM const wparam, LPARAM const lparam) noexcept;
   ///
   LRESULT DoAbout(WORD wNotifyCode);
   LRESULT DoPicker(WORD wNotifyCode);
+  // LRESULT is LONG_PTR so when AMD64 8byte long (can as pointer)
+  // HRESULT is LONG when AMD64 4byte
+  HRESULT CreateDeviceResources();
+  HRESULT OnRender();
 
 public:
   Window();
