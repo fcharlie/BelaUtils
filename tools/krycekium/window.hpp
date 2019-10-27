@@ -15,16 +15,6 @@
 //
 #include "executor.hpp"
 
-// UI Index
-#define IDM_KRYCEKIUM_ABOUT 1001
-#define IDE_SOURCE_URI 1002
-#define IDE_FOLDER_URI 1003
-#define IDB_SOURCE_VIEW 1004
-#define IDB_FOLDER_VIEW 1005
-#define IDP_PROGRESS_STATE 1006
-#define IDB_EXECUTE_TASK 1007
-#define IDB_CANCEL_TASK 1008
-
 #ifndef SYSCOMMAND_ID_HANDLER
 #define SYSCOMMAND_ID_HANDLER(id, func)                                        \
   if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                         \
@@ -36,6 +26,19 @@
 #endif
 
 namespace krycekium {
+namespace ui {
+enum WidgetNumber : ptrdiff_t {
+  about = 1001, //
+  source = 1002,
+  folder = 1003,
+  picker = 1004,
+  pickerdir = 1005,
+  progress = 1006,
+  execute = 1007,
+  cancel = 1008
+};
+}
+
 using namespace ATL;
 
 struct Label {
@@ -112,11 +115,11 @@ public:
   MESSAGE_HANDLER(WM_DROPFILES, OnDropfiles)
   // User defined message
   MESSAGE_HANDLER(WM_EXECUTOR_NOTIFY, OnExecutorNotify)
-  SYSCOMMAND_ID_HANDLER(IDM_KRYCEKIUM_ABOUT, OnKrycekiumAbout)
-  COMMAND_ID_HANDLER(IDB_SOURCE_VIEW, OnSourceView)
-  COMMAND_ID_HANDLER(IDB_FOLDER_VIEW, OnFolderView)
-  COMMAND_ID_HANDLER(IDB_EXECUTE_TASK, OnExecuteTask)
-  COMMAND_ID_HANDLER(IDB_CANCEL_TASK, OnCancelTask)
+  SYSCOMMAND_ID_HANDLER(ui::about, OnKrycekiumAbout)
+  COMMAND_ID_HANDLER(ui::picker, OnSourceView)
+  COMMAND_ID_HANDLER(ui::pickerdir, OnFolderView)
+  COMMAND_ID_HANDLER(ui::execute, OnExecuteTask)
+  COMMAND_ID_HANDLER(ui::cancel, OnCancelTask)
   END_MSG_MAP()
   LRESULT OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
   LRESULT OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);

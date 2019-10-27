@@ -1,0 +1,57 @@
+///
+
+//Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+IDI_CAELUM_ICON       ICON         "caelum.ico"
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION CAELUM_MAJOR_VERSION, CAELUM_MINOR_VERSION, CAELUM_PATCH_VERSION, CAELUM_BUILD_NUMBER
+PRODUCTVERSION CAELUM_MAJOR_VERSION, CAELUM_MINOR_VERSION, CAELUM_PATCH_VERSION, CAELUM_BUILD_NUMBER
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x1L
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+BLOCK "StringFileInfo"
+BEGIN
+BLOCK "080404b0"
+BEGIN
+VALUE "CompanyName", "Force Charlie"
+VALUE "FileDescription", "Caelum - Simple PE analysis tool"
+VALUE "FileVersion", PRIV_VERSION_FULL
+VALUE "InternalName", "caelum.exe"
+VALUE "LegalCopyright", COPYRIGHT
+VALUE "OriginalFilename", "caelum.exe"
+VALUE "ProductName", "Caelum - Simple PE analysis tool"
+VALUE "ProductVersion", PRIV_VERSION_MAIN
+END
+END
+BLOCK "VarFileInfo"
+BEGIN
+VALUE "Translation", 0x804, 1200
+END
+END
+

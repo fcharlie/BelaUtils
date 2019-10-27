@@ -12,6 +12,8 @@ This process created the file `CMakeCache.txt' and the directory `CMakeFiles'.
 Please delete them.")
 endif()
 
+option(ENABLE_XAMLDESKTOP "Enable XamlDesktop" OFF)
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
@@ -59,5 +61,9 @@ add_subdirectory(vendor/blake2)
 add_subdirectory(vendor/bela)
 add_subdirectory(lib/hashlib)
 add_subdirectory(lib/winutils)
+add_subdirectory(tools/caelum)
 add_subdirectory(tools/kisasum)
 add_subdirectory(tools/krycekium)
+if(ENABLE_XAMLDESKTOP)
+  add_subdirectory(tools/xamldesktop)
+endif()

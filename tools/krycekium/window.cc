@@ -223,23 +223,21 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
       BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
   constexpr const auto ps = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE;
 
-  MakeEdit(wSource, L"", 125, 50, 420, 27, IDE_SOURCE_URI);
-  MakeEdit(wFolder, L"", 125, 100, 420, 27, IDE_FOLDER_URI);
-  MakeWidget(wPicker, WC_BUTTONW, L"View...", bs, 560, 50, 90, 27,
-             IDB_SOURCE_VIEW);
+  MakeEdit(wSource, L"", 125, 50, 420, 27, ui::source);
+  MakeEdit(wFolder, L"", 125, 100, 420, 27, ui::folder);
+  MakeWidget(wPicker, WC_BUTTONW, L"View...", bs, 560, 50, 90, 27, ui::picker);
   MakeWidget(wPickerDir, WC_BUTTONW, L"Folder...", bs, 560, 100, 90, 27,
-             IDB_FOLDER_VIEW);
+             ui::pickerdir);
   MakeWidget(wProgress, PROGRESS_CLASSW, L"", ps, 125, 180, 420, 27,
-             IDP_PROGRESS_STATE);
+             ui::progress);
   MakeWidget(wExecute, WC_BUTTONW, L"Start", bs, 125, 270, 200, 30,
-             IDB_EXECUTE_TASK);
-  MakeWidget(wCancel, WC_BUTTONW, L"Cancel", bs, 340, 270, 205, 30,
-             IDB_EXECUTE_TASK);
+             ui::execute);
+  MakeWidget(wCancel, WC_BUTTONW, L"Cancel", bs, 340, 270, 205, 30, ui::cancel);
   wCancel.Visible(FALSE);
 
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
-  InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_KRYCEKIUM_ABOUT,
-              L"About Krycekium\tAlt+F1");
+  InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED,
+              static_cast<UINT_PTR>(ui::about), L"About Krycekium\tAlt+F1");
   //
   int numArgc = 0;
   auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
