@@ -3,6 +3,7 @@
 #include "resource.h"
 //
 #include <bela/picker.hpp>
+#include <bela/path.hpp>
 #include <shellapi.h>
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
@@ -63,7 +64,7 @@ template <class Factory>
 HRESULT DWriteCreateFactory(_In_ DWRITE_FACTORY_TYPE factoryType,
                             _Out_ Factory **factory) {
   return ::DWriteCreateFactory(factoryType, __uuidof(Factory),
-                               reinterpret_cast<void **>(factory));
+                               reinterpret_cast<IUnknown **>(factory));
 }
 
 bool Window::MakeWindow() {

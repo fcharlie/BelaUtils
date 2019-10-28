@@ -4,6 +4,7 @@ add_executable(caelum WIN32
   caelum.cc
   pecoff.cc
   window.cc
+  resolvelink.cc
   caelum.rc
   caelum.manifest
 )

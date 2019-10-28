@@ -9,6 +9,8 @@
 #include <string_view>
 #include <vector>
 #include <cassert>
+#include <optional>
+#include <bela/base.hpp>
 
 namespace caelum {
 namespace ui {
