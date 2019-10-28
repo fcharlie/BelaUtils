@@ -8,6 +8,6 @@ add_library(XMSS STATIC
   utils.c
   wots.c
   xmss_commons.cc
-  xmss_core.c
+  xmss_core_fast.c # we use xmss_core_fast.c not xmss_core.c
   xmss.c
 )
