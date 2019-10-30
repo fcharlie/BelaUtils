@@ -20,7 +20,8 @@ inline std::wstring flatvector(const std::vector<std::wstring> &v,
   for (auto &i : v) {
     s.append(i).append(delimiter);
   }
-  if (!s.empty()) {
+  constexpr std::wstring_view newline = L"\r\n";
+  if (!s.empty() && delimiter != newline) {
     s.resize(s.size() - delimiter.size());
   }
   return s;
@@ -54,12 +55,10 @@ bool Window::InquisitivePE() {
   // depends lab append
 
   auto strcharsv = flatvector(charsv);
-  auto depends = flatvector(pea->depends);
+  auto depends = flatvector(pea->depends, L"\r\n");
   if (!pea->delays.empty()) {
     auto delaydepends = flatvector(pea->delays);
-    bela::StrAppend(&depends, L"\r\n\r\n**below is delay**\r\n", delaydepends, L"\r\n");
-  } else {
-    bela::StrAppend(&depends, L"\r\n");
+    bela::StrAppend(&depends, L"\r\n**below is delay**\r\n", delaydepends);
   }
 
   constexpr auto es = WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL |
