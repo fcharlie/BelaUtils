@@ -22,6 +22,84 @@ enum WidgetNumber : ptrdiff_t {
 };
 };
 
+struct AttributesTable {
+  std::wstring name;
+  std::wstring value;
+};
+
+struct Label {
+  Label() = default;
+  Label(std::wstring_view sv, LONG left, LONG top, LONG right, LONG bottom)
+      : content(sv) {
+    mlayout = D2D1::RectF((float)left, (float)top, (float)right, (float)bottom);
+  }
+  const wchar_t *data() const { return content.data(); }
+  uint32_t length() const { return static_cast<uint32_t>(content.size()); }
+  D2D_RECT_F layout() const { return mlayout; }
+  std::wstring content;
+  D2D1_RECT_F mlayout;
+};
+
+struct AttributesTables {
+  std::vector<AttributesTable> ats;
+  std::vector<std::wstring> names;
+  std::size_t mnlen{0};
+  bool Empty() const { return ats.empty() && names.empty(); }
+  AttributesTables &Clear() {
+    mnlen = 0;
+    ats.clear();
+    names.clear();
+    return *this;
+  }
+  AttributesTables &Append(std::wstring_view name, std::wstring &&value) {
+    mnlen = (std::max)(mnlen, name.size());
+    ats.emplace_back(AttributesTable{std::wstring(name), std::move(value)});
+    return *this;
+  }
+  AttributesTables &Append(std::wstring_view name, std::wstring_view value) {
+    mnlen = (std::max)(mnlen, name.size());
+    ats.emplace_back(AttributesTable{std::wstring(name), std::wstring(value)});
+    return *this;
+  }
+  AttributesTables &Append(std::wstring_view name) {
+    mnlen = (std::max)(mnlen, name.size());
+    names.emplace_back(name);
+    return *this;
+  }
+};
+
+struct Widget {
+  HWND hWnd{nullptr};
+  int X{0};
+  int Y{0};
+  int W{0};
+  int H{0};
+  bool Alived() const { return hWnd != nullptr; }
+  void Destroy() {
+    if (hWnd != nullptr) {
+      ::DestroyWindow(hWnd);
+      hWnd = nullptr;
+    }
+  }
+  void Visible(BOOL v) { EnableWindow(hWnd, v); }
+  bool IsVisible() const { return IsWindowVisible(hWnd) == TRUE; }
+  std::wstring Content() {
+    auto n = GetWindowTextLengthW(hWnd);
+    if (n <= 0) {
+      return L"";
+    }
+    std::wstring str;
+    str.resize(n + 1);
+    auto k = GetWindowTextW(hWnd, str.data(), n + 1);
+    str.resize(k);
+    return str;
+  }
+  void Content(std::wstring_view text) {
+    //
+    ::SetWindowTextW(hWnd, text.data());
+  }
+};
+
 class Window {
 private:
   static Window *GetThisFromHandle(HWND const window) noexcept {
@@ -43,6 +121,25 @@ private:
   HRESULT CreateDeviceResources();
   HRESULT OnRender();
   void AttributesTablesDraw();
+  bool InquisitivePE();
+  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName,
+                       LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
+                       int nWidth, int nHeight, HMENU hMenu, Widget &w) {
+    auto hw = CreateWindowExW(
+        dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
+        MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
+        MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
+    if (hw == nullptr) {
+      return false;
+    }
+    w.hWnd = hw;
+    w.X = X;
+    w.Y = Y;
+    w.W = nWidth;
+    w.H = nHeight;
+    ::SendMessageW(hw, WM_SETFONT, (WPARAM)hFont, TRUE);
+    return true;
+  }
 
 public:
   Window();
@@ -54,7 +151,7 @@ public:
 
 private:
   HWND hWnd{nullptr};
-  HBRUSH hbrBkgnd{nullptr};
+  HINSTANCE hInst{nullptr};
   // ---
   ID2D1Factory7 *factory{nullptr};
   IDWriteFactory7 *dwFactory{nullptr};
@@ -63,7 +160,19 @@ private:
   ID2D1HwndRenderTarget *renderTarget{nullptr};
   ID2D1SolidColorBrush *textBrush{nullptr};
   ID2D1SolidColorBrush *streaksbrush{nullptr};
-
+  //
+  HBRUSH hbrBkgnd{nullptr};
+  HFONT hFont{nullptr};
+  //
+  Widget wUrl;
+  Widget wPicker;
+  Widget wCharacteristics;
+  Widget wDepends;
+  Widget wDelayDepends;
+  //
+  std::vector<Label> labels;
+  AttributesTables tables;
+  std::vector<Label> depends;
   //
   int dpiX{96};
   int dpiY{96};

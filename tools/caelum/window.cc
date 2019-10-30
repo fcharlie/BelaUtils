@@ -46,6 +46,7 @@ bool RefreshFont(HFONT &hFont, int dpiY) {
 
 Window::Window() {
   //
+  hInst = reinterpret_cast<HINSTANCE>(&__ImageBase);
 }
 
 Window::~Window() {
@@ -57,6 +58,9 @@ Window::~Window() {
   Free(&streaksbrush);
   if (hbrBkgnd != nullptr) {
     DeleteBrush(hbrBkgnd);
+  }
+  if (hFont != nullptr) {
+    DeleteFont(hFont);
   }
 }
 
@@ -139,7 +143,27 @@ HRESULT Window::OnRender() {
 }
 
 void Window::AttributesTablesDraw() {
-  //
+  if (tables.Empty()) {
+    return; ///
+  }
+  ////////// -->
+  float offset = 80;
+  float w1 = 30;
+  float w2 = 60;
+  float keyoff = 180;
+  float xoff = 60;
+  for (const auto &e : tables.ats) {
+    renderTarget->DrawTextW(e.name.c_str(), (UINT32)e.name.size(), dwFormat,
+                            D2D1::RectF(xoff, offset, keyoff, offset + w1),
+                            textBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+    renderTarget->DrawTextW(
+        e.value.c_str(), (UINT32)e.value.size(), dwFormat,
+        D2D1::RectF(keyoff + 10, offset, keyoff + 400, offset + w1), textBrush,
+        D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+        DWRITE_MEASURING_MODE_NATURAL);
+    offset += w1;
+  }
 }
 
 LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
