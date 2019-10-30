@@ -57,7 +57,7 @@ bool Window::InquisitivePE() {
   auto depends = flatvector(pea->depends);
   if (!pea->delays.empty()) {
     auto delaydepends = flatvector(pea->delays);
-    bela::StrAppend(&depends, L"\r\nDelay:\r\n", delaydepends, L"\r\n");
+    bela::StrAppend(&depends, L"\r\n\r\n**below is delay**\r\n", delaydepends, L"\r\n");
   } else {
     bela::StrAppend(&depends, L"\r\n");
   }
