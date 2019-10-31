@@ -2,9 +2,11 @@
 #include "window.hpp"
 #include "resource.h"
 //
+#include <CommCtrl.h>
 #include <bela/picker.hpp>
 #include <bela/path.hpp>
 #include <shellapi.h>
+#include "caelum.hpp"
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 
@@ -22,6 +24,12 @@ template <typename T> void FreeObj(T *t) {
     DeleteObject(*t);
     *t = nullptr;
   }
+}
+
+static inline int Year() {
+  SYSTEMTIME stime;
+  GetSystemTime(&stime);
+  return stime.wYear;
 }
 
 bool RefreshFont(HFONT &hFont, int dpiY) {
@@ -86,23 +94,40 @@ bool Window::MakeWindow() {
           reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
     return false;
   }
+
   constexpr const auto wndclassname = L"Caelum.Window";
   WNDCLASSEXW wc{};
   wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-  wc.hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
+  wc.hInstance = hInst;
   wc.lpszClassName = wndclassname;
   wc.style = CS_HREDRAW | CS_VREDRAW;
   wc.lpfnWndProc = Window::WindowProc;
+  wc.cbSize = sizeof(wc);
   // create Direct2D DWrite resources
-  RegisterClassExW(&wc);
-  CreateWindowExW(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName,
-                  wndclassname,
-                  WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN |
-                      WS_MINIMIZEBOX,
-                  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                  nullptr, nullptr, wc.hInstance, this);
+  auto atom = RegisterClassExW(&wc);
+  if (atom == 0) {
+    return false;
+  }
+  auto hWnd_ =
+      CreateWindowExW(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName,
+                      L"Caelum \u2764 PE Analyzer ",
+                      WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
+                          WS_CLIPCHILDREN | WS_MINIMIZEBOX,
+                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                      CW_USEDEFAULT, nullptr, nullptr, wc.hInstance, this);
 
-  return true;
+  return hWnd_ != nullptr;
+}
+
+void Window::RunMessageLoop() {
+  //
+  ShowWindow(hWnd, SW_SHOW);
+  UpdateWindow(hWnd);
+  MSG msg;
+  while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
+    TranslateMessage(&msg);
+    DispatchMessageW(&msg);
+  }
 }
 
 HRESULT Window::CreateDeviceResources() {
@@ -130,6 +155,13 @@ HRESULT Window::CreateDeviceResources() {
   return hr;
 }
 
+void Window::DiscardDeviceResources() {
+  //
+  Free(&renderTarget);
+  Free(&textBrush);
+  Free(&streaksbrush);
+}
+
 HRESULT Window::OnRender() {
   auto hr = CreateDeviceResources();
   if (!SUCCEEDED(hr)) {
@@ -139,6 +171,18 @@ HRESULT Window::OnRender() {
   renderTarget->BeginDraw();
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
   renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 1.0f));
+  AttributesTablesDraw();
+  for (const auto &l : labels) {
+    renderTarget->DrawTextW(l.data(), l.length(), dwFormat, l.layout(),
+                            textBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  hr = renderTarget->EndDraw();
+  if (hr == D2DERR_RECREATE_TARGET) {
+    hr = S_OK;
+    DiscardDeviceResources();
+  }
+  return hr;
   return S_OK;
 }
 
@@ -164,6 +208,19 @@ void Window::AttributesTablesDraw() {
         DWRITE_MEASURING_MODE_NATURAL);
     offset += w1;
   }
+  if (!tables.HasDepends()) {
+    return;
+  }
+  auto ch = tables.Characteristics();
+  auto depends = tables.Depends();
+  renderTarget->DrawTextW(ch.data(), (UINT32)ch.size(), dwFormat,
+                          D2D1::RectF(xoff, offset, keyoff, offset + w2),
+                          textBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                          DWRITE_MEASURING_MODE_NATURAL);
+  renderTarget->DrawTextW(
+      depends.data(), (UINT32)depends.size(), dwFormat,
+      D2D1::RectF(xoff, offset + w2, keyoff, offset + w2 + w2), textBrush,
+      D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
 }
 
 LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
@@ -223,7 +280,59 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
 }
 
 LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
-  //
+  dpiX = GetDpiForWindow(hWnd);
+  dpiY = dpiX;
+  RECT rect;
+  SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+  int cx = rect.right - rect.left;
+  auto w = MulDiv(720, dpiX, 96);
+  SetWindowPos(hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w,
+               MulDiv(500, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
+  RefreshFont(hFont, dpiX);
+  if (hFont == nullptr) {
+    hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  }
+  HICON hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_CAELUM_ICON));
+  SendMessageW(hWnd, WM_SETICON, TRUE, (LPARAM)hIcon);
+  ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+  ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
+  ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+  DragAcceptFiles(hWnd, TRUE);
+
+  // Initialize Labels
+  labels.emplace_back(L"PE:", 20, 40, 100, 65);
+  /// Copyrigth
+  labels.emplace_back(bela::StringCat(L"\U0001f60b Copyright \u00a9 ", Year(),
+                                      L". Force Charlie. All Rights Reserved."),
+                      60, 400, 600, 420);
+  HMENU hSystemMenu = ::GetSystemMenu(hWnd, FALSE);
+  InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, ui::about,
+              L"About PE Analyzer\tAlt+F1");
+
+  constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
+                             WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY |
+                             WS_EX_CLIENTEDGE;
+  constexpr const auto es = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE |
+                            WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+  constexpr const auto bex = WS_EX_LEFT | WS_EX_LTRREADING |
+                             WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
+  constexpr const auto bs =
+      BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
+
+  CreateSubWindow(eex, WC_EDITW, L"", es, 60, 40, 510, 27, HMENU(ui::editor),
+                  wUrl);
+  CreateSubWindow(bex, WC_BUTTONW, L"...", bs, 575, 40, 65, 27,
+                  HMENU(ui::picker), wPicker);
+
+  int numArgc = 0;
+  auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
+  if (Argv) {
+    if (numArgc >= 2 && bela::PathExists(Argv[1])) {
+      /// ---> todo set value
+      ResolveLink(Argv[1]);
+    }
+    LocalFree(Argv);
+  }
   return S_OK;
 }
 
@@ -256,6 +365,16 @@ LRESULT Window::OnDpiChanged(WPARAM const wparam,
                  prcNewWindow->right - prcNewWindow->left,
                  prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
+  RefreshFont(hFont, dpiY);
+  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
+  UpdateWidgetPos(wUrl);
+  UpdateWidgetPos(wPicker);
+  if (wCharacteristics.Alived()) {
+    UpdateWidgetPos(wCharacteristics);
+  }
+  if (wDepends.Alived()) {
+    UpdateWidgetPos(wDepends);
+  }
   return S_OK;
 }
 
@@ -273,6 +392,7 @@ LRESULT Window::OnDropfiles(WPARAM const wparam, LPARAM const lparam) noexcept {
     return S_OK;
   }
   buf.resize(l);
+  ResolveLink(buf);
   // TODO resolve link
   return S_OK;
 }
@@ -305,7 +425,33 @@ LRESULT Window::DoPicker(WORD wNotifyCode) {
     //
     return S_OK;
   }
+  ResolveLink(*file);
   return S_OK;
+}
+
+bool Window::ResolveLink(std::wstring_view file) {
+  //
+  std::lock_guard<std::mutex> lock(mtx);
+  tables.Clear();
+  wCharacteristics.Destroy();
+  wDepends.Destroy();
+  ::InvalidateRect(hWnd, NULL, TRUE);
+  if (file.empty()) {
+    return false;
+  }
+  bela::error_code ec;
+  auto link = caelum::ResolveLink(file, ec);
+  if (!link) {
+    bela::BelaMessageBox(
+        hWnd, L"unable lookup file link",
+        bela::StringCat(L"File: ", file, L"\nError: ", ec.message).data(),
+        nullptr, bela::mbs_t::FATAL);
+    return false;
+  }
+  ::SetWindowTextW(wUrl.hWnd, link->data());
+  auto ret = InquisitivePE();
+  ::InvalidateRect(hWnd, NULL, TRUE);
+  return ret;
 }
 
 } // namespace caelum

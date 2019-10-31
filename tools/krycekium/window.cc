@@ -210,8 +210,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
   ::DragAcceptFiles(m_hWnd, TRUE);
   // Draw Window ICON
-  auto hIcon = LoadIconW(GetModuleHandleW(nullptr),
-                         MAKEINTRESOURCEW(IDI_KRYCEKIUM_ICON));
+  auto hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_KRYCEKIUM_ICON));
   SetIcon(hIcon, TRUE);
   RefreshDxFont();
   RefreshGdiFont();

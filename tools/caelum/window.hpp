@@ -10,15 +10,17 @@
 #include <vector>
 #include <cassert>
 #include <optional>
+#include <mutex>
 #include <bela/base.hpp>
 
 namespace caelum {
 namespace ui {
 enum WidgetNumber : ptrdiff_t {
   about = 1001, //
-  picker = 1002,
-  characteristics = 1003,
-  depends = 1004
+  editor = 1002,
+  picker = 1003,
+  characteristics = 1004,
+  depends = 1005
 };
 };
 
@@ -45,6 +47,9 @@ struct AttributesTables {
   std::vector<std::wstring> names;
   std::size_t mnlen{0};
   bool Empty() const { return ats.empty() && names.empty(); }
+  bool HasDepends() const { return !names.empty(); }
+  std::wstring_view Characteristics() const { return names[0]; }
+  std::wstring_view Depends() const { return names[1]; }
   AttributesTables &Clear() {
     mnlen = 0;
     ats.clear();
@@ -119,9 +124,11 @@ private:
   // LRESULT is LONG_PTR so when AMD64 8byte long (can as pointer)
   // HRESULT is LONG when AMD64 4byte
   HRESULT CreateDeviceResources();
+  void DiscardDeviceResources();
   HRESULT OnRender();
   void AttributesTablesDraw();
   bool InquisitivePE();
+  bool ResolveLink(std::wstring_view file);
   bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName,
                        LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
                        int nWidth, int nHeight, HMENU hMenu, Widget &w) {
@@ -141,10 +148,22 @@ private:
     return true;
   }
 
+  bool UpdateWidgetPos(Widget &w) {
+    if (w.hWnd == nullptr) {
+      return false;
+    }
+    ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
+                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96),
+                   SWP_NOZORDER | SWP_NOACTIVATE);
+    ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+    return true;
+  }
+
 public:
   Window();
   ~Window();
   bool MakeWindow();
+  void RunMessageLoop();
   static LRESULT WINAPI WindowProc(HWND const window, UINT const message,
                                    WPARAM const wparam,
                                    LPARAM const lparam) noexcept;
@@ -173,6 +192,8 @@ private:
   std::vector<Label> labels;
   AttributesTables tables;
   std::vector<Label> depends;
+  //
+  std::mutex mtx;
   //
   int dpiX{96};
   int dpiY{96};

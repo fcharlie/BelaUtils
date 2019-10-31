@@ -243,6 +243,6 @@ std::optional<std::wstring> ResolveLink(std::wstring_view file,
   if (IsTarget(rp.ReparseTagValue())) {
     return FindAttributeName(rp.Attributes(), L"Target");
   }
-  return std::nullopt;
+  return std::make_optional(std::wstring(file));
 }
 } // namespace caelum
