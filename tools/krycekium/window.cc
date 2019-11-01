@@ -242,7 +242,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam,
   auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
   if (Argv) {
     if (numArgc >= 2 && PathFileExistsW(Argv[1])) {
-      std::wstring sv(Argv[1]);
+      std::wstring_view sv(Argv[1]);
       if (IsSuffixEnabled(sv)) {
         wSource.Content(sv);
         auto sameFolder = krycekium::SameFolder(sv);

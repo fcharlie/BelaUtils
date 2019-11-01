@@ -429,6 +429,25 @@ LRESULT Window::DoPicker(WORD wNotifyCode) {
   return S_OK;
 }
 
+inline std::wstring BaseName(std::wstring_view sv) {
+  if (sv.empty()) {
+    return L".";
+  }
+  auto pos = sv.find_last_not_of(L"\\/");
+  if (pos == std::wstring_view::npos) {
+    return L"/";
+  }
+  sv.remove_suffix(sv.size() - pos - 1);
+  pos = sv.find_last_of(L"\\/");
+  if (pos != std::wstring_view::npos) {
+    sv.remove_prefix(pos + 1);
+  }
+  if (sv.empty()) {
+    return L".";
+  }
+  return std::wstring(sv);
+}
+
 bool Window::ResolveLink(std::wstring_view file) {
   //
   std::lock_guard<std::mutex> lock(mtx);
@@ -444,7 +463,7 @@ bool Window::ResolveLink(std::wstring_view file) {
   if (!link) {
     bela::BelaMessageBox(
         hWnd, L"unable lookup file link",
-        bela::StringCat(L"File: ", file, L"\nError: ", ec.message).data(),
+        bela::StringCat(L"File: ", BaseName(file), L"\nError: ", ec.message).data(),
         nullptr, bela::mbs_t::FATAL);
     return false;
   }
