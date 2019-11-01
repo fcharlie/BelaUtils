@@ -12,13 +12,13 @@ using namespace Windows::Foundation::Numerics;
 namespace xamldesktop {
 struct Window : DesktopWindow<Window> {
   Window() noexcept {
-    WNDCLASS wc{};
+    WNDCLASSW wc{};
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
     wc.lpszClassName = L"XamlDesktop";
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WndProc;
-    RegisterClass(&wc);
+    RegisterClassW(&wc);
     WINRT_ASSERT(!m_window);
 
     WINRT_VERIFY(CreateWindowW(wc.lpszClassName, L"XamlDesktop",
