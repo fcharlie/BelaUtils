@@ -31,6 +31,18 @@ inline bool ConsumeSuffix(std::string_view *str, std::string_view expected) {
   return true;
 }
 
+// ui options
+struct KisasumOptions {
+  std::wstring title{L"Kismet Immersive"};
+  std::wstring font{L"Segoe UI"};
+  std::uint32_t panelcolor{0x00BFFF};
+  std::uint32_t contentcolor{0xffffff};
+  std::uint32_t textcolor{0x000000};
+  std::uint32_t labelcolor{0x000000};
+};
+
+bool InitializeKisasumOptions(KisasumOptions &options);
+bool FlushKisasumOptions(const KisasumOptions &options);
 } // namespace kisasum
 
 #endif

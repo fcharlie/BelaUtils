@@ -47,4 +47,14 @@ bool InitializeColorValue(std::string_view scr, std::uint32_t &cr) {
   return RgbColorExpand(scr, cr);
 }
 
+bool InitializeKisasumOptions(KisasumOptions &options) {
+  //
+  return true;
+}
+
+bool FlushKisasumOptions(const KisasumOptions &options) {
+  //
+  return true;
+}
+
 } // namespace kisasum

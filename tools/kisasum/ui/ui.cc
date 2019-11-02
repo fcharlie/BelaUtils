@@ -60,7 +60,7 @@ Window::~Window() {
   Free(&dwFormat);
   Free(&renderTarget);
   Free(&textBrush);
-  Free(&streaksbrush);
+  Free(&AppPageBackgroundThemeBrush);
   if (hbrBkgnd != nullptr) {
     DeleteBrush(hbrBkgnd);
   }
@@ -70,13 +70,14 @@ Window::~Window() {
 }
 
 template <class Factory>
-HRESULT DWriteCreateFactory(_In_ DWRITE_FACTORY_TYPE factoryType,
-                            _Out_ Factory **factory) {
+[[nodiscard]] HRESULT DWriteCreateFactory(_In_ DWRITE_FACTORY_TYPE factoryType,
+                                          _Out_ Factory **factory) {
   return ::DWriteCreateFactory(factoryType, __uuidof(Factory),
                                reinterpret_cast<IUnknown **>(factory));
 }
 
 bool Window::MakeWindow() {
+  InitializeKisasumOptions(options);
   // initialize d2d1 factory and dwrite factory
   if (!SUCCEEDED(
           D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory))) {
@@ -123,11 +124,6 @@ void Window::RunMessageLoop() {
     TranslateMessage(&msg);
     DispatchMessageW(&msg);
   }
-}
-
-bool Window::InitializeWindow() {
-  //
-  return true;
 }
 
 LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
@@ -228,6 +224,17 @@ LRESULT Window::OnStaticColor(WPARAM const wparam,
     hbrBkgnd = CreateSolidBrush(calcLuminance(options.panelcolor));
   }
   return reinterpret_cast<INT_PTR>(hbrBkgnd);
+}
+
+bool Window::UpdateTheme() {
+  FreeObj(&hbrBkgnd);
+  Free(&AppPageBackgroundThemeBrush);
+  auto hr = renderTarget->CreateSolidColorBrush(
+      D2D1::ColorF((UINT32)options.panelcolor), &AppPageBackgroundThemeBrush);
+  InvalidateRect(wUppercase.hWnd, nullptr, TRUE);
+  InvalidateRect(hWnd, nullptr, TRUE);
+  // flush options
+  return FlushKisasumOptions(options);
 }
 
 //

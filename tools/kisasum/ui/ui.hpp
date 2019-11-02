@@ -13,6 +13,7 @@
 #include <cassert>
 #include <optional>
 #include <mutex>
+#include "kisasumutils.hpp"
 
 namespace kisasum {
 
@@ -25,16 +26,6 @@ enum WidgetNumber : ptrdiff_t {
   clear = 1004,
   picker = 1005
 };
-};
-
-// ui options
-struct KisasumOptions {
-  std::wstring title{L"Kismet Immersive"};
-  std::wstring font{L"Segoe UI"};
-  std::uint32_t panelcolor{0x00BFFF};
-  std::uint32_t contentcolor{0xffffff};
-  std::uint32_t textcolor{0x000000};
-  std::uint32_t labelcolor{0x000000};
 };
 
 // swap to LE
@@ -115,7 +106,7 @@ private:
   void DiscardDeviceResources();
   HRESULT OnRender();
   //
-  bool InitializeWindow();
+  bool UpdateTheme();
   //
   bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName,
                        LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
@@ -167,7 +158,7 @@ private:
   //
   ID2D1HwndRenderTarget *renderTarget{nullptr};
   ID2D1SolidColorBrush *textBrush{nullptr};
-  ID2D1SolidColorBrush *streaksbrush{nullptr};
+  ID2D1SolidColorBrush *AppPageBackgroundThemeBrush{nullptr};
   //
   HBRUSH hbrBkgnd{nullptr};
   HFONT hFont{nullptr};
