@@ -39,6 +39,12 @@ struct KisasumOptions {
   std::uint32_t contentcolor{0xffffff};
   std::uint32_t textcolor{0x000000};
   std::uint32_t labelcolor{0x000000};
+  const wchar_t *Font() const {
+    if (font.size() >= 32) {
+      return L"Segoe UI";
+    }
+    return font.data();
+  }
 };
 
 bool InitializeKisasumOptions(KisasumOptions &options);

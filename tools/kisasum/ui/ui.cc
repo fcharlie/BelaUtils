@@ -29,7 +29,7 @@ static inline int Year() {
   return stime.wYear;
 }
 
-bool RefreshFont(HFONT &hFont, int dpiY) {
+bool Window::RefreshFont() {
   if (hFont == nullptr) {
     hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
   }
@@ -39,7 +39,7 @@ bool RefreshFont(HFONT &hFont, int dpiY) {
   }
   logFont.lfHeight = -MulDiv(14, dpiY, 96);
   logFont.lfWeight = FW_NORMAL;
-  wcscpy_s(logFont.lfFaceName, L"Segoe UI");
+  wcscpy_s(logFont.lfFaceName, options.Font());
   auto hNewFont = CreateFontIndirectW(&logFont);
   if (hNewFont == nullptr) {
     return false;
@@ -232,7 +232,7 @@ LRESULT Window::OnDpiChanged(WPARAM const wparam,
                  prcNewWindow->right - prcNewWindow->left,
                  prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
-  RefreshFont(hFont, dpiY);
+  RefreshFont();
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
   UpdateWidgetPos(wUppercase);
   UpdateWidgetPos(wAlgorithm);
@@ -269,6 +269,7 @@ LRESULT Window::OnStaticColor(WPARAM const wparam,
 bool Window::UpdateTheme() {
   FreeObj(&hbrBkgnd);
   Free(&AppPageBackgroundThemeBrush);
+  RefreshFont();
   auto hr = renderTarget->CreateSolidColorBrush(
       D2D1::ColorF((UINT32)options.panelcolor), &AppPageBackgroundThemeBrush);
   Free(&dwFormat);
@@ -310,6 +311,7 @@ LRESULT Window::DoTheme(WORD wNotifyCode) {
     auto g = GetGValue(co.rgbResult);
     auto b = GetBValue(co.rgbResult);
     options.panelcolor = (r << 16) + (g << 8) + b;
+    UpdateTheme();
   }
   return S_OK;
 }

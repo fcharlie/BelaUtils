@@ -107,6 +107,8 @@ private:
   HRESULT OnRender();
   //
   bool UpdateTheme();
+  bool RefreshFont();
+
   //
   bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName,
                        LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
