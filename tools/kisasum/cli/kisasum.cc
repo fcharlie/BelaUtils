@@ -8,7 +8,7 @@
 #include <vector>
 #include <optional>
 #include <json.hpp>
-#include "../../lib/hashlib/sumizer.hpp"
+#include "../../../lib/hashlib/sumizer.hpp"
 #include "fileutils.hpp"
 #include "progressbar.hpp"
 

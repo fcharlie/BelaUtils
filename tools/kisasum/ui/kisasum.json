@@ -1,0 +1,10 @@
+{
+    "Title": "Kisasum Immersive",
+    "Font": "Segoe UI",
+    "Color": {
+        "Panel": "#00BFFF",
+        "Content": "#FFFFFF",
+        "Text": "#000000",
+        "Label": "#000000"
+    }
+}

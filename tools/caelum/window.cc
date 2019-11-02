@@ -227,7 +227,6 @@ LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
                                   WPARAM const wparam,
                                   LPARAM const lparam) noexcept {
   assert(window);
-
   if (WM_NCCREATE == message) {
     auto cs = reinterpret_cast<CREATESTRUCT *>(lparam);
     Window *that = static_cast<Window *>(cs->lpCreateParams);
@@ -463,7 +462,8 @@ bool Window::ResolveLink(std::wstring_view file) {
   if (!link) {
     bela::BelaMessageBox(
         hWnd, L"unable lookup file link",
-        bela::StringCat(L"File: ", BaseName(file), L"\nError: ", ec.message).data(),
+        bela::StringCat(L"File: ", BaseName(file), L"\nError: ", ec.message)
+            .data(),
         nullptr, bela::mbs_t::FATAL);
     return false;
   }
