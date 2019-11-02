@@ -87,7 +87,7 @@ bool Window::MakeWindow() {
     return false;
   }
   if (!SUCCEEDED(dwFactory->CreateTextFormat(
-          L"Segeo UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
+          options.font.data(), nullptr, DWRITE_FONT_WEIGHT_NORMAL,
           DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
           reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
     return false;
@@ -271,6 +271,13 @@ bool Window::UpdateTheme() {
   Free(&AppPageBackgroundThemeBrush);
   auto hr = renderTarget->CreateSolidColorBrush(
       D2D1::ColorF((UINT32)options.panelcolor), &AppPageBackgroundThemeBrush);
+  Free(&dwFormat);
+  if (!SUCCEEDED(dwFactory->CreateTextFormat(
+          options.font.data(), nullptr, DWRITE_FONT_WEIGHT_NORMAL,
+          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
+          reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
+    return false;
+  }
   InvalidateRect(wUppercase.hWnd, nullptr, TRUE);
   InvalidateRect(hWnd, nullptr, TRUE);
   // flush options
