@@ -306,7 +306,7 @@ LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
                       60, 400, 600, 420);
   HMENU hSystemMenu = ::GetSystemMenu(hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, ui::about,
-              L"About PE Analyzer\tAlt+F1");
+              L"About Caelum \u2764 PE analysis tool\tAlt+F1");
 
   constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
                              WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY |

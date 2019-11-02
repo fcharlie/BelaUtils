@@ -184,20 +184,60 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
   return DefWindowProcW(hWnd, message, wparam, lparam);
 }
 
+inline bool InitializeComboHash(HWND hWnd) {
+  const constexpr wchar_t *hash[] = {
+      //
+      L"MD5",     L"SHA1",       L"SHA224",     L"SHA256",     L"SHA384",
+      L"SHA512",  L"SHA3 - 224", L"SHA3 - 256", L"SHA3 - 384", L"SHA3 - 512",
+      L"BLAKE2s", L"BLAKE2b"
+      //
+  };
+  for (auto c : hash) {
+    ComboBox_AddString(hWnd, c);
+  }
+  ComboBox_SetCurSel(hWnd, 3);
+  return true;
+}
+
 LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
   return S_OK;
 }
 
 LRESULT Window::OnSize(WPARAM const wparam, LPARAM const lparam) noexcept {
+  UINT width = LOWORD(lparam);
+  UINT height = HIWORD(lparam);
+  if (renderTarget != nullptr) {
+    renderTarget->Resize(D2D1::SizeU(width, height));
+  }
   return S_OK;
 }
 
 LRESULT Window::OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept {
+  PAINTSTRUCT ps;
+  BeginPaint(hWnd, &ps);
+  if (!SUCCEEDED(OnRender())) {
+    //
+  }
+  EndPaint(hWnd, &ps);
   return S_OK;
 }
 
 LRESULT Window::OnDpiChanged(WPARAM const wparam,
                              LPARAM const lparam) noexcept {
+  dpiX = static_cast<UINT32>(LOWORD(wparam));
+  dpiX = static_cast<UINT32>(HIWORD(wparam));
+  auto prcNewWindow = reinterpret_cast<RECT *const>(lparam);
+  // resize window with new DPI
+  ::SetWindowPos(hWnd, nullptr, prcNewWindow->left, prcNewWindow->top,
+                 prcNewWindow->right - prcNewWindow->left,
+                 prcNewWindow->bottom - prcNewWindow->top,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+  RefreshFont(hFont, dpiY);
+  renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
+  UpdateWidgetPos(wUppercase);
+  UpdateWidgetPos(wAlgorithm);
+  UpdateWidgetPos(wClear);
+  UpdateWidgetPos(wPicker);
   return S_OK;
 }
 
