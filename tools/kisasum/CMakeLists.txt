@@ -1,9 +1,11 @@
 # kisasum
 
 add_executable(kisasum-ui WIN32
-  ui/kisasum-ui.cc
+  ui/kisasum.cc
   ui/kisasumutils.cc
   ui/ui.cc
+  ui/kisasum.rc
+  ui/kisasum.manifest
 )
 
 target_link_libraries(kisasum-ui

@@ -32,7 +32,7 @@
 
 #define KISASUM_APPLINK                                                      \
   L"For more information about this tool. \nVisit: <a "                        \
-  L"href=\"https://github.com/fcharlie/BelaUtils\">Kisasum UI</a>\nVisit: <a "  \
+  L"href=\"https://github.com/fcharlie/BelaUtils\">Kisasum</a>\nVisit: <a "  \
   L"href=\"https://forcemz.net/\">forcemz.net</a>"
 
 #define COPYRIGHT L"Copyright \xA9 2019 Force Charlie, All Rights Reserved."

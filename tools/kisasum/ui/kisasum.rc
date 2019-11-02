@@ -1,0 +1,57 @@
+///
+
+//Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+IDI_KISASUM_ICON       ICON         "res/kisasum.ico"
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION KISASUM_MAJOR_VERSION, KISASUM_MINOR_VERSION, KISASUM_PATCH_VERSION, KISASUM_BUILD_NUMBER
+PRODUCTVERSION KISASUM_MAJOR_VERSION, KISASUM_MINOR_VERSION, KISASUM_PATCH_VERSION, KISASUM_BUILD_NUMBER
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x1L
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+BLOCK "StringFileInfo"
+BEGIN
+BLOCK "080404b0"
+BEGIN
+VALUE "CompanyName", "Force Charlie"
+VALUE "FileDescription", "Kisasum - Hash Utilities"
+VALUE "FileVersion", PRIV_VERSION_FULL
+VALUE "InternalName", "kisasum-ui.exe"
+VALUE "LegalCopyright", COPYRIGHT
+VALUE "OriginalFilename", "kisasum-ui.exe"
+VALUE "ProductName", "Kisasum - Hash Utilities"
+VALUE "ProductVersion", PRIV_VERSION_MAIN
+END
+END
+BLOCK "VarFileInfo"
+BEGIN
+VALUE "Translation", 0x804, 1200
+END
+END
+
