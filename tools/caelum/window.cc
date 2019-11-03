@@ -36,11 +36,14 @@ bool RefreshFont(HFONT &hFont, int dpiY) {
   if (hFont == nullptr) {
     hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
   }
+
   LOGFONTW logFont = {0};
   if (GetObjectW(hFont, sizeof(logFont), &logFont) == 0) {
     return false;
   }
-  logFont.lfHeight = -MulDiv(14, dpiY, 96);
+  logFont.lfHeight = -MulDiv(16, dpiY, 96);
+  // auto fs = bela::StringCat(L"Font height ", logFont.lfHeight);
+  // MessageBoxW(nullptr, fs.data(), L"DEBUG FONT", MB_OK);
   logFont.lfWeight = FW_NORMAL;
   wcscpy_s(logFont.lfFaceName, L"Segoe UI");
   auto hNewFont = CreateFontIndirectW(&logFont);

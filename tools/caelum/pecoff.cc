@@ -65,9 +65,9 @@ bool Window::InquisitivePE() {
                       ES_LEFT | ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY;
   constexpr auto exs = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
                        WS_EX_NOPARENTNOTIFY;
-  CreateSubWindow(exs, WC_EDITW, strcharsv.data(), es, 185, (int)y, 460, 55,
+  CreateSubWindow(exs, WC_EDITW, strcharsv.data(), es, 185, (int)y, 460, 60,
                   nullptr, wCharacteristics);
-  CreateSubWindow(exs, WC_EDITW, depends.data(), es, 185, (int)y + 60, 460, 80,
+  CreateSubWindow(exs, WC_EDITW, depends.data(), es, 185, (int)y + 65, 460, 80,
                   nullptr, wDepends);
   return true;
 }
