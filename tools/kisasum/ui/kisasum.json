@@ -1,10 +1,8 @@
 {
     "Title": "Kisasum Immersive",
     "Font": "Segoe UI",
-    "Color": {
-        "Panel": "#00BFFF",
-        "Content": "#FFFFFF",
-        "Text": "#000000",
-        "Label": "#000000"
-    }
+    "Color.Panel": "#00BFFF",
+    "Color.Content": "#FFFFFF",
+    "Color.Text": "#000000",
+    "Color.Label": "#000000"
 }
