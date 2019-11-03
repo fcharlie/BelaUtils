@@ -368,12 +368,8 @@ LRESULT Window::OnDpiChanged(WPARAM const wparam,
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
   UpdateWidgetPos(wUrl);
   UpdateWidgetPos(wPicker);
-  if (wCharacteristics.Alived()) {
-    UpdateWidgetPos(wCharacteristics);
-  }
-  if (wDepends.Alived()) {
-    UpdateWidgetPos(wDepends);
-  }
+  UpdateWidgetPos(wCharacteristics);
+  UpdateWidgetPos(wDepends);
   return S_OK;
 }
 

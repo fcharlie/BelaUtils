@@ -107,7 +107,7 @@ bool Window::MakeWindow() {
   }
   auto hWnd_ =
       CreateWindowExW(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName,
-                      L"Kisasum Immersive",
+                      options.title.data(),
                       WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
                           WS_CLIPCHILDREN | WS_MINIMIZEBOX,
                       CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -168,6 +168,9 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
   case WM_SYSCOMMAND:
     if (ui::about == static_cast<ptrdiff_t>(LOWORD(wparam))) {
       return DoAbout(HIWORD(wparam));
+    }
+    if (ui::theme == static_cast<ptrdiff_t>(LOWORD(wparam))) {
+      return DoTheme(HIWORD(wparam));
     }
     break;
   case WM_COMMAND:

@@ -46,10 +46,10 @@ bool Window::InquisitivePE() {
     tables.Append(L"CLR Details:", pea->clrmsg);
   }
 
-  tables.Append(L"Characteristics");
-  tables.Append(L"Depends");
+  tables.Append(L"Characteristics:");
+  tables.Append(L"Depends:");
 
-  auto y = 80 + 30 * tables.ats.size() * dpiX / 96;
+  auto y = 80 + 30 * tables.ats.size();
   auto charsv =
       caelum::Characteristics(pea->characteristics, pea->dllcharacteristics);
   // depends lab append

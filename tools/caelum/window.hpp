@@ -148,7 +148,7 @@ private:
     return true;
   }
 
-  bool UpdateWidgetPos(Widget &w) {
+  bool UpdateWidgetPos(const Widget &w) {
     if (w.hWnd == nullptr) {
       return false;
     }

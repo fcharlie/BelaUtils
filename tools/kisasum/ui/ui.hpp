@@ -13,6 +13,7 @@
 #include <cassert>
 #include <optional>
 #include <mutex>
+#include <atomic>
 #include "kisasumutils.hpp"
 
 namespace kisasum {
@@ -173,6 +174,8 @@ private:
   //
   int dpiX{96};
   int dpiY{96};
+  //
+  std::atomic_uint32_t progress{0};
 };
 } // namespace kisasum
 
