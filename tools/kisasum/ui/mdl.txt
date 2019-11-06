@@ -1,0 +1,4 @@
+https://docs.microsoft.com/en-us/windows/uwp/design/style/segoe-ui-symbol-font
+Font: Segoe MDL2 Assets
+FontSize: 64
+Shuffle: '\uE8B1'
