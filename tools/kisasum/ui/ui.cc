@@ -58,6 +58,7 @@ Window::~Window() {
   Free(&factory);
   Free(&dwFactory);
   Free(&dwFormat);
+  Free(&dwIconFormat);
   Free(&renderTarget);
   Free(&textBrush);
   Free(&AppPageBackgroundThemeBrush);
@@ -90,6 +91,12 @@ bool Window::MakeWindow() {
           options.font.data(), nullptr, DWRITE_FONT_WEIGHT_NORMAL,
           DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
           reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
+    return false;
+  }
+  if (!SUCCEEDED(dwFactory->CreateTextFormat(
+          L"Segoe MDL2 Assets", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
+          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 64.0f, L"zh-CN",
+          reinterpret_cast<IDWriteTextFormat **>(&dwIconFormat)))) {
     return false;
   }
   constexpr const auto wndclassname = L"Kisasum.Window";
@@ -347,7 +354,8 @@ void Window::DiscardDeviceResources() {
 }
 
 HRESULT Window::OnRender() {
-  //
+  constexpr std::wstring_view shuffle = L"\uE8B1";
+  //renderTarget->DrawEllipse()
   return S_OK;
 }
 

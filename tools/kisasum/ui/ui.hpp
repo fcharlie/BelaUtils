@@ -158,6 +158,7 @@ private:
   ID2D1Factory7 *factory{nullptr};
   IDWriteFactory7 *dwFactory{nullptr};
   IDWriteTextFormat3 *dwFormat{nullptr};
+  IDWriteTextFormat3 *dwIconFormat{nullptr};
   //
   ID2D1HwndRenderTarget *renderTarget{nullptr};
   ID2D1SolidColorBrush *textBrush{nullptr};
