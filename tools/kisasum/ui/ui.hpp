@@ -19,6 +19,20 @@
 namespace kisasum {
 
 namespace ui {
+
+struct rgb {
+  constexpr rgb() : r(0), g(0), b(0) {}
+  constexpr rgb(uint8_t r_, uint8_t g_, uint8_t b_) : r(r_), g(g_), b(b_) {}
+  constexpr rgb(uint32_t hex)
+      : r((hex >> 16) & 0xFF), g((hex >> 8) & 0xFF), b(hex & 0xFF) {}
+  constexpr rgb(COLORREF hex)
+      : r((uint32_t(hex) >> 16) & 0xFF), g((uint32_t(hex) >> 8) & 0xFF),
+        b(uint32_t(hex) & 0xFF) {}
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+};
+
 enum WidgetNumber : ptrdiff_t {
   theme = 1000,
   about = 1001, //
@@ -27,7 +41,7 @@ enum WidgetNumber : ptrdiff_t {
   clear = 1004,
   picker = 1005
 };
-};
+}; // namespace ui
 
 // swap to LE
 inline COLORREF calcLuminance(UINT32 cr) {
