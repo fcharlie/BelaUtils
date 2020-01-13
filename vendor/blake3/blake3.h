@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <stddef.h>
 
 #define BLAKE3_KEY_LEN 32
 #define BLAKE3_OUT_LEN 32
