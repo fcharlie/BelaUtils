@@ -58,6 +58,7 @@ include_directories(
 
 add_subdirectory(vendor/rhash)
 add_subdirectory(vendor/blake2)
+add_subdirectory(vendor/blake3)
 add_subdirectory(vendor/bela)
 add_subdirectory(lib/hashlib)
 add_subdirectory(lib/winutils)
