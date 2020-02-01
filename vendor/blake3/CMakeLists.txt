@@ -11,7 +11,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM64")
       blake3_neon.c
   )
 endif()
-message(STATUS "OS ${CMAKE_SYSTEM_PROCESSOR}")
+
 add_library(blake3 STATIC
   blake3.c
   blake3_dispatch.c
