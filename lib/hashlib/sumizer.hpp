@@ -26,7 +26,7 @@ template <typename T> std::string string_cast(T value) {
 }
 
 namespace algorithm {
-enum hash_t : int {
+enum class hash_t : int {
   MD5,
   SHA1,
   SHA224,
@@ -39,9 +39,11 @@ enum hash_t : int {
   SHA3_512,
   BLAKE2S,
   BLAKE2B,
+  BLAKE3,
   NONE = 999
 };
-}
+[[maybe_unused]] constexpr auto NONE = hash_t::NONE;
+} // namespace algorithm
 
 // md5 sha1 sha224 sha256 sha384 sha512
 // sha3-224 sha3-256 sha3-384 sha3-512

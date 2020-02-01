@@ -1,4 +1,4 @@
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "AMD64")
   set(BLAKE3_SIMDSRC
     blake3_sse41.c
     blake3_avx2.c
@@ -11,7 +11,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM64")
       blake3_neon.c
   )
 endif()
-
+message(STATUS "OS ${CMAKE_SYSTEM_PROCESSOR}")
 add_library(blake3 STATIC
   blake3.c
   blake3_dispatch.c

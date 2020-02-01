@@ -5,6 +5,7 @@
 #include "../../vendor/rhash/librhash/sha3.h"
 #include "../../vendor/rhash/librhash/sha512.h"
 #include "../../vendor/blake2/blake2.h"
+#include "../../vendor/blake3/blake3.h"
 #include <bela/match.hpp>
 #include "sumizer.hpp"
 
@@ -213,56 +214,82 @@ private:
   blake2b_state ctx;
 };
 
+class blake3sumizer : public Sumizer {
+public:
+  int Initialize(int w) {
+    (void)w;
+    blake3_hasher_init(&ctx);
+    return 0;
+  }
+  int Update(const unsigned char *b, size_t len) {
+    blake3_hasher_update(&ctx, b, len);
+    return 0;
+  }
+  int Final(std::wstring &hex, bool uc) {
+    unsigned char buf[BLAKE3_OUT_LEN];
+    blake3_hasher_finalize(&ctx, buf, BLAKE3_OUT_LEN);
+    binary_to_hex(buf, BLAKE3_OUT_LEN, hex, uc);
+    return 0;
+  }
+
+private:
+  blake3_hasher ctx;
+};
+
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
   using namespace algorithm;
   // Sumizer *sumizer = nullptr;
   std::shared_ptr<Sumizer> sumizer(nullptr);
   switch (alg) {
-  case MD5:
+  case belautils::algorithm::hash_t::MD5:
     sumizer = std::make_shared<md5sumizer>();
     sumizer->Initialize();
     break;
-  case SHA1:
+  case belautils::algorithm::hash_t::SHA1:
     sumizer = std::make_shared<sha1sumizer>();
     sumizer->Initialize();
     break;
-  case SHA224:
+  case belautils::algorithm::hash_t::SHA224:
     sumizer = std::make_shared<sha256sumizer>();
     sumizer->Initialize(224);
     break;
-  case SHA256:
+  case belautils::algorithm::hash_t::SHA256:
     sumizer = std::make_shared<sha256sumizer>();
     sumizer->Initialize(256);
     break;
-  case SHA384:
+  case belautils::algorithm::hash_t::SHA384:
     sumizer = std::make_shared<sha512sumizer>();
     sumizer->Initialize(384);
     break;
-  case SHA512:
+  case belautils::algorithm::hash_t::SHA512:
     sumizer = std::make_shared<sha512sumizer>();
     sumizer->Initialize(512);
     break;
-  case SHA3_224:
+  case belautils::algorithm::hash_t::SHA3_224:
     sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(224);
     break;
-  case SHA3_256:
+  case belautils::algorithm::hash_t::SHA3_256:
     sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(256);
     break;
-  case SHA3_384:
+  case belautils::algorithm::hash_t::SHA3_384:
     sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(384);
     break;
-  case SHA3_512:
+  case belautils::algorithm::hash_t::BLAKE3:
+    sumizer = std::make_shared<blake3sumizer>();
+    sumizer->Initialize(256);
+    break;
+  case belautils::algorithm::hash_t::SHA3_512:
     sumizer = std::make_shared<sha3sumizer>();
     sumizer->Initialize(512);
     break;
-  case BLAKE2S:
+  case belautils::algorithm::hash_t::BLAKE2S:
     sumizer = std::make_shared<blake2ssumizer>();
     sumizer->Initialize();
     break;
-  case BLAKE2B:
+  case belautils::algorithm::hash_t::BLAKE2B:
     sumizer = std::make_shared<blake2bsumizer>();
     sumizer->Initialize();
     break;
@@ -279,18 +306,19 @@ std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
     hash_t h;
   } hav[] = {
       //
-      {L"MD5", MD5},
-      {L"SHA1", SHA1},
-      {L"SHA224", SHA224},
-      {L"SHA256", SHA256},
-      {L"SHA384", SHA384},
-      {L"SHA512", SHA512},
-      {L"SHA3-224", SHA3_224},
-      {L"SHA3-256", SHA3_256},
-      {L"SHA3-384", SHA3_384},
-      {L"SHA3-512", SHA3_512},
-      {L"BLAKE2s", BLAKE2S},
-      {L"BLAKE2b", BLAKE2B}
+      {L"MD5", belautils::algorithm::hash_t::MD5},
+      {L"SHA1", belautils::algorithm::hash_t::SHA1},
+      {L"SHA224", belautils::algorithm::hash_t::SHA224},
+      {L"SHA256", belautils::algorithm::hash_t::SHA256},
+      {L"SHA384", belautils::algorithm::hash_t::SHA384},
+      {L"SHA512", belautils::algorithm::hash_t::SHA512},
+      {L"SHA3-224", belautils::algorithm::hash_t::SHA3_224},
+      {L"SHA3-256", belautils::algorithm::hash_t::SHA3_256},
+      {L"SHA3-384", belautils::algorithm::hash_t::SHA3_384},
+      {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
+      {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
+      {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
+      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B}
       //
   };
   for (const auto &h : hav) {
@@ -308,18 +336,19 @@ algorithm::hash_t lookup_algorithm(std::wstring_view alg) {
     hash_t h;
   } hav[] = {
       //
-      {L"MD5", MD5},
-      {L"SHA1", SHA1},
-      {L"SHA224", SHA224},
-      {L"SHA256", SHA256},
-      {L"SHA384", SHA384},
-      {L"SHA512", SHA512},
-      {L"SHA3-224", SHA3_224},
-      {L"SHA3-256", SHA3_256},
-      {L"SHA3-384", SHA3_384},
-      {L"SHA3-512", SHA3_512},
-      {L"BLAKE2s", BLAKE2S},
-      {L"BLAKE2b", BLAKE2B}
+      {L"MD5", belautils::algorithm::hash_t::MD5},
+      {L"SHA1", belautils::algorithm::hash_t::SHA1},
+      {L"SHA224", belautils::algorithm::hash_t::SHA224},
+      {L"SHA256", belautils::algorithm::hash_t::SHA256},
+      {L"SHA384", belautils::algorithm::hash_t::SHA384},
+      {L"SHA512", belautils::algorithm::hash_t::SHA512},
+      {L"SHA3-224", belautils::algorithm::hash_t::SHA3_224},
+      {L"SHA3-256", belautils::algorithm::hash_t::SHA3_256},
+      {L"SHA3-384", belautils::algorithm::hash_t::SHA3_384},
+      {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
+      {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
+      {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
+      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B}
       //
   };
   for (const auto &h : hav) {

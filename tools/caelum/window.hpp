@@ -94,8 +94,9 @@ struct Widget {
       return L"";
     }
     std::wstring str;
-    str.resize(n + 1);
-    auto k = GetWindowTextW(hWnd, str.data(), n + 1);
+    size_t l = n + 1;
+    str.resize(l);
+    auto k = GetWindowTextW(hWnd, str.data(), static_cast<int>(l));
     str.resize(k);
     return str;
   }
