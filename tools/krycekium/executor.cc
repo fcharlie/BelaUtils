@@ -50,7 +50,7 @@ INT WINAPI install_ui_callback(LPVOID ctx, UINT iMessageType,
   return sender->InstallHandler(iMessageType, szMessage);
 }
 // https://docs.microsoft.com/zh-cn/windows/win32/msi/handling-progress-messages-using-msisetexternalui
-struct ProgressFileds {
+struct ProgressFields {
   int field[4];
 };
 
@@ -72,7 +72,7 @@ int FGetInteger(wchar_t *&rpch) {
 //
 //  COMMENTS: Assumes correct syntax.
 //
-bool ParseProgressString(LPWSTR sz, ProgressFileds &fileds) {
+bool ParseProgressString(LPWSTR sz, ProgressFields &Fields) {
   wchar_t *pch = sz;
   if (0 == *pch) {
     return false; // no msg
@@ -88,22 +88,22 @@ bool ParseProgressString(LPWSTR sz, ProgressFileds &fileds) {
       if (0 == isdigit(*pch)) {
         return false; // blank record
       }
-      fileds.field[0] = *pch++ - '0';
+      Fields.field[0] = *pch++ - '0';
       break;
     case '2': // field 2
-      fileds.field[1] = FGetInteger(pch);
-      if (fileds.field[0] == 2 || fileds.field[0] == 3) {
+      Fields.field[1] = FGetInteger(pch);
+      if (Fields.field[0] == 2 || Fields.field[0] == 3) {
         return true; // done processing
       }
       break;
     case '3': // field 3
-      fileds.field[2] = FGetInteger(pch);
-      if (fileds.field[0] == 1) {
+      Fields.field[2] = FGetInteger(pch);
+      if (Fields.field[0] == 1) {
         return true; // done processing
       }
       break;
     case '4': // field 4
-      fileds.field[3] = FGetInteger(pch);
+      Fields.field[3] = FGetInteger(pch);
       return true; // done processing
     default:       // unknown field
       return false;
@@ -114,7 +114,7 @@ bool ParseProgressString(LPWSTR sz, ProgressFileds &fileds) {
 }
 
 void Sender::DoProgress(LPWSTR szMessage) {
-  ProgressFileds pf;
+  ProgressFields pf;
   if (!ParseProgressString(szMessage, pf)) {
     return;
   }
