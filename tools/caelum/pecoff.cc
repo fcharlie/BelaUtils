@@ -30,18 +30,23 @@ inline std::wstring flatvector(const std::vector<std::wstring> &v,
 bool Window::InquisitivePE() {
   auto path = wUrl.Content();
   bela::error_code ec;
-  auto pea = bela::PESimpleDetailsAze(path, ec);
+  auto pea = bela::pe::Expose(path, ec);
   if (!pea) {
     bela::BelaMessageBox(hWnd, L"Inquisitive PE ", ec.message.data(), nullptr,
                          bela::mbs_t::FATAL);
     return false;
   }
+  auto vi = bela::pe::ExposeVersion(path, ec);
+  bool hasProductName = false;
+  if (vi) {
+    tables.Append(L"ProductName:", vi->ProductName);
+  }
   tables.Append(L"Machine:",
                 caelum::Machine(static_cast<uint32_t>(pea->machine)));
   tables.Append(L"Subsystem:",
                 caelum::Subsystem(static_cast<uint32_t>(pea->subsystem)));
-  tables.Append(L"OS Version:", pea->osver.ToString());
-  tables.Append(L"Link Version:", pea->linkver.ToString());
+  tables.Append(L"OS Version:", pea->osver.Str());
+  tables.Append(L"Link Version:", pea->linkver.Str());
   if (!pea->clrmsg.empty()) {
     tables.Append(L"CLR Details:", pea->clrmsg);
   }
@@ -50,6 +55,9 @@ bool Window::InquisitivePE() {
   tables.Append(L"Depends:");
 
   auto y = 80 + 30 * tables.ats.size();
+  if (hasProductName) {
+    y += 30;
+  }
   auto charsv =
       caelum::Characteristics(pea->characteristics, pea->dllcharacteristics);
   // depends lab append
