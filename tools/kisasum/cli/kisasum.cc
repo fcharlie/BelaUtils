@@ -92,7 +92,7 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
 
 std::optional<kisasum_result> kisasum_one_json(std::wstring_view file,
                                                belautils::algorithm::hash_t h) {
-  auto filex = bela::PathCat(file);
+  auto filex = bela::PathAbsolute(file);
   kisasum::FileUtils fu;
   bela::error_code ec;
   if (!fu.Open(filex, ec)) {
@@ -159,7 +159,7 @@ bool kisasum_execute_json(const kisasum_options &opt,
 }
 
 void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
-  auto filex = bela::PathCat(file);
+  auto filex = bela::PathAbsolute(file);
   kisasum::FileUtils fu;
   bela::error_code ec;
   if (!fu.Open(filex, ec)) {
