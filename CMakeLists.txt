@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.12)
 
 project(BelaUtils CXX C)
 
-if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
-  message(FATAL_ERROR "In-source builds are not allowed.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE)
+  message(
+    FATAL_ERROR
+      "In-source builds are not allowed.
 CMake would overwrite the makefiles distributed with BelaUtils.
 Please create a directory and run cmake from there, passing the path
 to this source directory as the last argument.
@@ -21,7 +23,6 @@ set(BELAUTILS_VERSION_MAJOR 1)
 set(BELAUTILS_VERSION_MINOR 0)
 set(BELAUTILS_VERSION_PATCH 0)
 set(PACKAGE_VERSION "${BELAUTILS_VERSION_MAJOR}.${BELAUTILS_VERSION_MINOR}.${BELAUTILS_VERSION_PATCH}")
-
 
 set(CPACK_PACKAGE_NAME "BelaUtils")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "BelaUtils")
@@ -46,15 +47,9 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -c65001")
-add_definitions(
-  -D_UNICODE=1
-  -DUNICODE=1
-)
+add_definitions(-D_UNICODE=1 -DUNICODE=1)
 
-include_directories(
-  ./include
-  ./vendor/bela/include
-)
+include_directories(./include ./vendor/bela/include)
 
 add_subdirectory(vendor/rhash)
 add_subdirectory(vendor/blake2)

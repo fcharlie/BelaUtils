@@ -1,19 +1,19 @@
 #
 
-add_executable(krycekium WIN32
+add_executable(
+  krycekium WIN32
   krycekium.cc
   executor.cc
   window.cc
   kmutils.cc
   krycekium.rc
-  krycekium.manifest
-)
+  krycekium.manifest)
 
-target_link_libraries(krycekium
+target_link_libraries(
+  krycekium
   belawin
-  belashl
+  belash
   d2d1
   dwrite
   Shell32
-  Msi
-)
+  Msi)

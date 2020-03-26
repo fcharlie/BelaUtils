@@ -1,5 +1,3 @@
 #
 
-add_library(winutils STATIC
-  winutils.cc
-)
+add_library(winutils STATIC winutils.cc)
