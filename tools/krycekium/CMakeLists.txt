@@ -12,7 +12,7 @@ add_executable(
 target_link_libraries(
   krycekium
   belawin
-  belash
+  belashl
   d2d1
   dwrite
   Shell32
