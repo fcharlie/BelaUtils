@@ -360,7 +360,7 @@ LRESULT Window::OnExecutorNotify(UINT nMsg, WPARAM wParam, LPARAM lParam,
     break;
   case krycekium::Status::Failure: {
     auto ec = static_cast<DWORD>(lParam);
-    auto msg = bela::resolve_system_error_code(ec);
+    auto msg = bela::resolve_system_error_message(ec);
     bela::BelaMessageBox(m_hWnd, L"Unable to extract msi package", msg.data(),
                          nullptr, bela::mbs_t::FATAL);
     ::MessageBeep(MB_ICONERROR);
