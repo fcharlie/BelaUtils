@@ -1,0 +1,10 @@
+version: 1.0.0.{build}
+image: Visual Studio 2019
+configuration: Release
+platform: x64
+clone_depth: 1
+clone_folder: c:\projects\belautils
+build_script:
+- ps: '& ".\build.ps1"'
+artifacts:
+- path: build\BelaUtils-1.0.0-win64.zip
