@@ -11,3 +11,11 @@
 ## Krycekium MSI unpacker
 
 Use bela rewrite utilities
+
+
+
+## Download
+
+Download CI Build:
+[https://ci.appveyor.com/project/fcharlie/BelaUtils/branch/master/artifacts](https://ci.appveyor.com/project/fcharlie/BelaUtils/branch/master/artifacts)
+
