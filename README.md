@@ -1,5 +1,7 @@
 # BelaUtils
 
+ [![Build status](https://ci.appveyor.com/api/projects/status/github/fcharlie/BelaUtils?branch=master&svg=true)](https://ci.appveyor.com/project/fcharlie/BelaUtils/branch/master)
+
 
 ## Caelum Simple PE analysis tool
 
