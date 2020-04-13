@@ -16,3 +16,5 @@ target_link_libraries(
   d2d1
   dwrite
   Shell32)
+
+install(TARGETS caelum DESTINATION bin)

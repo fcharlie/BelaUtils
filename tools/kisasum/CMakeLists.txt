@@ -25,3 +25,6 @@ target_link_libraries(kisasum
   hashlib
   belawin
 )
+
+install(TARGETS kisasum-ui DESTINATION bin)
+install(TARGETS kisasum DESTINATION bin)

@@ -17,3 +17,5 @@ target_link_libraries(
   dwrite
   Shell32
   Msi)
+
+  install(TARGETS krycekium DESTINATION bin)
