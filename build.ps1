@@ -47,7 +47,7 @@ Write-Host "We try run '$vsvars amd64' and initialize environment."
 Invoke-BatchFile -Path $vsvars -ArgumentList "amd64" # initialize x64 env
 
 
-$RootDir = "c:\projects\Privexec"
+$RootDir = "c:\projects\belautils"
 
 if (Test-Path "Env:\APPVEYOR_BUILD_NUMBER") {
     $BUILDID = $env:APPVEYOR_BUILD_NUMBER
