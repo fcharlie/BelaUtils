@@ -77,7 +77,7 @@ public:
       } else {
         _snwprintf_s(buf, 64, L"%lld B ", speed);
       }
-      bela::FPrintF(stdout, L"\r[%s%s%s] %s %d%% completed.",
+      bela::FPrintF(stdout, L"\x1b[2K\r[%s%s%s] %s %d%% completed.",
                     svchars.substr(0, X), arrow, svspace.substr(0, Y), buf, N);
     }
     tick = now;
