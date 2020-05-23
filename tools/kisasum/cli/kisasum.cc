@@ -1,6 +1,6 @@
 ///
 #include <bela/parseargv.hpp>
-#include <bela/stdwriter.hpp>
+#include <bela/terminal.hpp>
 #include <bela/match.hpp>
 #include <bela/ascii.hpp>
 #include <bela/codecvt.hpp>

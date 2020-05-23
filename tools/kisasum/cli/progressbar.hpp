@@ -1,32 +1,14 @@
 //
 #ifndef KISASUM_PROGRESSBAR_HPP
 #define KISASUM_PROGRESSBAR_HPP
-#include <bela/stdwriter.hpp>
+#include <bela/terminal.hpp>
 #include <bela/base.hpp>
+#include <bela/process.hpp>
+#include <bela/str_split.hpp>
+#include <bela/ascii.hpp>
 #include <chrono>
 
 namespace kisasum {
-
-inline uint32_t TerminalWidth() {
-  auto h = GetStdHandle(STD_ERROR_HANDLE);
-  if (h == nullptr || h == INVALID_HANDLE_VALUE) {
-    return 80;
-  }
-  if (GetFileType(h) != FILE_TYPE_CHAR) {
-    // Only support Mintty (TERM not VT100)
-    // https://wiki.archlinux.org/index.php/working_with_the_serial_console#Resizing_a_terminal
-    // write escape string detect col
-    // result like ';120R'
-    // fprintf(stderr, "\x1b7\x1b[r\x1b[999;999H\x1b[6n\x1b8");
-
-    return 90;
-  }
-  CONSOLE_SCREEN_BUFFER_INFO bi;
-  if (GetConsoleScreenBufferInfo(h, &bi) != TRUE) {
-    return 80;
-  }
-  return bi.dwSize.X;
-}
 
 class ProgressBar {
 public:
@@ -43,15 +25,18 @@ public:
     total = to;
     completed = 0;
     tick = std::chrono::steady_clock::now();
-    width = TerminalWidth();
-    space.resize(width, L' ');
-    scs.resize(width, L'#');
+    if (!InitializeInternal()) {
+      return;
+    }
+    initialized = true;
     start_time = tick;
+    space.resize(termsz.columns, L' ');
+    scs.resize(termsz.columns, L'#');
   }
   void Update(int64_t bytes) {
     std::wstring_view svspace(space);
     std::wstring_view svchars(scs);
-    auto k = width - 30;
+    auto k = termsz.columns - 30;
     completed += bytes;
     auto now = std::chrono::steady_clock::now();
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - tick)
@@ -83,16 +68,56 @@ public:
     tick = now;
   }
   void Refresh() {
-    //
+    if (initialized) {
+      return;
+    }
     bela::FPrintF(stderr, L"\r%s", space);
   }
 
 private:
+  bool CygwinTerminalSize() {
+    bela::process::Process ps;
+    constexpr DWORD flags =
+        bela::process::CAPTURE_USEIN | bela::process::CAPTURE_USEERR;
+    if (auto exitcode = ps.CaptureWithMode(flags, L"stty", L"size");
+        exitcode != 0) {
+      bela::FPrintF(stderr, L"stty %d: %s\n", exitcode, ps.ErrorCode().message);
+      return false;
+    }
+    auto out = bela::ToWide(ps.Out());
+    std::vector<std::wstring_view> ss =
+        bela::StrSplit(bela::StripTrailingAsciiWhitespace(out),
+                       bela::ByChar(' '), bela::SkipEmpty());
+    if (ss.size() != 2) {
+      return false;
+    }
+    if (!bela::SimpleAtoi(ss[0], &termsz.rows)) {
+      return false;
+    }
+    if (!bela::SimpleAtoi(ss[1], &termsz.columns)) {
+      return false;
+    }
+    if (termsz.columns < 80) {
+      termsz.columns = 80;
+    }
+    return true;
+  }
+  bool InitializeInternal() {
+    if (bela::terminal::IsTerminal(stderr)) {
+      bela::terminal::TerminalSize(stderr, termsz);
+      return true;
+    }
+    if (!bela::terminal::IsCygwinTerminal(stderr)) {
+      return false;
+    }
+    return true;
+  }
   std::wstring space;
   std::wstring scs;
+  bool initialized{false};
   int64_t total{0};
   int64_t completed{0};
-  uint32_t width{0};
+  bela::terminal::terminal_size termsz;
   std::chrono::steady_clock::time_point start_time;
   std::chrono::steady_clock::time_point tick;
 };

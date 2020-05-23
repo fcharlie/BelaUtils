@@ -1,7 +1,7 @@
 ///
 #include <bela/picker.hpp>
 #include <bela/strcat.hpp>
-#include <bela/stdwriter.hpp>
+#include <bela/terminal.hpp>
 #include <shellapi.h>
 #include "window.hpp"
 #include "kmutils.hpp"
