@@ -12,9 +12,7 @@ namespace kisasum {
 
 class FileAtomicWriter {
 public:
-  FileAtomicWriter(std::wstring_view p) : path(p) {
-    locktmp = bela::StringCat(path, L".locktmp");
-  }
+  FileAtomicWriter(std::wstring_view p) : path(p) { locktmp = bela::StringCat(path, L".locktmp"); }
   FileAtomicWriter(const FileAtomicWriter &) = delete;
   FileAtomicWriter &operator=(const FileAtomicWriter &) = delete;
   ~FileAtomicWriter() {
@@ -66,8 +64,7 @@ bool FileAtomicWriter::Flush() {
 
 // RGB(1,2,3)
 bool RgbColorExpand(std::string_view scr, std::uint32_t &cr) {
-  if (!kisasum::ConsumePrefix(&scr, "RGB(") ||
-      !kisasum::ConsumeSuffix(&scr, ")")) {
+  if (!kisasum::ConsumePrefix(&scr, "RGB(") || !kisasum::ConsumeSuffix(&scr, ")")) {
     return false;
   }
   uint32_t r = 0;
@@ -107,8 +104,7 @@ bool InitializeColorValue(std::string_view scr, std::uint32_t &cr) {
   return RgbColorExpand(scr, cr);
 }
 
-template <size_t N>
-std::string_view EncodeColor(std::uint32_t cr, char (&buf)[N]) {
+template <size_t N> std::string_view EncodeColor(std::uint32_t cr, char (&buf)[N]) {
   auto k = _snprintf_s(buf, N, "#%06X", cr);
   return std::string_view(buf, k);
 }
@@ -179,8 +175,7 @@ bool FlushKisasumOptions(const KisasumOptions &options) {
     if (!fw.Open()) {
       return false;
     }
-    if (fwrite(tojson.data(), 1, tojson.size(), fw.FileHandle()) !=
-        tojson.size()) {
+    if (fwrite(tojson.data(), 1, tojson.size(), fw.FileHandle()) != tojson.size()) {
       return false;
     }
     fw.Flush();

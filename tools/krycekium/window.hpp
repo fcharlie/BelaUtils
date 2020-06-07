@@ -16,12 +16,12 @@
 #include "executor.hpp"
 
 #ifndef SYSCOMMAND_ID_HANDLER
-#define SYSCOMMAND_ID_HANDLER(id, func)                                        \
-  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                         \
-    bHandled = TRUE;                                                           \
-    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);    \
-    if (bHandled)                                                              \
-      return TRUE;                                                             \
+#define SYSCOMMAND_ID_HANDLER(id, func)                                                            \
+  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                                             \
+    bHandled = TRUE;                                                                               \
+    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);                        \
+    if (bHandled)                                                                                  \
+      return TRUE;                                                                                 \
   }
 #endif
 
@@ -43,8 +43,7 @@ using namespace ATL;
 
 struct Label {
   Label() = default;
-  Label(LONG left, LONG top, LONG right, LONG bottom,
-        std::wstring_view sv = L"") {
+  Label(LONG left, LONG top, LONG right, LONG bottom, std::wstring_view sv = L"") {
     layout.left = left;
     layout.top = top;
     layout.right = right;
@@ -63,9 +62,8 @@ struct Label {
   const wchar_t *data() const { return text.data(); };
   UINT32 length() const { return static_cast<UINT32>(text.size()); }
   D2D1_RECT_F FR() const {
-    return D2D1::RectF(
-        static_cast<float>(layout.left), static_cast<float>(layout.top),
-        static_cast<float>(layout.right), static_cast<float>(layout.bottom));
+    return D2D1::RectF(static_cast<float>(layout.left), static_cast<float>(layout.top),
+                       static_cast<float>(layout.right), static_cast<float>(layout.bottom));
   }
   RECT layout;
   std::wstring text;
@@ -97,8 +95,7 @@ struct Widget {
 };
 
 constexpr const wchar_t *WindowName = L"Krycekium.Window";
-using WindowTraits =
-    CWinTraits<WS_OVERLAPPEDWINDOW, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE>;
+using WindowTraits = CWinTraits<WS_OVERLAPPEDWINDOW, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE>;
 // Per-Monitor DPI Aware
 
 class Window : public CWindowImpl<Window, CWindow, WindowTraits> {
@@ -127,22 +124,15 @@ public:
   LRESULT OnSize(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
   LRESULT OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
   LRESULT OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
-  LRESULT OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam,
-                          BOOL &bHandled);
+  LRESULT OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
   LRESULT OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
-  LRESULT OnExecutorNotify(UINT nMsg, WPARAM wParam, LPARAM lParam,
-                           BOOL &bHandle);
+  LRESULT OnExecutorNotify(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
   // Command Handle
-  LRESULT OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl,
-                           BOOL &bHandled);
-  LRESULT OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
-                       BOOL &bHandled);
-  LRESULT OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl,
-                       BOOL &bHandled);
-  LRESULT OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
-                        BOOL &bHandled);
-  LRESULT OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl,
-                       BOOL &bHandled);
+  LRESULT OnKrycekiumAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnSourceView(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnFolderView(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnExecuteTask(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnCancelTask(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
 
 private:
   // UI function
@@ -153,17 +143,16 @@ private:
   HRESULT RefreshDxFont();
   HRESULT RefreshGdiFont();
   //  Feature
-  bool MakeWidget(Widget &w, LPCWSTR cn, LPCWSTR text, DWORD ds, int x, int y,
-                  int cx, int cy, ptrdiff_t id) {
-    constexpr const auto wndex = WS_EX_LEFT | WS_EX_LTRREADING |
-                                 WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
+  bool MakeWidget(Widget &w, LPCWSTR cn, LPCWSTR text, DWORD ds, int x, int y, int cx, int cy,
+                  ptrdiff_t id) {
+    constexpr const auto wndex =
+        WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
     w.X = x;
     w.Y = y;
     w.W = cx;
     w.H = cy;
-    w.hWnd = ::CreateWindowExW(wndex, cn, text, ds, MulDiv(w.X, dpiX, 96),
-                               MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96),
-                               MulDiv(w.H, dpiX, 96), m_hWnd,
+    w.hWnd = ::CreateWindowExW(wndex, cn, text, ds, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
+                               MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), m_hWnd,
                                reinterpret_cast<HMENU>(id), hInst, nullptr);
     if (w.hWnd == nullptr) {
       return false;
@@ -171,21 +160,18 @@ private:
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }
-  bool MakeEdit(Widget &w, LPCWSTR text, int x, int y, int cx, int cy,
-                ptrdiff_t id) {
-    constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
-                               WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY |
-                               WS_EX_CLIENTEDGE;
-    constexpr const auto es = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE |
-                              WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+  bool MakeEdit(Widget &w, LPCWSTR text, int x, int y, int cx, int cy, ptrdiff_t id) {
+    constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
+                               WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
+    constexpr const auto es =
+        WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
     w.X = x;
     w.Y = y;
     w.W = cx;
     w.H = cy;
     w.hWnd = ::CreateWindowExW(eex, WC_EDITW, text, es, MulDiv(w.X, dpiX, 96),
-                               MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96),
-                               MulDiv(w.H, dpiX, 96), m_hWnd,
-                               reinterpret_cast<HMENU>(id), hInst, nullptr);
+                               MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96),
+                               m_hWnd, reinterpret_cast<HMENU>(id), hInst, nullptr);
     if (w.hWnd == nullptr) {
       return false;
     }
@@ -198,8 +184,7 @@ private:
       return false;
     }
     ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96),
-                   SWP_NOZORDER | SWP_NOACTIVATE);
+                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }

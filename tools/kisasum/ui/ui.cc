@@ -80,22 +80,21 @@ template <class Factory>
 bool Window::MakeWindow() {
   InitializeKisasumOptions(options);
   // initialize d2d1 factory and dwrite factory
-  if (!SUCCEEDED(
-          D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory))) {
+  if (!SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory))) {
     return false;
   }
   if (!SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &dwFactory))) {
     return false;
   }
-  if (!SUCCEEDED(dwFactory->CreateTextFormat(
-          options.font.data(), nullptr, DWRITE_FONT_WEIGHT_NORMAL,
-          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
-          reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
+  if (!SUCCEEDED(dwFactory->CreateTextFormat(options.font.data(), nullptr,
+                                             DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+                                             DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
+                                             reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
     return false;
   }
   if (!SUCCEEDED(dwFactory->CreateTextFormat(
-          L"Segoe MDL2 Assets", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
-          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 64.0f, L"zh-CN",
+          L"Segoe MDL2 Assets", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+          DWRITE_FONT_STRETCH_NORMAL, 64.0f, L"zh-CN",
           reinterpret_cast<IDWriteTextFormat **>(&dwIconFormat)))) {
     return false;
   }
@@ -112,13 +111,10 @@ bool Window::MakeWindow() {
   if (atom == 0) {
     return false;
   }
-  auto hWnd_ =
-      CreateWindowExW(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName,
-                      options.title.data(),
-                      WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
-                          WS_CLIPCHILDREN | WS_MINIMIZEBOX,
-                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                      CW_USEDEFAULT, nullptr, nullptr, wc.hInstance, this);
+  auto hWnd_ = CreateWindowExW(
+      WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName, options.title.data(),
+      WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX, CW_USEDEFAULT,
+      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, wc.hInstance, this);
 
   return hWnd_ != nullptr;
 }
@@ -133,8 +129,7 @@ void Window::RunMessageLoop() {
   }
 }
 
-LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
-                                  WPARAM const wparam,
+LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message, WPARAM const wparam,
                                   LPARAM const lparam) noexcept {
   assert(window);
   if (WM_NCCREATE == message) {
@@ -197,9 +192,8 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
 inline bool InitializeComboHash(HWND hWnd) {
   const constexpr wchar_t *hash[] = {
       //
-      L"MD5",     L"SHA1",       L"SHA224",     L"SHA256",     L"SHA384",
-      L"SHA512",  L"SHA3 - 224", L"SHA3 - 256", L"SHA3 - 384", L"SHA3 - 512",
-      L"BLAKE2s", L"BLAKE2b"
+      L"MD5",        L"SHA1",       L"SHA224",     L"SHA256",  L"SHA384", L"SHA512", L"SHA3 - 224",
+      L"SHA3 - 256", L"SHA3 - 384", L"SHA3 - 512", L"BLAKE2s", L"BLAKE2b"
       //
   };
   for (auto c : hash) {
@@ -209,9 +203,7 @@ inline bool InitializeComboHash(HWND hWnd) {
   return true;
 }
 
-LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
-  return S_OK;
-}
+LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept { return S_OK; }
 
 LRESULT Window::OnSize(WPARAM const wparam, LPARAM const lparam) noexcept {
   UINT width = LOWORD(lparam);
@@ -232,15 +224,13 @@ LRESULT Window::OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept {
   return S_OK;
 }
 
-LRESULT Window::OnDpiChanged(WPARAM const wparam,
-                             LPARAM const lparam) noexcept {
+LRESULT Window::OnDpiChanged(WPARAM const wparam, LPARAM const lparam) noexcept {
   dpiX = static_cast<UINT32>(LOWORD(wparam));
   dpiX = static_cast<UINT32>(HIWORD(wparam));
   auto prcNewWindow = reinterpret_cast<RECT *const>(lparam);
   // resize window with new DPI
   ::SetWindowPos(hWnd, nullptr, prcNewWindow->left, prcNewWindow->top,
-                 prcNewWindow->right - prcNewWindow->left,
-                 prcNewWindow->bottom - prcNewWindow->top,
+                 prcNewWindow->right - prcNewWindow->left, prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
   RefreshFont();
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
@@ -268,8 +258,7 @@ LRESULT Window::OnDropfiles(WPARAM const wparam, LPARAM const lparam) noexcept {
   return S_OK;
 }
 
-LRESULT Window::OnStaticColor(WPARAM const wparam,
-                              LPARAM const lparam) noexcept {
+LRESULT Window::OnStaticColor(WPARAM const wparam, LPARAM const lparam) noexcept {
   if (hbrBkgnd == nullptr) {
     hbrBkgnd = CreateSolidBrush(calcLuminance(options.panelcolor));
   }
@@ -280,13 +269,13 @@ bool Window::UpdateTheme() {
   FreeObj(&hbrBkgnd);
   Free(&AppPageBackgroundThemeBrush);
   RefreshFont();
-  auto hr = renderTarget->CreateSolidColorBrush(
-      D2D1::ColorF((UINT32)options.panelcolor), &AppPageBackgroundThemeBrush);
+  auto hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)options.panelcolor),
+                                                &AppPageBackgroundThemeBrush);
   Free(&dwFormat);
-  if (!SUCCEEDED(dwFactory->CreateTextFormat(
-          options.font.data(), nullptr, DWRITE_FONT_WEIGHT_NORMAL,
-          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
-          reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
+  if (!SUCCEEDED(dwFactory->CreateTextFormat(options.font.data(), nullptr,
+                                             DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+                                             DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
+                                             reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
     return false;
   }
   InvalidateRect(wUppercase.hWnd, nullptr, TRUE);
@@ -298,12 +287,10 @@ bool Window::UpdateTheme() {
 //
 LRESULT Window::DoTheme(WORD wNotifyCode) {
   static constexpr COLORREF colors[] = {
-      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
-      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
-      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
-      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
-      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
-      RGB(255, 255, 255),
+      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
+      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
+      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
+      RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255),
   };
 
   CHOOSECOLORW co;
@@ -328,8 +315,8 @@ LRESULT Window::DoTheme(WORD wNotifyCode) {
 
 ///
 LRESULT Window::DoAbout(WORD wNotifyCode) {
-  bela::BelaMessageBox(hWnd, L"About Kisasum Hash Utilities", FULL_COPYRIGHT,
-                       KISASUM_APPLINK, bela::mbs_t::ABOUT);
+  bela::BelaMessageBox(hWnd, L"About Kisasum Hash Utilities", FULL_COPYRIGHT, KISASUM_APPLINK,
+                       bela::mbs_t::ABOUT);
   return S_OK;
 }
 
@@ -355,7 +342,7 @@ void Window::DiscardDeviceResources() {
 
 HRESULT Window::OnRender() {
   constexpr std::wstring_view shuffle = L"\uE8B1";
-  //renderTarget->DrawEllipse()
+  // renderTarget->DrawEllipse()
   return S_OK;
 }
 

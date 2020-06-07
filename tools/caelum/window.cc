@@ -76,25 +76,23 @@ Window::~Window() {
 }
 
 template <class Factory>
-HRESULT DWriteCreateFactory(_In_ DWRITE_FACTORY_TYPE factoryType,
-                            _Out_ Factory **factory) {
+HRESULT DWriteCreateFactory(_In_ DWRITE_FACTORY_TYPE factoryType, _Out_ Factory **factory) {
   return ::DWriteCreateFactory(factoryType, __uuidof(Factory),
                                reinterpret_cast<IUnknown **>(factory));
 }
 
 bool Window::MakeWindow() {
   // initialize d2d1 factory and dwrite factory
-  if (!SUCCEEDED(
-          D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory))) {
+  if (!SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &factory))) {
     return false;
   }
   if (!SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &dwFactory))) {
     return false;
   }
-  if (!SUCCEEDED(dwFactory->CreateTextFormat(
-          L"Segeo UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
-          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN",
-          reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
+  if (!SUCCEEDED(dwFactory->CreateTextFormat(L"Segeo UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
+                                             DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+                                             16.0f, L"zh-CN",
+                                             reinterpret_cast<IDWriteTextFormat **>(&dwFormat)))) {
     return false;
   }
 
@@ -111,13 +109,10 @@ bool Window::MakeWindow() {
   if (atom == 0) {
     return false;
   }
-  auto hWnd_ =
-      CreateWindowExW(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName,
-                      L"Caelum \u2764 PE Analyzer ",
-                      WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
-                          WS_CLIPCHILDREN | WS_MINIMIZEBOX,
-                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                      CW_USEDEFAULT, nullptr, nullptr, wc.hInstance, this);
+  auto hWnd_ = CreateWindowExW(
+      WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, wc.lpszClassName, L"Caelum \u2764 PE Analyzer ",
+      WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX, CW_USEDEFAULT,
+      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, wc.hInstance, this);
 
   return hWnd_ != nullptr;
 }
@@ -141,20 +136,17 @@ HRESULT Window::CreateDeviceResources() {
   RECT rect;
   ::GetClientRect(hWnd, &rect);
   auto size = D2D1::SizeU(rect.right - rect.left, rect.bottom - rect.top);
-  hr = factory->CreateHwndRenderTarget(
-      D2D1::RenderTargetProperties(),
-      D2D1::HwndRenderTargetProperties(hWnd, size), &renderTarget);
+  hr = factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(),
+                                       D2D1::HwndRenderTargetProperties(hWnd, size), &renderTarget);
   if (!SUCCEEDED(hr)) {
     return hr;
   }
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
-  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black),
-                                           &textBrush);
+  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &textBrush);
   if (!SUCCEEDED(hr)) {
     return hr;
   }
-  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFC300),
-                                           &streaksbrush);
+  hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFC300), &streaksbrush);
   return hr;
 }
 
@@ -176,8 +168,8 @@ HRESULT Window::OnRender() {
   renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 1.0f));
   AttributesTablesDraw();
   for (const auto &l : labels) {
-    renderTarget->DrawTextW(l.data(), l.length(), dwFormat, l.layout(),
-                            textBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+    renderTarget->DrawTextW(l.data(), l.length(), dwFormat, l.layout(), textBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
                             DWRITE_MEASURING_MODE_NATURAL);
   }
   hr = renderTarget->EndDraw();
@@ -201,14 +193,13 @@ void Window::AttributesTablesDraw() {
   float xoff = 60;
   for (const auto &e : tables.ats) {
     renderTarget->DrawTextW(e.name.c_str(), (UINT32)e.name.size(), dwFormat,
-                            D2D1::RectF(xoff, offset, keyoff, offset + w1),
-                            textBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            D2D1::RectF(xoff, offset, keyoff, offset + w1), textBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
                             DWRITE_MEASURING_MODE_NATURAL);
-    renderTarget->DrawTextW(
-        e.value.c_str(), (UINT32)e.value.size(), dwFormat,
-        D2D1::RectF(keyoff + 10, offset, keyoff + 400, offset + w1), textBrush,
-        D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-        DWRITE_MEASURING_MODE_NATURAL);
+    renderTarget->DrawTextW(e.value.c_str(), (UINT32)e.value.size(), dwFormat,
+                            D2D1::RectF(keyoff + 10, offset, keyoff + 400, offset + w1), textBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
     offset += w1;
   }
   if (!tables.HasDepends()) {
@@ -217,17 +208,14 @@ void Window::AttributesTablesDraw() {
   auto ch = tables.Characteristics();
   auto depends = tables.Depends();
   renderTarget->DrawTextW(ch.data(), (UINT32)ch.size(), dwFormat,
-                          D2D1::RectF(xoff, offset, keyoff, offset + w2),
-                          textBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                          DWRITE_MEASURING_MODE_NATURAL);
-  renderTarget->DrawTextW(
-      depends.data(), (UINT32)depends.size(), dwFormat,
-      D2D1::RectF(xoff, offset + w2, keyoff, offset + w2 + w2), textBrush,
-      D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
+                          D2D1::RectF(xoff, offset, keyoff, offset + w2), textBrush,
+                          D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
+  renderTarget->DrawTextW(depends.data(), (UINT32)depends.size(), dwFormat,
+                          D2D1::RectF(xoff, offset + w2, keyoff, offset + w2 + w2), textBrush,
+                          D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
 }
 
-LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message,
-                                  WPARAM const wparam,
+LRESULT WINAPI Window::WindowProc(HWND const window, UINT const message, WPARAM const wparam,
                                   LPARAM const lparam) noexcept {
   assert(window);
   if (WM_NCCREATE == message) {
@@ -288,8 +276,8 @@ LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
   SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
   int cx = rect.right - rect.left;
   auto w = MulDiv(720, dpiX, 96);
-  SetWindowPos(hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w,
-               MulDiv(500, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
+  SetWindowPos(hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w, MulDiv(500, dpiX, 96),
+               SWP_NOZORDER | SWP_NOACTIVATE);
   RefreshFont(hFont, dpiX);
   if (hFont == nullptr) {
     hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -311,20 +299,16 @@ LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, ui::about,
               L"About Caelum \u2764 PE analysis tool\tAlt+F1");
 
-  constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING |
-                             WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY |
-                             WS_EX_CLIENTEDGE;
-  constexpr const auto es = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE |
-                            WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
-  constexpr const auto bex = WS_EX_LEFT | WS_EX_LTRREADING |
-                             WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
-  constexpr const auto bs =
-      BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
+  constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
+                             WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
+  constexpr const auto es =
+      WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+  constexpr const auto bex =
+      WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
+  constexpr const auto bs = BS_PUSHBUTTON | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE;
 
-  CreateSubWindow(eex, WC_EDITW, L"", es, 60, 40, 510, 27, HMENU(ui::editor),
-                  wUrl);
-  CreateSubWindow(bex, WC_BUTTONW, L"...", bs, 575, 40, 65, 27,
-                  HMENU(ui::picker), wPicker);
+  CreateSubWindow(eex, WC_EDITW, L"", es, 60, 40, 510, 27, HMENU(ui::editor), wUrl);
+  CreateSubWindow(bex, WC_BUTTONW, L"...", bs, 575, 40, 65, 27, HMENU(ui::picker), wPicker);
 
   int numArgc = 0;
   auto Argv = ::CommandLineToArgvW(GetCommandLineW(), &numArgc);
@@ -357,15 +341,13 @@ LRESULT Window::OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept {
   return S_OK;
 }
 
-LRESULT Window::OnDpiChanged(WPARAM const wparam,
-                             LPARAM const lparam) noexcept {
+LRESULT Window::OnDpiChanged(WPARAM const wparam, LPARAM const lparam) noexcept {
   dpiX = static_cast<UINT32>(LOWORD(wparam));
   dpiX = static_cast<UINT32>(HIWORD(wparam));
   auto prcNewWindow = reinterpret_cast<RECT *const>(lparam);
   // resize window with new DPI
   ::SetWindowPos(hWnd, nullptr, prcNewWindow->left, prcNewWindow->top,
-                 prcNewWindow->right - prcNewWindow->left,
-                 prcNewWindow->bottom - prcNewWindow->top,
+                 prcNewWindow->right - prcNewWindow->left, prcNewWindow->bottom - prcNewWindow->top,
                  SWP_NOZORDER | SWP_NOACTIVATE);
   RefreshFont(hFont, dpiY);
   renderTarget->SetDpi(static_cast<float>(dpiX), static_cast<float>(dpiX));
@@ -396,8 +378,7 @@ LRESULT Window::OnDropfiles(WPARAM const wparam, LPARAM const lparam) noexcept {
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/controls/wm-ctlcolorstatic
-LRESULT Window::OnStaticColor(WPARAM const wparam,
-                              LPARAM const lparam) noexcept {
+LRESULT Window::OnStaticColor(WPARAM const wparam, LPARAM const lparam) noexcept {
   if (hbrBkgnd == nullptr) {
     hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
   }
@@ -406,19 +387,17 @@ LRESULT Window::OnStaticColor(WPARAM const wparam,
 
 LRESULT Window::DoAbout(WORD wNotifyCode) {
   // show about
-  bela::BelaMessageBox(hWnd, L"About Caelum \u2764 PE analysis tool",
-                       FULL_COPYRIGHT, CAELUM_APPLINK, bela::mbs_t::ABOUT);
+  bela::BelaMessageBox(hWnd, L"About Caelum \u2764 PE analysis tool", FULL_COPYRIGHT,
+                       CAELUM_APPLINK, bela::mbs_t::ABOUT);
   return S_OK;
 }
 
 LRESULT Window::DoPicker(WORD wNotifyCode) {
   constexpr const bela::filter_t filters[] = {
-      {L"Windows  Execute File (*.exe;*.com;*.dll;*.sys)",
-       L"*.exe;*.com;*.dll;*.sys"},
+      {L"Windows  Execute File (*.exe;*.com;*.dll;*.sys)", L"*.exe;*.com;*.dll;*.sys"},
       {L"Windows Other File (*.scr;*.fon;*.drv)", L"*.scr;*.fon;*.drv"},
       {L"All Files (*.*)", L"*.*"}};
-  auto file =
-      bela::FilePicker(hWnd, L"Select PE file", filters, std::size(filters));
+  auto file = bela::FilePicker(hWnd, L"Select PE file", filters, std::size(filters));
   if (!file) {
     //
     return S_OK;
@@ -461,9 +440,8 @@ bool Window::ResolveLink(std::wstring_view file) {
   if (!link) {
     bela::BelaMessageBox(
         hWnd, L"unable lookup file link",
-        bela::StringCat(L"File: ", BaseName(file), L"\nError: ", ec.message)
-            .data(),
-        nullptr, bela::mbs_t::FATAL);
+        bela::StringCat(L"File: ", BaseName(file), L"\nError: ", ec.message).data(), nullptr,
+        bela::mbs_t::FATAL);
     return false;
   }
   ::SetWindowTextW(wUrl.hWnd, link->data());

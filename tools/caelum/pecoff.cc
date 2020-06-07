@@ -32,8 +32,7 @@ bool Window::InquisitivePE() {
   bela::error_code ec;
   auto pea = bela::pe::Expose(path, ec);
   if (!pea) {
-    bela::BelaMessageBox(hWnd, L"Inquisitive PE ", ec.message.data(), nullptr,
-                         bela::mbs_t::FATAL);
+    bela::BelaMessageBox(hWnd, L"Inquisitive PE ", ec.message.data(), nullptr, bela::mbs_t::FATAL);
     return false;
   }
   auto vi = bela::pe::ExposeVersion(path, ec);
@@ -41,10 +40,8 @@ bool Window::InquisitivePE() {
   if (vi) {
     tables.Append(L"ProductName:", vi->ProductName);
   }
-  tables.Append(L"Machine:",
-                caelum::Machine(static_cast<uint32_t>(pea->machine)));
-  tables.Append(L"Subsystem:",
-                caelum::Subsystem(static_cast<uint32_t>(pea->subsystem)));
+  tables.Append(L"Machine:", caelum::Machine(static_cast<uint32_t>(pea->machine)));
+  tables.Append(L"Subsystem:", caelum::Subsystem(static_cast<uint32_t>(pea->subsystem)));
   tables.Append(L"OS Version:", pea->osver.Str());
   tables.Append(L"Link Version:", pea->linkver.Str());
   if (!pea->clrmsg.empty()) {
@@ -58,8 +55,7 @@ bool Window::InquisitivePE() {
   if (hasProductName) {
     y += 30;
   }
-  auto charsv =
-      caelum::Characteristics(pea->characteristics, pea->dllcharacteristics);
+  auto charsv = caelum::Characteristics(pea->characteristics, pea->dllcharacteristics);
   // depends lab append
 
   auto strcharsv = flatvector(charsv);
@@ -69,14 +65,12 @@ bool Window::InquisitivePE() {
     bela::StrAppend(&depends, L"**below is delay**\r\n", delaydepends);
   }
 
-  constexpr auto es = WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL |
-                      ES_LEFT | ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY;
-  constexpr auto exs = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
-                       WS_EX_NOPARENTNOTIFY;
-  CreateSubWindow(exs, WC_EDITW, strcharsv.data(), es, 185, (int)y, 460, 60,
-                  nullptr, wCharacteristics);
-  CreateSubWindow(exs, WC_EDITW, depends.data(), es, 185, (int)y + 65, 460, 80,
-                  nullptr, wDepends);
+  constexpr auto es = WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | ES_LEFT |
+                      ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY;
+  constexpr auto exs = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
+  CreateSubWindow(exs, WC_EDITW, strcharsv.data(), es, 185, (int)y, 460, 60, nullptr,
+                  wCharacteristics);
+  CreateSubWindow(exs, WC_EDITW, depends.data(), es, 185, (int)y + 65, 460, 80, nullptr, wDepends);
   return true;
 }
 

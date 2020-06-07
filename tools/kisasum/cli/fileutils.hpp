@@ -24,8 +24,8 @@ private:
 };
 
 inline bool FileUtils::Open(std::wstring_view path, bela::error_code &ec) {
-  FileHandle = CreateFileW(path.data(), GENERIC_READ, FILE_SHARE_READ, NULL,
-                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  FileHandle = CreateFileW(path.data(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, nullptr);
   if (FileHandle == INVALID_HANDLE_VALUE) {
     ec = bela::make_system_error_code();
     return false;

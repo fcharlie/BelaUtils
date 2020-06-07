@@ -9,8 +9,7 @@
 
 namespace caelum {
 std::wstring fromascii(std::string_view sv) {
-  auto sz =
-      MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
+  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
   std::wstring output;
   output.resize(sz);
   // C++17 must output.data()
@@ -20,8 +19,7 @@ std::wstring fromascii(std::string_view sv) {
 
 class shl_memview {
 public:
-  shl_memview(const char *data__, size_t size__)
-      : data_(data__), size_(size__) {
+  shl_memview(const char *data__, size_t size__) : data_(data__), size_(size__) {
     //
   }
   // --> perpare shl memview
@@ -139,8 +137,7 @@ struct link_details_t {
   std::wstring relativepath;
 };
 
-std::optional<std::wstring> ResolveShLink(std::wstring_view sv,
-                                          bela::error_code &ec) {
+std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code &ec) {
   if (sv.size() < 4 || sv.compare(sv.size() - 4, 4, L".lnk") != 0) {
     return std::make_optional(std::wstring(sv));
   }
@@ -214,9 +211,8 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv,
   return std::make_optional(target);
 }
 
-std::optional<std::wstring>
-FindAttributeName(const std::vector<bela::FileAttributePair> &attrs,
-                  std::wstring_view name) {
+std::optional<std::wstring> FindAttributeName(const std::vector<bela::FileAttributePair> &attrs,
+                                              std::wstring_view name) {
   for (const auto &a : attrs) {
     if (name == a.name) {
       return std::make_optional(a.value);
@@ -226,13 +222,11 @@ FindAttributeName(const std::vector<bela::FileAttributePair> &attrs,
 }
 
 inline bool IsTarget(unsigned long i) {
-  return i == bela::ReparsePointTagIndex::APPEXECLINK ||
-         i == bela::ReparsePointTagIndex::SYMLINK ||
+  return i == bela::ReparsePointTagIndex::APPEXECLINK || i == bela::ReparsePointTagIndex::SYMLINK ||
          i == bela::ReparsePointTagIndex::MOUNT_POINT;
 }
 
-std::optional<std::wstring> ResolveLink(std::wstring_view file,
-                                        bela::error_code &ec) {
+std::optional<std::wstring> ResolveLink(std::wstring_view file, bela::error_code &ec) {
   bela::ReparsePoint rp;
   if (!rp.Analyze(file, ec)) {
     if (ec.code != ERROR_NOT_A_REPARSE_POINT) {

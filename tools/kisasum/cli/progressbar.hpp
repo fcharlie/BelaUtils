@@ -12,12 +12,7 @@ namespace kisasum {
 
 class ProgressBar {
 public:
-  enum : uint64_t {
-    KB = 1024,
-    XKB = 10 * 1024,
-    MB = 1024 * 1024,
-    GB = 1024ULL * 1024 * 1024
-  };
+  enum : uint64_t { KB = 1024, XKB = 10 * 1024, MB = 1024 * 1024, GB = 1024ULL * 1024 * 1024 };
   ProgressBar() = default;
   ProgressBar(const ProgressBar &) = delete;
   ProgressBar &operator=(const ProgressBar &) = delete;
@@ -39,10 +34,8 @@ public:
     auto k = termsz.columns - 30;
     completed += bytes;
     auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - tick)
-            .count() > 10) {
-      auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
-          tick - start_time);
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - tick).count() > 10) {
+      auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(tick - start_time);
       auto speed = completed * 1000'000'000 / diff.count();
       auto N = completed * 100 / total;
       auto X = N * k / 100;
@@ -62,8 +55,8 @@ public:
       } else {
         _snwprintf_s(buf, 64, L"%lld B ", speed);
       }
-      bela::FPrintF(stdout, L"\x1b[2K\r[%s%s%s] %s %d%% completed.",
-                    svchars.substr(0, X), arrow, svspace.substr(0, Y), buf, N);
+      bela::FPrintF(stdout, L"\x1b[2K\r[%s%s%s] %s %d%% completed.", svchars.substr(0, X), arrow,
+                    svspace.substr(0, Y), buf, N);
     }
     tick = now;
   }
@@ -77,17 +70,14 @@ public:
 private:
   bool CygwinTerminalSize() {
     bela::process::Process ps;
-    constexpr DWORD flags =
-        bela::process::CAPTURE_USEIN | bela::process::CAPTURE_USEERR;
-    if (auto exitcode = ps.CaptureWithMode(flags, L"stty", L"size");
-        exitcode != 0) {
+    constexpr DWORD flags = bela::process::CAPTURE_USEIN | bela::process::CAPTURE_USEERR;
+    if (auto exitcode = ps.CaptureWithMode(flags, L"stty", L"size"); exitcode != 0) {
       bela::FPrintF(stderr, L"stty %d: %s\n", exitcode, ps.ErrorCode().message);
       return false;
     }
     auto out = bela::ToWide(ps.Out());
-    std::vector<std::wstring_view> ss =
-        bela::StrSplit(bela::StripTrailingAsciiWhitespace(out),
-                       bela::ByChar(' '), bela::SkipEmpty());
+    std::vector<std::wstring_view> ss = bela::StrSplit(bela::StripTrailingAsciiWhitespace(out),
+                                                       bela::ByChar(' '), bela::SkipEmpty());
     if (ss.size() != 2) {
       return false;
     }

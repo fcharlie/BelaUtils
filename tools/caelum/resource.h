@@ -30,14 +30,13 @@
 #define CAELUM_BUILD_VERSION PRIV_VERSION_FULL L"." PRIVSUBVER L" (dev)"
 #endif
 
-#define CAELUM_APPLINK                                                         \
-  L"For more information about this tool. \nVisit: <a "                        \
-  L"href=\"https://github.com/fcharlie/BelaUtils\">Caelum</a>\nVisit: <a "     \
+#define CAELUM_APPLINK                                                                             \
+  L"For more information about this tool. \nVisit: <a "                                            \
+  L"href=\"https://github.com/fcharlie/BelaUtils\">Caelum</a>\nVisit: <a "                         \
   L"href=\"https://forcemz.net/\">forcemz.net</a>"
 
 #define COPYRIGHT L"Copyright \xA9 2020 Force Charlie, All Rights Reserved."
-#define FULL_COPYRIGHT                                                         \
-  L"Prerelease: 2.0\nCopyright \xA9 2020, Force Charlie. All Rights Reserved."
+#define FULL_COPYRIGHT L"Prerelease: 2.0\nCopyright \xA9 2020, Force Charlie. All Rights Reserved."
 
 // ICON
 #define IDI_CAELUM_ICON 500

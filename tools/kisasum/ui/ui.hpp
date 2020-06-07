@@ -23,11 +23,9 @@ namespace ui {
 struct rgb {
   constexpr rgb() : r(0), g(0), b(0) {}
   constexpr rgb(uint8_t r_, uint8_t g_, uint8_t b_) : r(r_), g(g_), b(b_) {}
-  constexpr rgb(uint32_t hex)
-      : r((hex >> 16) & 0xFF), g((hex >> 8) & 0xFF), b(hex & 0xFF) {}
+  constexpr rgb(uint32_t hex) : r((hex >> 16) & 0xFF), g((hex >> 8) & 0xFF), b(hex & 0xFF) {}
   constexpr rgb(COLORREF hex)
-      : r((uint32_t(hex) >> 16) & 0xFF), g((uint32_t(hex) >> 8) & 0xFF),
-        b(uint32_t(hex) & 0xFF) {}
+      : r((uint32_t(hex) >> 16) & 0xFF), g((uint32_t(hex) >> 8) & 0xFF), b(uint32_t(hex) & 0xFF) {}
   uint8_t r;
   uint8_t g;
   uint8_t b;
@@ -54,8 +52,7 @@ inline COLORREF calcLuminance(UINT32 cr) {
 
 struct Label {
   Label() = default;
-  Label(std::wstring_view sv, LONG left, LONG top, LONG right, LONG bottom)
-      : content(sv) {
+  Label(std::wstring_view sv, LONG left, LONG top, LONG right, LONG bottom) : content(sv) {
     mlayout = D2D1::RectF((float)left, (float)top, (float)right, (float)bottom);
   }
   const wchar_t *data() const { return content.data(); }
@@ -80,9 +77,7 @@ struct Widget {
   }
   void Visible(BOOL v) { EnableWindow(hWnd, v); }
   bool IsVisible() const { return IsWindowVisible(hWnd) == TRUE; }
-  bool IsChecked() const {
-    return (hWnd != nullptr && Button_GetCheck(hWnd) == BST_CHECKED);
-  }
+  bool IsChecked() const { return (hWnd != nullptr && Button_GetCheck(hWnd) == BST_CHECKED); }
   void Content(std::wstring_view text) { ::SetWindowTextW(hWnd, text.data()); }
   std::wstring Content() {
     auto n = GetWindowTextLengthW(hWnd);
@@ -102,8 +97,7 @@ private:
   static Window *GetThisFromHandle(HWND const window) noexcept {
     return reinterpret_cast<Window *>(GetWindowLongPtr(window, GWLP_USERDATA));
   }
-  LRESULT MessageHandler(UINT const message, WPARAM const wparam,
-                         LPARAM const lparam) noexcept;
+  LRESULT MessageHandler(UINT const message, WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnSize(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept;
@@ -125,13 +119,11 @@ private:
   bool RefreshFont();
 
   //
-  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName,
-                       LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
-                       int nWidth, int nHeight, HMENU hMenu, Widget &w) {
-    auto hw = CreateWindowExW(
-        dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
-        MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
-        MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
+  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle,
+                       int X, int Y, int nWidth, int nHeight, HMENU hMenu, Widget &w) {
+    auto hw = CreateWindowExW(dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
+                              MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
+                              MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
     if (hw == nullptr) {
       return false;
     }
@@ -149,8 +141,7 @@ private:
       return false;
     }
     ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96),
-                   SWP_NOZORDER | SWP_NOACTIVATE);
+                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }
@@ -161,8 +152,7 @@ public:
   bool MakeWindow();
   void RunMessageLoop();
   /// static
-  static LRESULT WINAPI WindowProc(HWND const window, UINT const message,
-                                   WPARAM const wparam,
+  static LRESULT WINAPI WindowProc(HWND const window, UINT const message, WPARAM const wparam,
                                    LPARAM const lparam) noexcept;
 
 private:

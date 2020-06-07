@@ -134,9 +134,9 @@ struct shl_cnr_link_t {
   uint32_t cbSize;
   /* Specifies which fields are present/populated (SLI_CNR_*) */
   uint32_t dwFlags;
-  /* Offset of the NetName field (ANSI, NULL¨Cterminated string) */
+  /* Offset of the NetName field (ANSI, NULLï¿½Cterminated string) */
   uint32_t cbNetNameOffset;
-  /* Offset of the DeviceName field (ANSI, NULL¨Cterminated string) */
+  /* Offset of the DeviceName field (ANSI, NULLï¿½Cterminated string) */
   uint32_t cbDeviceNameOffset;
   /* Type of the network provider (WNNC_NET_* defined in winnetwk.h) */
   uint32_t dwNetworkProviderType;
@@ -147,15 +147,15 @@ struct shl_cnr_linkw_t {
   uint32_t cbSize;
   /* Specifies which fields are present/populated (SLI_CNR_*) */
   uint32_t dwFlags;
-  /* Offset of the NetName field (ANSI, NULL¨Cterminated string) */
+  /* Offset of the NetName field (ANSI, NULLï¿½Cterminated string) */
   uint32_t cbNetNameOffset;
-  /* Offset of the DeviceName field (ANSI, NULL¨Cterminated string) */
+  /* Offset of the DeviceName field (ANSI, NULLï¿½Cterminated string) */
   uint32_t cbDeviceNameOffset;
   /* Type of the network provider (WNNC_NET_* defined in winnetwk.h) */
   uint32_t dwNetworkProviderType;
-  /* Offset of the NetNameUnicode field (Unicode, NULL¨Cterminated string) */
+  /* Offset of the NetNameUnicode field (Unicode, NULLï¿½Cterminated string) */
   uint32_t cbNetNameUnicodeOffset;
-  /* Offset of the DeviceNameUnicode field (Unicode, NULL¨Cterminated string) */
+  /* Offset of the DeviceNameUnicode field (Unicode, NULLï¿½Cterminated string) */
   uint32_t cbDeviceNameUnicodeOffset;
 };
 

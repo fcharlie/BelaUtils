@@ -44,8 +44,7 @@ private:
 };
 
 // install_ui_callback
-INT WINAPI install_ui_callback(LPVOID ctx, UINT iMessageType,
-                               LPCWSTR szMessage) {
+INT WINAPI install_ui_callback(LPVOID ctx, UINT iMessageType, LPCWSTR szMessage) {
   auto sender = reinterpret_cast<Sender *>(ctx);
   return sender->InstallHandler(iMessageType, szMessage);
 }
@@ -130,8 +129,7 @@ void Sender::DoProgress(LPWSTR szMessage) {
     break;
   case 1:
     if (pf.field[2] != 0) {
-      Progress(PBM_SETSTEP, mForwardProgress ? pf.field[1] : -1 * pf.field[1],
-               0);
+      Progress(PBM_SETSTEP, mForwardProgress ? pf.field[1] : -1 * pf.field[1], 0);
       mEnableActionData = true;
       break;
     }
@@ -166,12 +164,10 @@ INT Sender::InstallHandler(UINT iMessageType, LPCWSTR szMessage) {
     return 1;
   case INSTALLMESSAGE_ERROR: {
     MessageBeep(uiflags & MB_ICONMASK);
-    return ::MessageBoxEx(hWnd_, szMessage, TEXT("Error"), uiflags,
-                          LANG_NEUTRAL);
+    return ::MessageBoxEx(hWnd_, szMessage, TEXT("Error"), uiflags, LANG_NEUTRAL);
   };
   case INSTALLMESSAGE_WARNING:
-    bela::BelaMessageBox(hWnd_, L"Install message warning", szMessage, nullptr,
-                         bela::mbs_t::WARN);
+    bela::BelaMessageBox(hWnd_, L"Install message warning", szMessage, nullptr, bela::mbs_t::WARN);
     break;
   case INSTALLMESSAGE_USER:
     return IDOK;
@@ -216,19 +212,16 @@ INT Sender::InstallHandler(UINT iMessageType, LPCWSTR szMessage) {
 bool Executor::execute(Packet &pk) {
   auto cmd = bela::StringCat(L"ACTION=ADMIN TARGETDIR=\"", pk.outdir, L"\"");
   Sender sender(pk.hWnd, pk.hProgress, *this);
-  MsiSetInternalUI(
-      INSTALLUILEVEL(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY),
-      nullptr);
-  MsiSetExternalUIW(
-      install_ui_callback,
-      INSTALLLOGMODE_PROGRESS | INSTALLLOGMODE_FATALEXIT |
-          INSTALLLOGMODE_ERROR | INSTALLLOGMODE_WARNING | INSTALLLOGMODE_USER |
-          INSTALLLOGMODE_INFO | INSTALLLOGMODE_RESOLVESOURCE |
-          INSTALLLOGMODE_OUTOFDISKSPACE | INSTALLLOGMODE_ACTIONSTART |
-          INSTALLLOGMODE_ACTIONDATA | INSTALLLOGMODE_COMMONDATA |
-          INSTALLLOGMODE_PROGRESS | INSTALLLOGMODE_INITIALIZE |
-          INSTALLLOGMODE_TERMINATE | INSTALLLOGMODE_SHOWDIALOG,
-      &sender);
+  MsiSetInternalUI(INSTALLUILEVEL(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY), nullptr);
+  MsiSetExternalUIW(install_ui_callback,
+                    INSTALLLOGMODE_PROGRESS | INSTALLLOGMODE_FATALEXIT | INSTALLLOGMODE_ERROR |
+                        INSTALLLOGMODE_WARNING | INSTALLLOGMODE_USER | INSTALLLOGMODE_INFO |
+                        INSTALLLOGMODE_RESOLVESOURCE | INSTALLLOGMODE_OUTOFDISKSPACE |
+                        INSTALLLOGMODE_ACTIONSTART | INSTALLLOGMODE_ACTIONDATA |
+                        INSTALLLOGMODE_COMMONDATA | INSTALLLOGMODE_PROGRESS |
+                        INSTALLLOGMODE_INITIALIZE | INSTALLLOGMODE_TERMINATE |
+                        INSTALLLOGMODE_SHOWDIALOG,
+                    &sender);
   if (MsiInstallProductW(pk.msi.data(), cmd.data()) == ERROR_SUCCESS) {
     sender.Notify(krycekium::Status::Completed, 0);
     return true;
@@ -265,8 +258,8 @@ bool Executor::InitializeExecutor() {
   return !!t;
 }
 
-bool Executor::PushEvent(std::wstring_view msi, std::wstring_view outdir,
-                         HWND hWnd, HWND hProgress) {
+bool Executor::PushEvent(std::wstring_view msi, std::wstring_view outdir, HWND hWnd,
+                         HWND hProgress) {
   canceled = false;
   {
     std::unique_lock<std::recursive_mutex> lock(mtx);

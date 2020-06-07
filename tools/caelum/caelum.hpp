@@ -14,7 +14,7 @@
 #include <bela/base.hpp>
 
 namespace caelum {
-  std::optional<std::wstring> ResolveLink(std::wstring_view file,bela::error_code &ec);
+std::optional<std::wstring> ResolveLink(std::wstring_view file, bela::error_code &ec);
 }
 
 #endif

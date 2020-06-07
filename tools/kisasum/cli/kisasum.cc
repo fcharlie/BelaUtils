@@ -119,8 +119,8 @@ std::optional<kisasum_result> kisasum_one_json(std::wstring_view file,
     sumizer->Update(buffer, dw);
   }
   if (total != fu.FileSize()) {
-    bela::FPrintF(stderr, L"sum file hash error, file size: %d but read %d\n",
-                  fu.FileSize(), total);
+    bela::FPrintF(stderr, L"sum file hash error, file size: %d but read %d\n", fu.FileSize(),
+                  total);
     return std::nullopt;
   }
   std::wstring hashhex;
@@ -131,8 +131,7 @@ std::optional<kisasum_result> kisasum_one_json(std::wstring_view file,
   return std::make_optional(kisasum_result{filename, hashhex});
 }
 
-bool kisasum_execute_json(const kisasum_options &opt,
-                          belautils::algorithm::hash_t h) {
+bool kisasum_execute_json(const kisasum_options &opt, belautils::algorithm::hash_t h) {
   bool ok = true;
   try {
     nlohmann::json j;
@@ -190,8 +189,8 @@ void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
   }
   if (total != fu.FileSize()) {
     pb.Refresh();
-    bela::FPrintF(stderr, L"\nsum file hash error, file size: %d but read %d\n",
-                  fu.FileSize(), total);
+    bela::FPrintF(stderr, L"\nsum file hash error, file size: %d but read %d\n", fu.FileSize(),
+                  total);
     return;
   }
   std::wstring hashhex;

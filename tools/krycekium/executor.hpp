@@ -58,8 +58,7 @@ public:
     }
   }
   bool InitializeExecutor();
-  bool PushEvent(std::wstring_view msi, std::wstring_view outdir, HWND hWnd,
-                 HWND hProgress);
+  bool PushEvent(std::wstring_view msi, std::wstring_view outdir, HWND hWnd, HWND hProgress);
   // cancel current task
   void Cancel() { canceled = true; }
   bool IsCanceled() const { return canceled; }

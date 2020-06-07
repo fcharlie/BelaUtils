@@ -31,8 +31,7 @@ struct AttributesTable {
 
 struct Label {
   Label() = default;
-  Label(std::wstring_view sv, LONG left, LONG top, LONG right, LONG bottom)
-      : content(sv) {
+  Label(std::wstring_view sv, LONG left, LONG top, LONG right, LONG bottom) : content(sv) {
     mlayout = D2D1::RectF((float)left, (float)top, (float)right, (float)bottom);
   }
   const wchar_t *data() const { return content.data(); }
@@ -111,8 +110,7 @@ private:
   static Window *GetThisFromHandle(HWND const window) noexcept {
     return reinterpret_cast<Window *>(GetWindowLongPtr(window, GWLP_USERDATA));
   }
-  LRESULT MessageHandler(UINT const message, WPARAM const wparam,
-                         LPARAM const lparam) noexcept;
+  LRESULT MessageHandler(UINT const message, WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnSize(WPARAM const wparam, LPARAM const lparam) noexcept;
   LRESULT OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept;
@@ -130,13 +128,11 @@ private:
   void AttributesTablesDraw();
   bool InquisitivePE();
   bool ResolveLink(std::wstring_view file);
-  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName,
-                       LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
-                       int nWidth, int nHeight, HMENU hMenu, Widget &w) {
-    auto hw = CreateWindowExW(
-        dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
-        MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
-        MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
+  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle,
+                       int X, int Y, int nWidth, int nHeight, HMENU hMenu, Widget &w) {
+    auto hw = CreateWindowExW(dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
+                              MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
+                              MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
     if (hw == nullptr) {
       return false;
     }
@@ -154,8 +150,7 @@ private:
       return false;
     }
     ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96),
-                   SWP_NOZORDER | SWP_NOACTIVATE);
+                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }
@@ -165,8 +160,7 @@ public:
   ~Window();
   bool MakeWindow();
   void RunMessageLoop();
-  static LRESULT WINAPI WindowProc(HWND const window, UINT const message,
-                                   WPARAM const wparam,
+  static LRESULT WINAPI WindowProc(HWND const window, UINT const message, WPARAM const wparam,
                                    LPARAM const lparam) noexcept;
 
 private:
