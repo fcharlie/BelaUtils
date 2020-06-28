@@ -172,7 +172,6 @@ void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
     return;
   }
   kisasum::ProgressBar bar;
-  bela::FPrintF(stderr, L"Maximum: %d\n", fu.FileSize());
   bar.Maximum(static_cast<uint64_t>(fu.FileSize()));
   bar.Execute();
   unsigned char buffer[8192];
