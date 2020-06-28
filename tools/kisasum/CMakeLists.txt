@@ -19,6 +19,7 @@ target_link_libraries(kisasum-ui
 
 add_executable(kisasum
   cli/kisasum.cc
+  cli/indicators.cc
 )
 
 target_link_libraries(kisasum
