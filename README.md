@@ -12,13 +12,18 @@ Caelum is derived from [PEAnalyzer](https://github.com/fcharlie/PEAnalyzer/), wh
 
 ## Kisasum Hash Utilities
 
-Kisasum is derived from [Kismet](https://github.com/fcharlie/Kismet) and is a CUI hash calculation tool that supports SHA1/SHA228/SHA256/SHA384/SHA512/SHA3/BLAKE2/BAKE3
+Kisasum is derived from [Kismet](https://github.com/fcharlie/Kismet) and is a CUI hash calculation tool that supports SHA1/SHA228/SHA256/SHA384/SHA512/SHA3/BAKE3
 
 
 ## Krycekium MSI unpacker
 
 Krycekium is derived from  [Krycekium](https://github.com/fcharlie/Krycekium) and is an MSI installation package decompression tool.
 
+## hastyhex
+
+A faster hex dumper fork from [https://github.com/skeeto/hastyhex](https://github.com/skeeto/hastyhex). 
+
+![](./docs/images/hastyhex.png)
 
 ## Download
 
