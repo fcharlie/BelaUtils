@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <ppltasks.h>
 #include <bela/picker.hpp>
+#include <bela/fmt.hpp>
 #include "../../../lib/hashlib/sumizer.hpp"
 
 #ifndef HINST_THISCOMPONENT
@@ -612,6 +613,22 @@ LRESULT Window::OnContentClear(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &b
   return S_OK;
 }
 
+std::wstring EncodeSize(int64_t size) {
+  constexpr auto GB = 1024 * 1024 * 1024ULL;
+  constexpr auto MB = 1024 * 1024ULL;
+  constexpr auto KB = 1024ULL;
+  if (size > GB) {
+    return bela::StrFormat(L"%.2f GB", (double)size / GB);
+  }
+  if (size > MB) {
+    return bela::StrFormat(L"%.2f MB", (double)size / MB);
+  }
+  if (size > KB) {
+    return bela::StrFormat(L"%.2f KB", (double)size / KB);
+  }
+  return bela::StringCat(size, L" bytes");
+}
+
 LRESULT Window::Filesum(std::wstring_view file) {
   if (locked) {
     return false;
@@ -653,7 +670,7 @@ LRESULT Window::Filesum(std::wstring_view file) {
         filetext.append(L"...");
       }
     }
-    sizetext.assign(std::to_wstring(li.QuadPart));
+    sizetext = EncodeSize(li.QuadPart);
     InvalidateRect(nullptr);
     DWORD dwRead;
     int64_t total = 0;
