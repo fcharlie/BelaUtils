@@ -1,41 +1,42 @@
-/// Kisasum UI
-#include <bela/picker.hpp>
+//
+#include <bela/base.hpp>
 #include <CommCtrl.h>
-#include <VersionHelpers.h>
-#include <bela/picker.hpp>
+#include <commdlg.h>
+#include <regex>
+#include <wchar.h>
 #include "ui.hpp"
+#include "kisasum.hpp"
 
-class dotcom_initializer {
+class DotComInitialize {
 public:
-  dotcom_initializer() {
-    if (FAILED(CoInitialize(nullptr))) {
-      MessageBoxW(nullptr, L"CoInitialize()", L"CoInitialize() failed",
-                  MB_OK | MB_ICONERROR);
-    }
-  }
-  ~dotcom_initializer() { CoUninitialize(); }
+  DotComInitialize() { CoInitialize(NULL); }
+  ~DotComInitialize() { CoUninitialize(); }
 };
 
-int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
-  dotcom_initializer di;
-  if (!IsWindows10OrGreater()) {
-    bela::BelaMessageBox(nullptr, L"You need at least Windows 10",
-                         L"Please upgrade Your OS to Windows 10", nullptr,
-                         bela::mbs_t::FATAL);
-    return -1;
-  }
-  HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+int WindowLoop() {
   INITCOMMONCONTROLSEX info = {sizeof(INITCOMMONCONTROLSEX),
-                               ICC_TREEVIEW_CLASSES | ICC_COOL_CLASSES |
-                                   ICC_LISTVIEW_CLASSES};
+                               ICC_TREEVIEW_CLASSES | ICC_COOL_CLASSES | ICC_LISTVIEW_CLASSES};
   InitCommonControlsEx(&info);
-  kisasum::Window window;
-  if (!window.MakeWindow()) {
-    auto ec = bela::make_system_error_code();
-    bela::BelaMessageBox(nullptr, L"unable create window", ec.data(), nullptr,
-                         bela::mbs_t::FATAL);
+  kisasum::ui::Window window;
+  MSG msg;
+  window.Settings().Update();
+  if (window.InitializeWindow() != S_OK) {
     return 1;
   }
-  window.RunMessageLoop();
+  window.ShowWindow(SW_SHOW);
+  window.UpdateWindow();
+  while (GetMessage(&msg, nullptr, 0, 0) > 0) {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
   return 0;
+}
+
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+                      _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
+  UNREFERENCED_PARAMETER(hPrevInstance);
+  UNREFERENCED_PARAMETER(lpCmdLine);
+  DotComInitialize dot;
+  HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+  return WindowLoop();
 }

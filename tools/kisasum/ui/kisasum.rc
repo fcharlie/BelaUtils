@@ -1,30 +1,27 @@
-///
-
-//Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
-#define APSTUDIO_HIDDEN_SYMBOLS
 #include "windows.h"
-#undef APSTUDIO_HIDDEN_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
 
-IDI_KISASUM_ICON       ICON         "res/kisasum.ico"
-///////////////////////////////////////////////////////////////////////////////
+IDI_KISASUM       ICON         "res\\kisasum.ico"
+IDI_ICON_APP  ICON         "res\\app.ico"
+IDI_ICON_COPY   ICON      "res\\copy.ico"
+
+IDM_MAIN_CONTEXT MENU
+BEGIN
+POPUP "0"
+BEGIN
+//MENUITEM "Change UI Color", IDM_CONTEXT_COLOR
+MENUITEM "Copy Hash\tCtrl+C", IDM_CONTEXT_COPY
+END
+END
+
+
 /////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
+/////////// version
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION KISASUM_MAJOR_VERSION, KISASUM_MINOR_VERSION, KISASUM_PATCH_VERSION, KISASUM_BUILD_NUMBER
-PRODUCTVERSION KISASUM_MAJOR_VERSION, KISASUM_MINOR_VERSION, KISASUM_PATCH_VERSION, KISASUM_BUILD_NUMBER
+FILEVERSION MAJORVER, MINORVER, PATCHVER, BUILDVER
+PRODUCTVERSION MAJORVER, MINORVER, PATCHVER, BUILDVER
 FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 FILEFLAGS 0x1L
@@ -41,12 +38,12 @@ BLOCK "080404b0"
 BEGIN
 VALUE "CompanyName", "Force Charlie"
 VALUE "FileDescription", "Kisasum - Hash Utilities"
-VALUE "FileVersion", PRIV_VERSION_FULL
+VALUE "FileVersion", VERSIONSTRING
 VALUE "InternalName", "kisasum-ui.exe"
 VALUE "LegalCopyright", COPYRIGHT
 VALUE "OriginalFilename", "kisasum-ui.exe"
 VALUE "ProductName", "Kisasum - Hash Utilities"
-VALUE "ProductVersion", PRIV_VERSION_MAIN
+VALUE "ProductVersion", VERSIONSTRING
 END
 END
 BLOCK "VarFileInfo"

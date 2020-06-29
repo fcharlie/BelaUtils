@@ -14,6 +14,7 @@ target_link_libraries(kisasum-ui
   belashl
   d2d1
   dwrite
+  Shcore
   Shell32
 )
 

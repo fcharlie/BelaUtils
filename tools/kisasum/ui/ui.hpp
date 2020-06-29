@@ -1,187 +1,154 @@
-////
 #ifndef KISASUM_UI_HPP
 #define KISASUM_UI_HPP
+#pragma once
 #include <bela/base.hpp>
-#include <bela/endian.hpp>
-#include <windowsx.h>
-#include <d2d1helper.h>
-#include <d2d1_3.h>
-#include <dwrite_3.h>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <cassert>
-#include <optional>
-#include <mutex>
+#include <atlbase.h>
+#include <atlctl.h>
+#include <atlwin.h>
 #include <atomic>
-#include "kisasumutils.hpp"
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <memory>
+#include <string>
+#include <vector>
+#include <wincodec.h>
+#include "kisasum.hpp"
 
-namespace kisasum {
+namespace kisasum::ui {
 
-namespace ui {
-
-struct rgb {
-  constexpr rgb() : r(0), g(0), b(0) {}
-  constexpr rgb(uint8_t r_, uint8_t g_, uint8_t b_) : r(r_), g(g_), b(b_) {}
-  constexpr rgb(uint32_t hex) : r((hex >> 16) & 0xFF), g((hex >> 8) & 0xFF), b(hex & 0xFF) {}
-  constexpr rgb(COLORREF hex)
-      : r((uint32_t(hex) >> 16) & 0xFF), g((uint32_t(hex) >> 8) & 0xFF), b(uint32_t(hex) & 0xFF) {}
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+struct WindowSettings {
+  /// color
+  std::uint32_t panelcolor{0x00BFFF};
+  std::uint32_t contentcolor{0xffffff};
+  std::uint32_t textcolor{0x000000};
+  std::uint32_t labelcolor{0x000000};
+  std::wstring title{L"Kisasum Immersive"};
+  std::wstring font{L"Segoe UI"};
+  bool Update();
+  bool Flush();
 };
 
-enum WidgetNumber : ptrdiff_t {
-  theme = 1000,
-  about = 1001, //
-  uppercase = 1002,
-  algo = 1003,
-  clear = 1004,
-  picker = 1005
-};
-}; // namespace ui
-
-// swap to LE
+//// what's fuck HEX color and COLORREF color, red <-- --> blue
+//// this is LE CPU, BE CPU don't call
 inline COLORREF calcLuminance(UINT32 cr) {
-  cr = bela::swaple(cr);
   int r = (cr & 0xff0000) >> 16;
   int g = (cr & 0xff00) >> 8;
   int b = (cr & 0xff);
   return RGB(r, g, b);
 }
 
-struct Label {
-  Label() = default;
-  Label(std::wstring_view sv, LONG left, LONG top, LONG right, LONG bottom) : content(sv) {
-    mlayout = D2D1::RectF((float)left, (float)top, (float)right, (float)bottom);
-  }
-  const wchar_t *data() const { return content.data(); }
-  uint32_t length() const { return static_cast<uint32_t>(content.size()); }
-  D2D_RECT_F layout() const { return mlayout; }
-  std::wstring content;
-  D2D1_RECT_F mlayout;
+struct D2D1Checkbox {
+  RECT Layout;
+  std::wstring Text;
+  bool IsChecked;
 };
 
-struct Widget {
-  HWND hWnd{nullptr};
-  int X{0};
-  int Y{0};
-  int W{0};
-  int H{0};
-  bool Alived() const { return hWnd != nullptr; }
-  void Destroy() {
-    if (hWnd != nullptr) {
-      ::DestroyWindow(hWnd);
-      hWnd = nullptr;
-    }
-  }
-  void Visible(BOOL v) { EnableWindow(hWnd, v); }
-  bool IsVisible() const { return IsWindowVisible(hWnd) == TRUE; }
-  bool IsChecked() const { return (hWnd != nullptr && Button_GetCheck(hWnd) == BST_CHECKED); }
-  void Content(std::wstring_view text) { ::SetWindowTextW(hWnd, text.data()); }
-  std::wstring Content() {
-    auto n = GetWindowTextLengthW(hWnd);
-    if (n <= 0) {
-      return L"";
-    }
-    std::wstring str;
-    str.resize(n + 1);
-    auto k = GetWindowTextW(hWnd, str.data(), n + 1);
-    str.resize(k);
-    return str;
-  }
-};
+#define KISASUM_WINDOW_NAME L"Kisasum.UI"
 
-class Window {
+#ifndef SYSCOMMAND_ID_HANDLER
+#define SYSCOMMAND_ID_HANDLER(id, func)                                                            \
+  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                                             \
+    bHandled = TRUE;                                                                               \
+    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);                        \
+    if (bHandled)                                                                                  \
+      return TRUE;                                                                                 \
+  }
+#endif
+
+#define NEON_WINDOW_CLASSSTYLE                                                                     \
+  WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_CLIPSIBLINGS & ~WS_MAXIMIZEBOX
+typedef CWinTraits<NEON_WINDOW_CLASSSTYLE, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE> CMetroWindowTraits;
+
+class CDPI;
+/// Awesome
+class Window : public CWindowImpl<Window, CWindow, CMetroWindowTraits> {
 private:
-  static Window *GetThisFromHandle(HWND const window) noexcept {
-    return reinterpret_cast<Window *>(GetWindowLongPtr(window, GWLP_USERDATA));
-  }
-  LRESULT MessageHandler(UINT const message, WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnSize(WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnPaint(WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnDpiChanged(WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnDropfiles(WPARAM const wparam, LPARAM const lparam) noexcept;
-  LRESULT OnStaticColor(WPARAM const wparam, LPARAM const lparam) noexcept;
-  ///
-  LRESULT DoTheme(WORD wNotifyCode);
-  LRESULT DoAbout(WORD wNotifyCode);
-  //
-  LRESULT DoClear(WORD wNotiftCode);
-  LRESULT DoPicker(WORD wNotifyCode);
-  //
+  ID2D1Factory *pFactory;
+  ID2D1HwndRenderTarget *pHwndRenderTarget;
+  ID2D1SolidColorBrush *AppPageBackgroundThemeBrush;
+  ID2D1SolidColorBrush *AppPageTextBrush;
+  IDWriteFactory *pWriteFactory;
+  // IDWriteTextFormat* pTitleWriteTextFormat;//Alignment left
+  // IDWriteTextFormat* pButtonWriteTextFormat; /// Alignment center
+  IDWriteTextFormat *pLabelWriteTextFormat; /// Alignment left
+  HRESULT CreateDeviceIndependentResources();
+  HRESULT Initialize();
   HRESULT CreateDeviceResources();
   void DiscardDeviceResources();
   HRESULT OnRender();
-  //
+  D2D1_SIZE_U CalculateD2DWindowSize();
+  void OnResize(UINT width, UINT height);
+  /////////// self control handle
+  LRESULT Filesum(std::wstring_view file);
+  void UpdateTitle(std::wstring_view title_);
+  bool CopyToClipboard(std::wstring_view text);
   bool UpdateTheme();
-  bool RefreshFont();
-
-  //
-  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle,
-                       int X, int Y, int nWidth, int nHeight, HMENU hMenu, Widget &w) {
-    auto hw = CreateWindowExW(dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
-                              MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
-                              MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
-    if (hw == nullptr) {
-      return false;
-    }
-    w.hWnd = hw;
-    w.X = X;
-    w.Y = Y;
-    w.W = nWidth;
-    w.H = nHeight;
-    ::SendMessageW(hw, WM_SETFONT, (WPARAM)hFont, TRUE);
-    return true;
-  }
-
-  bool UpdateWidgetPos(Widget &w) {
-    if (w.hWnd == nullptr) {
-      return false;
-    }
-    ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
-    ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
-    return true;
-  }
+  std::unique_ptr<CDPI> dpi_;
+  HFONT hFont{nullptr};
+  HWND hCombo{nullptr};
+  HWND hOpenButton{nullptr};
+  HWND hClearButton{nullptr};
+  HWND hCheck{nullptr};
+  HBRUSH hBrush{nullptr};
+  WindowSettings ws;
+  std::wstring filetext;
+  std::wstring sizetext;
+  std::wstring hash;
+  std::atomic_uint32_t progress{0};
+  std::atomic_bool locked{false};
+  int dpiX;
+  int dpiY;
+  std::uint32_t height;
+  std::uint32_t width;
+  std::uint32_t areaheight;
+  std::uint32_t keywidth{90};
+  std::uint32_t lineheight{20};
+  bool showerror{false};
 
 public:
+  Window(const Window &) = delete;
+  Window &operator=(const Window &) = delete;
   Window();
   ~Window();
-  bool MakeWindow();
-  void RunMessageLoop();
-  /// static
-  static LRESULT WINAPI WindowProc(HWND const window, UINT const message, WPARAM const wparam,
-                                   LPARAM const lparam) noexcept;
-
-private:
-  HWND hWnd{nullptr};
-  HINSTANCE hInst{nullptr};
-  // ---
-  ID2D1Factory7 *factory{nullptr};
-  IDWriteFactory7 *dwFactory{nullptr};
-  IDWriteTextFormat3 *dwFormat{nullptr};
-  IDWriteTextFormat3 *dwIconFormat{nullptr};
-  //
-  ID2D1HwndRenderTarget *renderTarget{nullptr};
-  ID2D1SolidColorBrush *textBrush{nullptr};
-  ID2D1SolidColorBrush *AppPageBackgroundThemeBrush{nullptr};
-  //
-  HBRUSH hbrBkgnd{nullptr};
-  HFONT hFont{nullptr};
-  //
-  Widget wUppercase;
-  Widget wAlgorithm;
-  Widget wClear;
-  Widget wPicker;
-  KisasumOptions options;
-  //
-  int dpiX{96};
-  int dpiY{96};
-  //
-  std::atomic_uint32_t progress{0};
+  WindowSettings &Settings() { return ws; }
+  LRESULT InitializeWindow();
+  DECLARE_WND_CLASS(KISASUM_WINDOW_NAME)
+  BEGIN_MSG_MAP(MetroWindow)
+  MESSAGE_HANDLER(WM_CREATE, OnCreate)
+  MESSAGE_HANDLER(WM_CTLCOLORSTATIC, OnColorStatic)
+  MESSAGE_HANDLER(WM_KEYDOWN, OnKeydown);
+  MESSAGE_HANDLER(WM_SIZE, OnSize)
+  MESSAGE_HANDLER(WM_PAINT, OnPaint)
+  MESSAGE_HANDLER(WM_DISPLAYCHANGE, OnDisplayChange)
+  MESSAGE_HANDLER(WM_DPICHANGED, OnDpiChanged)
+  MESSAGE_HANDLER(WM_DROPFILES, OnDropfiles)
+  MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+  MESSAGE_HANDLER(WM_RBUTTONUP, OnRButtonUp)
+  COMMAND_ID_HANDLER(IDC_CLEAR_BUTTON, OnContentClear)
+  COMMAND_ID_HANDLER(IDC_FILEOPEN_BUTTON, OnOpenFile)
+  COMMAND_ID_HANDLER(IDM_CONTEXT_COPY, OnCopy)
+  SYSCOMMAND_ID_HANDLER(IDM_CHANGE_THEME, OnTheme)
+  SYSCOMMAND_ID_HANDLER(IDM_APP_INFO, OnAbout)
+  END_MSG_MAP()
+  LRESULT OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnClose(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnSize(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnPaint(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
+  LRESULT OnKeydown(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
+  LRESULT OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
+  LRESULT OnColorStatic(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnColorButton(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle);
+  LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL &bHandled);
+  LRESULT OnContentClear(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnOpenFile(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnTheme(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
+  LRESULT OnCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled);
 };
-} // namespace kisasum
-
+} // namespace kisasum::ui
 #endif

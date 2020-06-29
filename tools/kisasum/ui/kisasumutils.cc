@@ -1,188 +1,120 @@
 ///
-#include "kisasumutils.hpp"
-#include <charconv>
-#include <bela/base.hpp>
-#include <bela/match.hpp>
-#include <bela/strip.hpp>
-#include <bela/path.hpp>
-#include <bela/codecvt.hpp>
+#include "ui.hpp"
+#include <PathCch.h>
 #include <json.hpp>
+#include <bela/path.hpp>
+#include <bela/io.hpp>
+#include <charconv>
 
-namespace kisasum {
+namespace kisasum::ui {
 
-class FileAtomicWriter {
-public:
-  FileAtomicWriter(std::wstring_view p) : path(p) { locktmp = bela::StringCat(path, L".locktmp"); }
-  FileAtomicWriter(const FileAtomicWriter &) = delete;
-  FileAtomicWriter &operator=(const FileAtomicWriter &) = delete;
-  ~FileAtomicWriter() {
-    if (fd != nullptr) {
-      fclose(fd);
-      DeleteFileW(locktmp.data());
+namespace color {
+int32_t Decode(std::string_view color) {
+  if (color.empty()) {
+    return -1;
+  }
+  if (color[0] == '#') {
+    auto s = color.substr(1);
+    uint32_t cl = 0;
+    auto result = std::from_chars(s.data(), s.data() + s.size(), cl, 16);
+    if (result.ec != std::errc{}) {
+      return -1;
     }
+    return cl;
   }
-  bool Open();
-  bool Flush();
-  FILE *FileHandle() const { return fd; }
-
-private:
-  std::wstring path;
-  std::wstring locktmp;
-  FILE *fd{nullptr};
-};
-
-bool FileAtomicWriter::Open() {
-  if (fd != nullptr) {
-    return false;
-  }
-  if (_wfopen_s(&fd, locktmp.data(), L"w+") != 0) {
-    return false;
-  }
-  return true;
+  // RGB not support now
+  return -1;
 }
 
-bool FileAtomicWriter::Flush() {
-  if (!bela::PathExists(path)) {
-    fclose(fd);
-    fd = nullptr;
-    return MoveFileW(locktmp.data(), path.data()) == TRUE;
+std::string Encode(uint32_t color) {
+  char buffer[256];
+  auto result = std::to_chars(buffer, buffer + sizeof(buffer), color, 16);
+  if (result.ec != std::errc{}) {
+    return "";
   }
-  auto oldtmp = bela::StringCat(path, L".oldtmp");
-  if (bela::PathExists(oldtmp) && (DeleteFileW(oldtmp.data()) != TRUE)) {
-    return false;
+  std::string_view sv(buffer, result.ptr - buffer);
+  if (sv.size() > 6) {
+    return "";
   }
-  if (MoveFileW(path.data(), oldtmp.data()) != TRUE) {
-    return false;
-  }
-  if (MoveFileW(locktmp.data(), path.data()) != TRUE) {
-    MoveFileW(oldtmp.data(), path.data());
-    return false;
-  }
-  DeleteFileW(oldtmp.data());
-  return true;
+  constexpr std::string_view zero = "#000000";
+  std::string s;
+  s.append(zero.substr(0, zero.size() - sv.size())).append(sv);
+  return s;
 }
 
-// RGB(1,2,3)
-bool RgbColorExpand(std::string_view scr, std::uint32_t &cr) {
-  if (!kisasum::ConsumePrefix(&scr, "RGB(") || !kisasum::ConsumeSuffix(&scr, ")")) {
-    return false;
+} // namespace color
+constexpr const std::wstring_view profilename = L"kisasum-ui.json";
+
+void resolovecolor(nlohmann::json &j, const char *name, uint32_t &value) {
+  auto it = j.find(name);
+  if (it == j.end()) {
+    return;
   }
-  uint32_t r = 0;
-  uint32_t g = 0;
-  uint32_t b = 0;
-  auto end = scr.data() + scr.size();
-  auto begin = scr.data();
-  auto ec = std::from_chars(begin, end, r);
-  if (ec.ec != std::errc{} || ec.ptr + 1 >= end) {
-    return false;
+  auto s = it->get<std::string>();
+  if (auto val = color::Decode(s); val >= 0) {
+    value = static_cast<uint32_t>(val);
   }
-  begin = ec.ptr + 1;
-  ec = std::from_chars(begin, end, g);
-  if (ec.ec != std::errc{} || ec.ptr + 1 >= end) {
-    return false;
-  }
-  begin = ec.ptr + 1;
-  ec = std::from_chars(begin, end, b);
-  if (ec.ec != std::errc{} || ec.ptr + 1 >= end) {
-    return false;
-  }
-  return true;
 }
 
-bool InitializeColorValue(std::string_view scr, std::uint32_t &cr) {
-  if (scr.size() < 4) {
+bool WindowSettings::Update() {
+  bela::error_code ec;
+  auto parent = bela::ExecutableParent(ec);
+  if (!parent) {
     return false;
   }
-  if (scr.front() == '#') {
-    scr.remove_prefix(1);
-    auto ec = std::from_chars(scr.data(), scr.data() + scr.size(), cr, 16);
-    if (ec.ec != std::errc{}) {
-      return false;
-    }
-    return true;
-  }
-  return RgbColorExpand(scr, cr);
-}
-
-template <size_t N> std::string_view EncodeColor(std::uint32_t cr, char (&buf)[N]) {
-  auto k = _snprintf_s(buf, N, "#%06X", cr);
-  return std::string_view(buf, k);
-}
-
-inline std::wstring KisasumOptionsFile() {
-  auto dwlen = GetModuleFileNameW(nullptr, nullptr, 0);
-  if (dwlen == 0) {
-    return false;
-  }
-  std::wstring str;
-  str.resize(dwlen);
-  dwlen = GetModuleFileNameW(nullptr, str.data(), dwlen);
-  str.resize(dwlen);
-  return bela::StringCat(str, L"../kisasum.json");
-}
-
-bool InitializeKisasumOptions(KisasumOptions &options) {
-  auto jsonfile = KisasumOptionsFile();
+  auto profile = bela::StringCat(*parent, L"\\", profilename);
   FILE *fd = nullptr;
-  if (_wfopen_s(&fd, jsonfile.data(), L"rb") != 0) {
+  if (_wfopen_s(&fd, profile.data(), L"rb") != 0) {
     return false;
   }
+  auto closer = bela::finally([&] { fclose(fd); });
   try {
-    auto json = nlohmann::json::parse(fd);
-    if (auto it = json.find("Title"); it != json.end()) {
-      options.title = bela::ToWide(it->get<std::string_view>());
+    /* code */
+    auto j = nlohmann::json::parse(fd);
+    if (auto it = j.find("title"); it != j.end()) {
+      title = bela::ToWide(it->get<std::string_view>());
     }
-    if (auto it = json.find("Font"); it != json.end()) {
-      options.font = bela::ToWide(it->get<std::string_view>());
+    if (auto it = j.find("font"); it != j.end()) {
+      font = bela::ToWide(it->get<std::string_view>());
     }
-    if (auto it = json.find("Color.Panel"); it != json.end()) {
-      InitializeColorValue(it->get<std::string_view>(), options.panelcolor);
+    if (auto it = j.find("color"); it != j.end()) {
+      resolovecolor(it.value(), "panel", panelcolor);
+      resolovecolor(it.value(), "content", contentcolor);
+      resolovecolor(it.value(), "text", textcolor);
+      resolovecolor(it.value(), "label", labelcolor);
     }
-    if (auto it = json.find("Color.Content"); it != json.end()) {
-      InitializeColorValue(it->get<std::string_view>(), options.contentcolor);
-    }
-    if (auto it = json.find("Color.Text"); it != json.end()) {
-      InitializeColorValue(it->get<std::string_view>(), options.textcolor);
-    }
-    if (auto it = json.find("Color.Label"); it != json.end()) {
-      InitializeColorValue(it->get<std::string_view>(), options.labelcolor);
-    }
+
   } catch (const std::exception &) {
-    fclose(fd);
     return false;
   }
-  fclose(fd);
   return true;
 }
 
-bool FlushKisasumOptions(const KisasumOptions &options) {
-  // we flush options only panel color
-  KisasumOptions no;
-  InitializeKisasumOptions(no);
-  no.panelcolor = options.panelcolor;
+bool WindowSettings::Flush() {
+  bela::error_code ec;
+  auto parent = bela::ExecutableParent(ec);
+  if (!parent) {
+    return false;
+  }
+  auto profile = bela::StringCat(*parent, L"\\", profilename);
   try {
     nlohmann::json j;
-    char buf[16];
-    j["Title"] = bela::ToNarrow(no.title);
-    j["Font"] = bela::ToNarrow(no.font);
-    j["Color.Panel"] = EncodeColor(options.panelcolor, buf);
-    j["Color.Content"] = EncodeColor(options.contentcolor, buf);
-    j["Color.Text"] = EncodeColor(options.textcolor, buf);
-    j["Color.Label"] = EncodeColor(options.labelcolor, buf);
-    auto tojson = j.dump(4);
-    auto jsonfile = KisasumOptionsFile();
-    FileAtomicWriter fw(jsonfile);
-    if (!fw.Open()) {
+    nlohmann::json cj;
+    cj["panel"] = color::Encode(panelcolor);
+    cj["text"] = color::Encode(textcolor);
+    cj["content"] = color::Encode(contentcolor);
+    cj["label"] = color::Encode(labelcolor);
+    j["color"] = cj;
+    j["font"] = bela::ToNarrow(font);
+    j["title"] = bela::ToNarrow(title);
+    auto s = j.dump(4);
+    bela::error_code ec;
+    if (!bela::io::WriteTextAtomic(s, profile, ec)) {
       return false;
     }
-    if (fwrite(tojson.data(), 1, tojson.size(), fw.FileHandle()) != tojson.size()) {
-      return false;
-    }
-    fw.Flush();
   } catch (const std::exception &) {
     return false;
   }
   return true;
 }
-
-} // namespace kisasum
+} // namespace kisasum::ui
