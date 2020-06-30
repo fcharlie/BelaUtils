@@ -1,3 +1,4 @@
+// hastyhex fork from https://github.com/skeeto/hastyhex
 #include <cctype>
 #include <cerrno>
 #include <cstdio>
@@ -9,18 +10,17 @@
 #include <bela/base.hpp>
 #include <bela/numbers.hpp>
 #include <bela/parseargv.hpp>
+#include <belautilsversion.h>
 
-#define PROGRAM_NAME L"hastyhex"
-
-static const char hex[] = "0123456789abcdef";
+static const constexpr char hex[] = "0123456789abcdef";
 
 static int color(int b) {
-#define CN 0x37 /* null    */
-#define CS 0x92 /* space   */
-#define CP 0x96 /* print   */
-#define CC 0x95 /* control */
-#define CH 0x93 /* high    */
-  static const unsigned char table[] = {
+  constexpr unsigned char CN = 0x37; /* null    */
+  constexpr unsigned char CS = 0x92; /* space   */
+  constexpr unsigned char CP = 0x96; /* print   */
+  constexpr unsigned char CC = 0x95; /* control */
+  constexpr unsigned char CH = 0x93; /* high    */
+  static constexpr const unsigned char table[] = {
       CN, CC, CC, CC, CC, CC, CC, CC, CC, CC, CS, CS, CS, CS, CC, CC, CC, CC, CC, CC, CC, CC,
       CC, CC, CC, CC, CC, CC, CC, CC, CC, CC, CS, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP,
       CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP, CP,
@@ -37,7 +37,7 @@ static int color(int b) {
 }
 
 static int display(int b) {
-  static const char table[] = {
+  static constexpr const char table[] = {
       0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e,
       0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e,
       0x2e, 0x2e, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c,
@@ -86,8 +86,9 @@ static void process_color(FILE *in, FILE *out, int64_t len) {
     n = fread(input, 1, (int)rn, in);
     maxlen -= n;
     /* Write the offset */
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < 8; i++) {
       colortemplate[i] = hex[(offset >> (28 - i * 4)) & 15];
+    }
 
     /* Fill out the colortemplate */
     for (i = 0; i < 16; i++) {
@@ -120,8 +121,9 @@ static void process_color(FILE *in, FILE *out, int64_t len) {
       colortemplate[slots[i * 4 + 3] + 0] = ' ';
     }
 
-    if (!fwrite(colortemplate, sizeof(colortemplate) - 1, 1, out))
+    if (!fwrite(colortemplate, sizeof(colortemplate) - 1, 1, out)) {
       break; /* Output error */
+    }
     offset += 16;
   } while (n == 16 && maxlen > 0);
 }
@@ -143,8 +145,9 @@ static void process_plain(FILE *in, FILE *out, int64_t len) {
     maxlen -= n;
 
     /* Write the offset */
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < 8; i++) {
       colortemplate[i] = hex[(offset >> (28 - i * 4)) & 15];
+    }
 
     /* Fill out the template */
     for (i = 0; i < 16; i++) {
@@ -161,8 +164,9 @@ static void process_plain(FILE *in, FILE *out, int64_t len) {
       colortemplate[slots[i * 2 + 1] + 0] = ' ';
     }
 
-    if (!fwrite(colortemplate, sizeof(colortemplate) - 1, 1, out))
+    if (!fwrite(colortemplate, sizeof(colortemplate) - 1, 1, out)) {
       break;
+    }
     offset += 16;
   } while (n == 16 && maxlen > 0);
 }
@@ -198,30 +202,31 @@ struct Options {
   std::wstring out;
   int64_t length{-1};
   uint64_t seek{0};
-  bool plain{false};
+  bool plaintext{false};
 };
 
 void Usage() {
-  const char *ua = R"(OVERVIEW: hastyhex
+  constexpr const char *ua = R"(OVERVIEW: hastyhex a faster hex dumper
 Usage: hastyhex [options] <input>
 OPTIONS:
   -h [--help]                      Print hastyhex usage information and exit
+  -v [--version]                   Print hastyhex version and exit
   -n [--length]                    Read only N bytes from the input.
   -s [--seek]                      Read from the specified offset
   -o [--out]                       Output to file instead of standard output
-  -p                               Do not output color ("plain")
+  -p [--plain-text]                Do not output color ("plain")
 
 Example:
-  hastyhex example.bin
+  hastyhex file.exe
 
 )";
   printf("%s", ua);
 }
 
 bool ParseArgv(int argc, wchar_t **argv, Options &bo) {
-
   bela::ParseArgv pv(argc, argv);
   pv.Add(L"help", bela::no_argument, L'h')
+      .Add(L"version", bela::no_argument, 'v')
       .Add(L"length", bela::required_argument, L'n')
       .Add(L"seek", bela::required_argument, L's')
       .Add(L"plain", bela::no_argument, L'p')
@@ -233,24 +238,24 @@ bool ParseArgv(int argc, wchar_t **argv, Options &bo) {
         case 'h':
           Usage();
           exit(0);
-          break;
+        case 'v':
+          bela::FPrintF(stdout, L"%s\n", BELAUTILS_VERSION);
+          exit(0);
         case 'o':
           bo.out = oa;
           break;
-        case 'n': {
-          int64_t n;
-          if (bela::SimpleAtoi(oa, &n)) {
+        case 'n':
+          if (int64_t n = 0; bela::SimpleAtoi(oa, &n)) {
             bo.length = n;
           }
-        } break;
-        case 's': {
-          int64_t n;
-          if (bela::SimpleAtoi(oa, &n)) {
+          break;
+        case 's':
+          if (int64_t n = 0; bela::SimpleAtoi(oa, &n)) {
             bo.seek = n;
           }
-        } break;
+          break;
         case 'p':
-          bo.plain = true;
+          bo.plaintext = true;
           break;
         default:
           return false;
@@ -272,16 +277,16 @@ bool ParseArgv(int argc, wchar_t **argv, Options &bo) {
 }
 
 int wmain(int argc, wchar_t *argv[]) {
+  enablevtmode();
   FILE *in = stdin;
   FILE *out = stdout;
-  enablevtmode();
   Options bo;
   if (!ParseArgv(argc, argv, bo)) {
     return 1;
   }
-  if (_wfopen_s(&in, bo.file.c_str(), L"rb") != 0) {
+  if (_wfopen_s(&in, bo.file.data(), L"rb") != 0) {
     auto ec = bela::make_system_error_code();
-    bela::FPrintF(stderr, L"hastyhex: open '%s': %s\n", bo.file, ec.message);
+    bela::FPrintF(stderr, L"hastyhex: open '%s' for read: %s\n", bo.file, ec.message);
     return 1;
   }
   auto closer = bela::finally([&] {
@@ -293,19 +298,19 @@ int wmain(int argc, wchar_t *argv[]) {
     }
   });
   if (!bo.out.empty()) {
-    if (_wfopen_s(&in, bo.out.c_str(), L"wb") != 0) {
+    if (_wfopen_s(&out, bo.out.data(), L"wb") != 0) {
       auto ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"hastyhex: open '%s': %s\n", bo.out, ec.message);
+      bela::FPrintF(stderr, L"hastyhex: open '%s' for write: %s\n", bo.out, ec.message);
       return 1;
     }
   }
   if (in != stdin) {
     _fseeki64(in, bo.seek, SEEK_SET);
   }
-  if (bo.plain) {
+  if (bo.plaintext) {
     process_plain(in, out, bo.length);
-  } else {
-    process_color(in, out, bo.length);
+    return 0;
   }
+  process_color(in, out, bo.length);
   return 0;
 }
