@@ -17,7 +17,7 @@
 
 #ifndef rhash_ctz
 
-#  if _MSC_VER >= 1300 && (_M_IX86 || _M_AMD64 || _M_IA64) /* if MSVC++ >= 2002 on x86/x64 */
+#  if _MSC_VER >= 1300 && (_M_IX86 || _M_AMD64 || _M_IA64|| _M_ARM64) /* if MSVC++ >= 2002 on x86/x64 */
 #  include <intrin.h>
 #  pragma intrinsic(_BitScanForward)
 
