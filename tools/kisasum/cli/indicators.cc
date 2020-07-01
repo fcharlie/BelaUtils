@@ -44,7 +44,6 @@ void ProgressBar::Loop() {
     // --- draw progress bar
     Draw();
   }
-  bela::FPrintF(stderr, L"\n");
 }
 
 void ProgressBar::Draw() {
