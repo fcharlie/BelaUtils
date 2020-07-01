@@ -13,13 +13,6 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-IDI_KRYCEKIUM_ICON       ICON         "krycekium.ico"
-///////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION BELAUTILS_VERSION_MAJOR, BELAUTILS_VERSION_MINOR, BELAUTILS_VERSION_PATCH, BELAUTILS_BUILD_NUMBER
 PRODUCTVERSION BELAUTILS_VERSION_MAJOR, BELAUTILS_VERSION_MINOR, BELAUTILS_VERSION_PATCH, BELAUTILS_BUILD_NUMBER
@@ -38,12 +31,12 @@ BEGIN
 BLOCK "080404b0"
 BEGIN
 VALUE "CompanyName", "Force Charlie"
-VALUE "FileDescription", "Krycekium MSI Unpacker"
+VALUE "FileDescription", "Kisasum - Hash Utilities"
 VALUE "FileVersion", BELAUTILS_VERSION
-VALUE "InternalName", "krycekium.exe"
+VALUE "InternalName", "kisasum.exe"
 VALUE "LegalCopyright", BELAUTILSUI_COPYRIGHT
-VALUE "OriginalFilename", "krycekium.exe"
-VALUE "ProductName", "Krycekium MSI Unpacker"
+VALUE "OriginalFilename", "kisasum.exe"
+VALUE "ProductName", "Kisasum - Hash Utilities"
 VALUE "ProductVersion", BELAUTILS_VERSION
 END
 END

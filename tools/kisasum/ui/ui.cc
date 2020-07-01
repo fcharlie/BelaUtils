@@ -765,12 +765,8 @@ LRESULT Window::OnTheme(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled
 }
 
 LRESULT Window::OnAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled) {
-  bela::BelaMessageBox(m_hWnd, L"About Kisasum Hash Utilities",
-                       L"Prerelease: 1.0\nCopyright \xA9 2020, Force Charlie. "
-                       L"All Rights Reserved.",
-                       L"For more information about this tool.\nVisit: <a "
-                       L"href=\"https://forcemz.net/\">forcemz.net</a>",
-                       bela::mbs_t::ABOUT);
+  bela::BelaMessageBox(m_hWnd, L"About Kisasum Hash Utilities", BELAUTILS_APPVERSION,
+                       BELAUTILS_APPLINK, bela::mbs_t::ABOUT);
   return S_OK;
 }
 

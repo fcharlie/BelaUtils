@@ -387,8 +387,8 @@ LRESULT Window::OnStaticColor(WPARAM const wparam, LPARAM const lparam) noexcept
 
 LRESULT Window::DoAbout(WORD wNotifyCode) {
   // show about
-  bela::BelaMessageBox(hWnd, L"About Caelum \u2764 PE analysis tool", FULL_COPYRIGHT,
-                       CAELUM_APPLINK, bela::mbs_t::ABOUT);
+  bela::BelaMessageBox(hWnd, L"About Caelum \u2764 PE analysis tool", BELAUTILS_APPVERSION,
+                       BELAUTILS_APPLINK, bela::mbs_t::ABOUT);
   return S_OK;
 }
 

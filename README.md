@@ -1,6 +1,9 @@
 # BelaUtils
 
- [![Build status](https://ci.appveyor.com/api/projects/status/github/fcharlie/BelaUtils?branch=master&svg=true)](https://ci.appveyor.com/project/fcharlie/BelaUtils/branch/master)
+[![license badge](https://img.shields.io/github/license/fcharlie/belautils.svg)](LICENSE)
+[![Master Branch Status](https://github.com/fcharlie/belautils/workflows/CI/badge.svg)](https://github.com/fcharlie/belautils/actions)
+[![Latest Release Downloads](https://img.shields.io/github/downloads/fcharlie/belautils/latest/total.svg)](https://github.com/fcharlie/belautils/releases/latest)
+[![Total Downloads](https://img.shields.io/github/downloads/fcharlie/belautils/total.svg)](https://github.com/fcharlie/belautils/releases)
 
 Tools reimplemented using Bela library
 
@@ -27,6 +30,11 @@ A faster hex dumper fork from [https://github.com/skeeto/hastyhex](https://githu
 
 ## Download
 
-Download CI Build:
-[https://ci.appveyor.com/project/fcharlie/BelaUtils/branch/master/artifacts](https://ci.appveyor.com/project/fcharlie/BelaUtils/branch/master/artifacts)
+Download the latest version of Baulk: [https://github.com/fcharlie/belautils/releases/latest](https://github.com/fcharlie/belautils/releases/latest)
+
+or
+
+```powershell
+baulk install belautils
+```
 

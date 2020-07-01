@@ -13,12 +13,6 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-IDI_KRYCEKIUM_ICON       ICON         "krycekium.ico"
-///////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION BELAUTILS_VERSION_MAJOR, BELAUTILS_VERSION_MINOR, BELAUTILS_VERSION_PATCH, BELAUTILS_BUILD_NUMBER
@@ -37,13 +31,13 @@ BLOCK "StringFileInfo"
 BEGIN
 BLOCK "080404b0"
 BEGIN
-VALUE "CompanyName", "Force Charlie"
-VALUE "FileDescription", "Krycekium MSI Unpacker"
+VALUE "CompanyName", "UNLICENSE"
+VALUE "FileDescription", "hastyhex a faster hex dumper"
 VALUE "FileVersion", BELAUTILS_VERSION
-VALUE "InternalName", "krycekium.exe"
-VALUE "LegalCopyright", BELAUTILSUI_COPYRIGHT
-VALUE "OriginalFilename", "krycekium.exe"
-VALUE "ProductName", "Krycekium MSI Unpacker"
+VALUE "InternalName", "hastyhex.exe"
+VALUE "LegalCopyright", L"No Copyright",
+VALUE "OriginalFilename", "hastyhex.exe"
+VALUE "ProductName", "hastyhex a faster hex dumper"
 VALUE "ProductVersion", BELAUTILS_VERSION
 END
 END
