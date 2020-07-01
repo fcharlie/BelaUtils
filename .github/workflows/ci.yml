@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        Privexec_target: [BelaUtils-win64, BelaUtils-win32, BelaUtils-arm64]
+        BelaUtils_target: [BelaUtils-win64, BelaUtils-win32, BelaUtils-arm64]
         include:
           - BelaUtils_target: BelaUtils-win64
             msvc_arch: amd64
