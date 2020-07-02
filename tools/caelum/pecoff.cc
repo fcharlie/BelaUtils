@@ -36,8 +36,7 @@ bool Window::InquisitivePE() {
     return false;
   }
   auto vi = bela::pe::ExposeVersion(path, ec);
-  bool hasProductName = false;
-  if (vi) {
+  if (vi && !vi->ProductName.empty()) {
     tables.Append(L"ProductName:", vi->ProductName);
   }
   tables.Append(L"Machine:", caelum::Machine(static_cast<uint32_t>(pea->machine)));
@@ -52,9 +51,6 @@ bool Window::InquisitivePE() {
   tables.Append(L"Depends:");
 
   auto y = 80 + 30 * tables.ats.size();
-  if (hasProductName) {
-    y += 30;
-  }
   auto charsv = caelum::Characteristics(pea->characteristics, pea->dllcharacteristics);
   // depends lab append
 

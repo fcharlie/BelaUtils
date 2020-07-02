@@ -298,6 +298,9 @@ LRESULT Window::OnDisplayChange(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &b
 }
 
 LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled) {
+  if (!wPicker.IsVisible()) {
+    return S_FALSE;
+  }
   ::SetWindowTextW(m_hWnd, L"Krycekium");
   const LPCWSTR PackageSubffix[] = {L".msi", L".msp"};
   HDROP hDrop = (HDROP)wParam;

@@ -19,7 +19,7 @@ namespace kisasum::ui {
 
 struct WindowSettings {
   /// color
-  std::uint32_t panelcolor{0x00BFFF};
+  std::uint32_t panelcolor{0x7dbeff};
   std::uint32_t contentcolor{0xffffff};
   std::uint32_t textcolor{0x000000};
   std::uint32_t labelcolor{0x000000};
@@ -65,13 +65,13 @@ class CDPI;
 class Window : public CWindowImpl<Window, CWindow, CMetroWindowTraits> {
 private:
   ID2D1Factory *pFactory;
-  ID2D1HwndRenderTarget *pHwndRenderTarget;
+  ID2D1HwndRenderTarget *renderTarget;
   ID2D1SolidColorBrush *AppPageBackgroundThemeBrush;
   ID2D1SolidColorBrush *AppPageTextBrush;
   IDWriteFactory *pWriteFactory;
   // IDWriteTextFormat* pTitleWriteTextFormat;//Alignment left
   // IDWriteTextFormat* pButtonWriteTextFormat; /// Alignment center
-  IDWriteTextFormat *pLabelWriteTextFormat; /// Alignment left
+  IDWriteTextFormat *lableTextFormat; /// Alignment left
   HRESULT CreateDeviceIndependentResources();
   HRESULT Initialize();
   HRESULT CreateDeviceResources();

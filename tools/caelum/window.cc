@@ -178,7 +178,6 @@ HRESULT Window::OnRender() {
     DiscardDeviceResources();
   }
   return hr;
-  return S_OK;
 }
 
 void Window::AttributesTablesDraw() {

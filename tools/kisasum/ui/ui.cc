@@ -126,21 +126,24 @@ private:
 
 Window::Window()
     : pFactory(nullptr), AppPageBackgroundThemeBrush(nullptr), AppPageTextBrush(nullptr),
-      pHwndRenderTarget(nullptr), pWriteFactory(nullptr), pLabelWriteTextFormat(nullptr) {
+      renderTarget(nullptr), pWriteFactory(nullptr), lableTextFormat(nullptr) {
   dpi_ = std::make_unique<CDPI>();
   dpi_->GetAwareness();
   // dpi_->SetAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 }
 
 Window::~Window() {
-  SafeRelease(&pLabelWriteTextFormat);
+  SafeRelease(&lableTextFormat);
   SafeRelease(&pWriteFactory);
   SafeRelease(&AppPageBackgroundThemeBrush);
   SafeRelease(&AppPageTextBrush);
-  SafeRelease(&pHwndRenderTarget);
+  SafeRelease(&renderTarget);
   SafeRelease(&pFactory);
   if (hFont != nullptr) {
     DeleteFont(hFont);
+  }
+  if (hBrush != nullptr) {
+    DeleteObject(hBrush);
   }
 }
 #define WS_NORESIZEWINDOW                                                                          \
@@ -188,7 +191,7 @@ HRESULT Window::CreateDeviceIndependentResources() {
     if (SUCCEEDED(hr)) {
       hr = pWriteFactory->CreateTextFormat(ws.font.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL,
                                            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-                                           16.0f, L"zh-CN", &pLabelWriteTextFormat);
+                                           16.0f, L"zh-CN", &lableTextFormat);
     }
   }
   return hr;
@@ -205,20 +208,20 @@ HRESULT Window::Initialize() {
 HRESULT Window::CreateDeviceResources() {
   HRESULT hr = S_OK;
 
-  if (!pHwndRenderTarget) {
+  if (!renderTarget) {
     RECT rc;
     ::GetClientRect(m_hWnd, &rc);
     D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
     hr = pFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(),
                                           D2D1::HwndRenderTargetProperties(m_hWnd, size),
-                                          &pHwndRenderTarget);
+                                          &renderTarget);
     if (SUCCEEDED(hr)) {
       ////
-      hr = pHwndRenderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor),
-                                                    &AppPageBackgroundThemeBrush);
+      hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor),
+                                               &AppPageBackgroundThemeBrush);
     }
     if (SUCCEEDED(hr)) {
-      hr = pHwndRenderTarget->CreateSolidColorBrush(D2D1::ColorF(ws.labelcolor), &AppPageTextBrush);
+      hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(ws.labelcolor), &AppPageTextBrush);
     }
   }
   return hr;
@@ -227,93 +230,93 @@ void Window::DiscardDeviceResources() {
   SafeRelease(&AppPageBackgroundThemeBrush);
   SafeRelease(&AppPageTextBrush);
 }
+
+template <typename A, typename B, typename C, typename D>
+auto RectF(A left, B top, C right, D bottom) {
+  return D2D1::RectF(static_cast<FLOAT>(left), static_cast<FLOAT>(top), static_cast<FLOAT>(right),
+                     static_cast<FLOAT>(bottom));
+}
+
 HRESULT Window::OnRender() {
   auto hr = CreateDeviceResources();
-  if (SUCCEEDED(hr)) {
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4267)
-    if (SUCCEEDED(hr)) {
-      auto size = pHwndRenderTarget->GetSize();
-      pHwndRenderTarget->BeginDraw();
-      pHwndRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-      pHwndRenderTarget->Clear(D2D1::ColorF(ws.contentcolor));
-      pHwndRenderTarget->FillRectangle(D2D1::RectF(0, areaheight, size.width, size.height),
-                                       AppPageBackgroundThemeBrush);
-      wchar_t uppercase[] = L"Uppercase";
-      pHwndRenderTarget->DrawTextW(uppercase, 9, pLabelWriteTextFormat,
-                                   D2D1::RectF(40, areaheight + 28.0f, 200.0f, areaheight + 50.0f),
-                                   AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                                   DWRITE_MEASURING_MODE_NATURAL);
-      if (filetext.size()) {
-        const wchar_t Name[] = L"Name:";
-        pHwndRenderTarget->DrawTextW(Name, 5, pLabelWriteTextFormat,
-                                     D2D1::RectF(20, 5.0f, keywidth, lineheight), AppPageTextBrush,
-                                     D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                                     DWRITE_MEASURING_MODE_NATURAL);
-        pHwndRenderTarget->DrawTextW(filetext.data(), filetext.size(), pLabelWriteTextFormat,
-                                     D2D1::RectF(keywidth, 5.0f, size.width - 20, lineheight),
-                                     AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                                     DWRITE_MEASURING_MODE_NATURAL);
-      }
-      if (sizetext.size()) {
-        const wchar_t Size[] = L"Size:";
-        pHwndRenderTarget->DrawTextW(Size, 5, pLabelWriteTextFormat,
-                                     D2D1::RectF(20, lineheight + 5.0f, keywidth, lineheight * 2),
-                                     AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                                     DWRITE_MEASURING_MODE_NATURAL);
-        pHwndRenderTarget->DrawTextW(
-            sizetext.data(), sizetext.size(), pLabelWriteTextFormat,
-            D2D1::RectF(keywidth, lineheight + 5.0f, size.width - 20, lineheight * 2),
-            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-            DWRITE_MEASURING_MODE_NATURAL);
-      }
-      if (hash.size()) {
-        const wchar_t Size[] = L"Hash:";
-        pHwndRenderTarget->DrawTextW(
-            Size, 5, pLabelWriteTextFormat,
-            D2D1::RectF(20, lineheight * 2 + 5.0f, keywidth, lineheight * 3), AppPageTextBrush,
-            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
-        pHwndRenderTarget->DrawTextW(
-            hash.data(), hash.size(), pLabelWriteTextFormat,
-            D2D1::RectF(keywidth, lineheight * 2 + 5.0f, size.width - 20, lineheight * 5),
-            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-            DWRITE_MEASURING_MODE_NATURAL);
-      }
-      //// write progress 100 %
-      if (progress == 100) {
-        wchar_t text[] = L"\xD83D\xDCAF";
-        pHwndRenderTarget->DrawTextW(
-            text, 2, pLabelWriteTextFormat,
-            D2D1::RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
-            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
-      } else if (progress > 0 && progress < 100) {
-        auto progressText = std::to_wstring(progress) + L"%";
-        pHwndRenderTarget->DrawTextW(
-            progressText.c_str(), progressText.size(), pLabelWriteTextFormat,
-            D2D1::RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
-            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
-      } else if (showerror) {
-        wchar_t text[] = L"\xD83D\xDE1F";
-        pHwndRenderTarget->DrawTextW(
-            text, 2, pLabelWriteTextFormat,
-            D2D1::RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
-            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
-      } else {
-        constexpr std::wstring_view text = L"\u2764Kisasum";
-        pHwndRenderTarget->DrawTextW(
-            text.data(), (UINT32)text.size(), pLabelWriteTextFormat,
-            D2D1::RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
-            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
-      }
-      hr = pHwndRenderTarget->EndDraw();
-    }
-    if (hr == D2DERR_RECREATE_TARGET) {
-      hr = S_OK;
-      DiscardDeviceResources();
-      //::InvalidateRect(m_hWnd, nullptr, FALSE);
-    }
-#pragma warning(default : 4244)
-#pragma warning(default : 4267)
+  if (!SUCCEEDED(hr)) {
+    return hr;
+  }
+  auto size = renderTarget->GetSize();
+  renderTarget->BeginDraw();
+  renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+  renderTarget->Clear(D2D1::ColorF(ws.contentcolor));
+  renderTarget->FillRectangle(RectF(0, areaheight, size.width, size.height),
+                              AppPageBackgroundThemeBrush);
+  constexpr std::wstring_view uppercase = L"Uppercase";
+  renderTarget->DrawTextW(uppercase.data(), static_cast<UINT32>(uppercase.size()), lableTextFormat,
+                          RectF(40, areaheight + 28.0f, 200.0f, areaheight + 50.0f),
+                          AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                          DWRITE_MEASURING_MODE_NATURAL);
+  if (!filetext.empty()) {
+    constexpr std::wstring_view name = L"Name:";
+    renderTarget->DrawTextW(name.data(), static_cast<UINT32>(name.size()), lableTextFormat,
+                            RectF(20, 5.0f, keywidth, lineheight), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+    renderTarget->DrawTextW(filetext.data(), static_cast<UINT32>(filetext.size()), lableTextFormat,
+                            RectF(keywidth, 5.0f, size.width - 20, lineheight), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  if (!sizetext.empty()) {
+    constexpr std::wstring_view Size = L"Size:";
+    renderTarget->DrawTextW(Size.data(), static_cast<UINT32>(Size.size()), lableTextFormat,
+                            RectF(20, lineheight + 5.0f, keywidth, lineheight * 2),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+    renderTarget->DrawTextW(sizetext.data(), static_cast<UINT32>(sizetext.size()), lableTextFormat,
+                            RectF(keywidth, lineheight + 5.0f, size.width - 20, lineheight * 2),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  if (!hash.empty()) {
+    constexpr std::wstring_view Hash = L"Hash:";
+    renderTarget->DrawTextW(Hash.data(), static_cast<UINT32>(Hash.size()), lableTextFormat,
+                            RectF(20, lineheight * 2 + 5.0f, keywidth, lineheight * 3),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+    renderTarget->DrawTextW(hash.data(), static_cast<UINT32>(hash.size()), lableTextFormat,
+                            RectF(keywidth, lineheight * 2 + 5.0f, size.width - 20, lineheight * 5),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  //// write progress 100 %
+  if (progress == 100) {
+    constexpr std::wstring_view Hundred = L"💯";
+    renderTarget->DrawTextW(Hundred.data(), static_cast<UINT32>(Hundred.size()), lableTextFormat,
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  } else if (progress > 0 && progress < 100) {
+    auto progressText = bela::StringCat(static_cast<uint32_t>(progress), L"%");
+    renderTarget->DrawTextW(
+        progressText.data(), static_cast<uint32_t>(progressText.size()), lableTextFormat,
+        RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
+        D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
+  } else if (showerror) {
+    constexpr std::wstring_view fatal = L"\xD83D\xDE1F";
+    renderTarget->DrawTextW(fatal.data(), static_cast<UINT32>(fatal.size()), lableTextFormat,
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  } else {
+    constexpr std::wstring_view text = L"\u2764Kisasum";
+    renderTarget->DrawTextW(text.data(), (UINT32)text.size(), lableTextFormat,
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
+                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
+                            DWRITE_MEASURING_MODE_NATURAL);
+  }
+  hr = renderTarget->EndDraw();
+  if (hr == D2DERR_RECREATE_TARGET) {
+    hr = S_OK;
+    DiscardDeviceResources();
+    //::InvalidateRect(m_hWnd, nullptr, FALSE);
   }
   return hr;
 }
@@ -329,8 +332,8 @@ D2D1_SIZE_U Window::CalculateD2DWindowSize() {
 }
 
 void Window::OnResize(UINT width, UINT height) {
-  if (pHwndRenderTarget) {
-    pHwndRenderTarget->Resize(D2D1::SizeU(width, height));
+  if (renderTarget) {
+    renderTarget->Resize(D2D1::SizeU(width, height));
   }
 }
 
@@ -348,8 +351,8 @@ bool Window::UpdateTheme() {
   }
   hBrush = CreateSolidBrush(calcLuminance(ws.panelcolor));
   SafeRelease(&AppPageBackgroundThemeBrush);
-  auto hr = pHwndRenderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor),
-                                                     &AppPageBackgroundThemeBrush);
+  auto hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor),
+                                                &AppPageBackgroundThemeBrush);
   ::InvalidateRect(hCheck, nullptr, TRUE);
   InvalidateRect(nullptr, TRUE);
   return true;
@@ -630,14 +633,15 @@ std::wstring EncodeSize(int64_t size) {
 }
 
 LRESULT Window::Filesum(std::wstring_view file) {
-  if (locked) {
+  bool except = false;
+  if (!locked.compare_exchange_strong(except, true)) {
     return false;
   }
   auto i = ComboBox_GetCurSel(hCombo);
   if (i < 0 || static_cast<size_t>(i) >= std::size(HashAlgorithm)) {
+    locked = false;
     return S_FALSE;
   }
-  locked = true;
   auto hashName = HashAlgorithm[i];
   filetext.clear();
   hash.clear();
