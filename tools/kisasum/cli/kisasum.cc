@@ -8,12 +8,13 @@
 #include <vector>
 #include <optional>
 #include <json.hpp>
-#include "../../../lib/hashlib/sumizer.hpp"
+#include <belautilsversion.h>
+#include "sumizer.hpp"
 #include "fileutils.hpp"
 #include "indicators.hpp"
 
 void usage() {
-  const std::wstring_view ua = LR"(OVERVIEW: kisasum 1.0
+  const wchar_t *ua = LR"(OVERVIEW: kisasum %d.%d
 USAGE: kisasum [options] <input>
 OPTIONS:
   -a, --algorithm  Hash Algorithm,support algorithm described below.
@@ -35,7 +36,7 @@ Notes:
   KangarooTwelve Experimental Support
 
 )";
-  bela::FPrintF(stderr, L"%s\n", ua);
+  bela::FPrintF(stderr, ua, BELAUTILS_VERSION_MAJOR, BELAUTILS_VERSION_MINOR);
 }
 
 struct kisasum_options {
@@ -73,8 +74,8 @@ bool parse_options(int argc, wchar_t **argv, kisasum_options &opt) {
           usage();
           exit(0);
         case 'v':
-          bela::FPrintF(stderr, L"kisasum 1.0\n");
-          break;
+          bela::FPrintF(stderr, L"kisasum %s\n", BELAUTILS_VERSION);
+          exit(0);
         default:
           break;
         }

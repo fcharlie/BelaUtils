@@ -17,7 +17,7 @@
 #include <ppltasks.h>
 #include <bela/picker.hpp>
 #include <bela/fmt.hpp>
-#include "../../../lib/hashlib/sumizer.hpp"
+#include "sumizer.hpp"
 
 #ifndef HINST_THISCOMPONENT
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
