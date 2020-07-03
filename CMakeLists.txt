@@ -108,9 +108,7 @@ add_definitions(-D_UNICODE=1 -DUNICODE=1)
 
 include_directories("${CMAKE_BINARY_DIR}/include" ./include ./vendor/bela/include)
 
-add_subdirectory(vendor/rhash)
 add_subdirectory(vendor/blake2)
-add_subdirectory(vendor/blake3)
 add_subdirectory(vendor/bela)
 add_subdirectory(lib/hashlib)
 add_subdirectory(lib/winutils)

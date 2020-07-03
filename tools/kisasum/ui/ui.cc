@@ -300,7 +300,7 @@ HRESULT Window::OnRender() {
         RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
         D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   } else if (showerror) {
-    constexpr std::wstring_view fatal = L"\xD83D\xDE1F";
+    constexpr std::wstring_view fatal = L"😟";
     renderTarget->DrawTextW(fatal.data(), static_cast<UINT32>(fatal.size()), lableTextFormat,
                             RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
                             AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
@@ -358,8 +358,8 @@ bool Window::UpdateTheme() {
   return true;
 }
 constexpr const std::wstring_view HashAlgorithm[] = {
-    L"BLAKE3", L"MD5",      L"SHA1",     L"SHA224",   L"SHA256",   L"SHA384",
-    L"SHA512", L"SHA3-224", L"SHA3-256", L"SHA3-384", L"SHA3-512",
+    L"BLAKE3",   L"SHA224",   L"SHA256",   L"SHA384",  L"SHA512",  L"SHA3-224",
+    L"SHA3-256", L"SHA3-384", L"SHA3-512", L"BLAKE2s", L"BLAKE2b", //
 };
 
 //////////////////////////

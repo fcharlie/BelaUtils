@@ -1,133 +1,73 @@
 ///
-#include "../../vendor/rhash/librhash/md5.h"
-#include "../../vendor/rhash/librhash/sha1.h"
-#include "../../vendor/rhash/librhash/sha256.h"
-#include "../../vendor/rhash/librhash/sha3.h"
-#include "../../vendor/rhash/librhash/sha512.h"
-#include "../../vendor/blake2/blake2.h"
-#include "../../vendor/blake3/blake3.h"
+#include <bela/hash.hpp>
 #include <bela/match.hpp>
 #include "sumizer.hpp"
+#include "blake2.hpp"
 
 namespace belautils {
-// hashlib feature
-inline void binary_to_hex(const unsigned char *b, size_t len, std::wstring &hex,
-                          bool uppercase = false) {
-  hex.resize(len * 2);
-  auto p = hex.data();
-  constexpr char lower_hex[] = "0123456789abcdef";
-  constexpr char upper_hex[] = "0123456789ABCDEF";
+
+inline void HashEncodeEx(const uint8_t *b, size_t len, std::wstring &hv, bool uppercase = false) {
+  hv.resize(len * 2);
+  auto p = hv.data();
+  constexpr char hex[] = "0123456789abcdef";
+  constexpr char uhex[] = "0123456789ABCDEF";
   if (uppercase) {
     for (size_t i = 0; i < len; i++) {
-      unsigned int val = b[i];
-      *p++ = upper_hex[val >> 4];
-      *p++ = upper_hex[val & 0xf];
+      uint32_t val = b[i];
+      *p++ = uhex[val >> 4];
+      *p++ = uhex[val & 0xf];
     }
-  } else {
-    for (size_t i = 0; i < len; i++) {
-      unsigned int val = b[i];
-      *p++ = lower_hex[val >> 4];
-      *p++ = lower_hex[val & 0xf];
-    }
+    return;
+  }
+  for (size_t i = 0; i < len; i++) {
+    uint32_t val = b[i];
+    *p++ = hex[val >> 4];
+    *p++ = hex[val & 0xf];
   }
 }
-
-class md5sumizer : public Sumizer {
-public:
-  int Initialize(int w) {
-    (void)w;
-    rhash_md5_init(&ctx);
-    return 0;
-  }
-  int Update(const unsigned char *b, size_t len) {
-    rhash_md5_update(&ctx, b, len);
-    return 0;
-  }
-  int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[md5_hash_size + 1];
-    rhash_md5_final(&ctx, buf);
-    binary_to_hex(buf, md5_hash_size, hex, uc);
-    return 0;
-  }
-
-private:
-  md5_ctx ctx;
-};
-
-class sha1sumizer : public Sumizer {
-public:
-  int Initialize(int w) {
-    (void)w;
-    rhash_sha1_init(&ctx);
-    return 0;
-  }
-  int Update(const unsigned char *b, size_t len) {
-    rhash_sha1_update(&ctx, b, len);
-    return 0;
-  }
-  int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[sha1_hash_size + 1];
-    rhash_sha1_final(&ctx, buf);
-    binary_to_hex(buf, sha1_hash_size, hex, uc);
-    return 0;
-  }
-
-private:
-  sha1_ctx ctx;
-};
 
 class sha256sumizer : public Sumizer {
 public:
   int Initialize(int w) {
-    if (w == 224) {
-      width = w;
-      rhash_sha224_init(&ctx);
-    } else {
-      rhash_sha256_init(&ctx);
-    }
+    hasher.Initialize(w == 224 ? bela::hash::sha256::HashBits::SHA224
+                               : bela::hash::sha256::HashBits::SHA256);
     return 0;
   }
   int Update(const unsigned char *b, size_t len) {
-    rhash_sha256_update(&ctx, b, len);
+    hasher.Update(b, len);
     return 0;
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[sha256_hash_size + 1];
-    rhash_sha256_final(&ctx, buf);
-    binary_to_hex(buf, width / 8, hex, uc);
+    uint8_t buf[bela::hash::sha256::sha256_hash_size];
+    hasher.Finalize(buf, static_cast<size_t>(hasher.hb) / 8);
+    HashEncodeEx(buf, static_cast<size_t>(hasher.hb) / 8, hex, uc);
     return 0;
   }
 
 private:
-  sha256_ctx ctx;
-  int width{256};
+  bela::hash::sha256::Hasher hasher;
 };
 
 class sha512sumizer : public Sumizer {
 public:
   int Initialize(int w) {
-    if (w == 384) {
-      width = 384;
-      rhash_sha384_init(&ctx);
-    } else {
-      rhash_sha512_init(&ctx);
-    }
+    hasher.Initialize(w == 384 ? bela::hash::sha512::HashBits::SHA384
+                               : bela::hash::sha512::HashBits::SHA512);
     return 0;
   }
   int Update(const unsigned char *b, size_t len) {
-    rhash_sha512_update(&ctx, b, len);
+    hasher.Update(b, len);
     return 0;
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[sha512_hash_size + 1];
-    rhash_sha512_final(&ctx, buf);
-    binary_to_hex(buf, width / 8, hex, uc);
+    uint8_t buf[bela::hash::sha512::sha512_hash_size];
+    hasher.Finalize(buf, static_cast<size_t>(hasher.hb) / 8);
+    HashEncodeEx(buf, static_cast<size_t>(hasher.hb) / 8, hex, uc);
     return 0;
   }
 
 private:
-  sha512_ctx ctx;
-  int width{512};
+  bela::hash::sha512::Hasher hasher;
 };
 
 class sha3sumizer : public Sumizer {
@@ -135,37 +75,33 @@ private:
   int Initialize(int w) {
     switch (w) {
     case 224:
-      width = 224;
-      rhash_sha3_224_init(&ctx);
+      hasher.Initialize(bela::hash::sha3::HashBits::SHA3224);
       break;
     case 384:
-      width = 384;
-      rhash_sha3_384_init(&ctx);
+      hasher.Initialize(bela::hash::sha3::HashBits::SHA3384);
       break;
     case 512:
-      width = 512;
-      rhash_sha3_512_init(&ctx);
+      hasher.Initialize(bela::hash::sha3::HashBits::SHA3512);
       break;
     default:
-      rhash_sha3_256_init(&ctx);
+      hasher.Initialize(bela::hash::sha3::HashBits::SHA3256);
       break;
     }
     return 0;
   }
   int Update(const unsigned char *b, size_t len) {
-    rhash_sha3_update(&ctx, b, len);
+    hasher.Update(b, len);
     return 0;
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[sha3_512_hash_size + 1];
-    rhash_sha3_final(&ctx, buf);
-    binary_to_hex(buf, width / 8, hex, uc);
+    uint8_t buf[bela::hash::sha3::sha3_512_hash_size];
+    hasher.Finalize(buf, static_cast<size_t>(hasher.hb) / 8);
+    HashEncodeEx(buf, static_cast<size_t>(hasher.hb) / 8, hex, uc);
     return 0;
   }
 
 private:
-  sha3_ctx ctx;
-  int width{256};
+  bela::hash::sha3::Hasher hasher;
 };
 
 class blake2ssumizer : public Sumizer {
@@ -174,16 +110,14 @@ public:
     (void)w;
     return blake2s_init(&ctx, BLAKE2S_OUTBYTES);
   }
-  int Update(const unsigned char *b, size_t len) {
-    return blake2s_update(&ctx, b, len);
-  }
+  int Update(const unsigned char *b, size_t len) { return blake2s_update(&ctx, b, len); }
   int Final(std::wstring &hex, bool uc) {
     unsigned char buf[BLAKE2S_OUTBYTES];
     auto n = blake2s_final(&ctx, buf, BLAKE2S_OUTBYTES);
     if (n != 0) {
       return n;
     }
-    binary_to_hex(buf, BLAKE2S_OUTBYTES, hex, uc);
+    HashEncodeEx(buf, BLAKE2S_OUTBYTES, hex, uc);
     return 0;
   }
 
@@ -198,6 +132,7 @@ public:
     return blake2b_init(&ctx, BLAKE2B_OUTBYTES);
   }
   int Update(const unsigned char *b, size_t len) {
+    //
     return blake2b_update(&ctx, b, len);
   }
   int Final(std::wstring &hex, bool uc) {
@@ -206,7 +141,7 @@ public:
     if (n != 0) {
       return n;
     }
-    binary_to_hex(buf, BLAKE2B_OUTBYTES, hex, uc);
+    HashEncodeEx(buf, BLAKE2B_OUTBYTES, hex, uc);
     return 0;
   }
 
@@ -218,22 +153,22 @@ class blake3sumizer : public Sumizer {
 public:
   int Initialize(int w) {
     (void)w;
-    blake3_hasher_init(&ctx);
+    hasher.Initialize();
     return 0;
   }
   int Update(const unsigned char *b, size_t len) {
-    blake3_hasher_update(&ctx, b, len);
+    hasher.Update(b, len);
     return 0;
   }
   int Final(std::wstring &hex, bool uc) {
     unsigned char buf[BLAKE3_OUT_LEN];
-    blake3_hasher_finalize(&ctx, buf, BLAKE3_OUT_LEN);
-    binary_to_hex(buf, BLAKE3_OUT_LEN, hex, uc);
+    hasher.Finalize(buf, BLAKE3_OUT_LEN);
+    HashEncodeEx(buf, BLAKE3_OUT_LEN, hex, uc);
     return 0;
   }
 
 private:
-  blake3_hasher ctx;
+  bela::hash::blake3::Hasher hasher;
 };
 
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
@@ -241,14 +176,6 @@ std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
   // Sumizer *sumizer = nullptr;
   std::shared_ptr<Sumizer> sumizer(nullptr);
   switch (alg) {
-  case belautils::algorithm::hash_t::MD5:
-    sumizer = std::make_shared<md5sumizer>();
-    sumizer->Initialize();
-    break;
-  case belautils::algorithm::hash_t::SHA1:
-    sumizer = std::make_shared<sha1sumizer>();
-    sumizer->Initialize();
-    break;
   case belautils::algorithm::hash_t::SHA224:
     sumizer = std::make_shared<sha256sumizer>();
     sumizer->Initialize(224);
@@ -306,8 +233,6 @@ std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
     hash_t h;
   } hav[] = {
       //
-      {L"MD5", belautils::algorithm::hash_t::MD5},
-      {L"SHA1", belautils::algorithm::hash_t::SHA1},
       {L"SHA224", belautils::algorithm::hash_t::SHA224},
       {L"SHA256", belautils::algorithm::hash_t::SHA256},
       {L"SHA384", belautils::algorithm::hash_t::SHA384},

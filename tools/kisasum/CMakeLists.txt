@@ -18,6 +18,8 @@ target_link_libraries(kisasum-ui
   Shell32
 )
 
+target_include_directories(kisasum-ui PRIVATE "../../lib/hashlib")
+
 add_executable(kisasum
   cli/kisasum.cc
   cli/indicators.cc
@@ -29,6 +31,8 @@ target_link_libraries(kisasum
   hashlib
   belawin
 )
+
+target_include_directories(kisasum PRIVATE "../../lib/hashlib")
 
 install(TARGETS kisasum-ui DESTINATION bin)
 install(TARGETS kisasum DESTINATION bin)
