@@ -40,6 +40,7 @@ enum class hash_t : int {
   BLAKE2S,
   BLAKE2B,
   BLAKE3,
+  KangarooTwelve,
   NONE = 999
 };
 [[maybe_unused]] constexpr auto NONE = hash_t::NONE;
@@ -47,7 +48,7 @@ enum class hash_t : int {
 
 // md5 sha1 sha224 sha256 sha384 sha512
 // sha3-224 sha3-256 sha3-384 sha3-512
-// blake2s blake2b
+// blake2s blake2b KangarooTwelve
 algorithm::hash_t lookup_algorithm(std::wstring_view alg);
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg);
 std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg);

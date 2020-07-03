@@ -359,7 +359,7 @@ bool Window::UpdateTheme() {
 }
 constexpr const std::wstring_view HashAlgorithm[] = {
     L"BLAKE3",   L"SHA224",   L"SHA256",   L"SHA384",  L"SHA512",  L"SHA3-224",
-    L"SHA3-256", L"SHA3-384", L"SHA3-512", L"BLAKE2s", L"BLAKE2b", //
+    L"SHA3-256", L"SHA3-384", L"SHA3-512", L"BLAKE2s", L"BLAKE2b", L"KangarooTwelve", //
 };
 
 //////////////////////////

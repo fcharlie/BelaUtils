@@ -3,6 +3,7 @@
 #include <bela/match.hpp>
 #include "sumizer.hpp"
 #include "blake2.hpp"
+#include "KangarooTwelve.hpp"
 
 namespace belautils {
 
@@ -171,6 +172,26 @@ private:
   bela::hash::blake3::Hasher hasher;
 };
 
+class k12sumizer : public Sumizer {
+public:
+  int Initialize(int w) {
+    (void)w;
+    return KangarooTwelve_Initialize(&instance, 33);
+  }
+  int Update(const unsigned char *b, size_t len) {
+    return KangarooTwelve_Update(&instance, b, len);
+  }
+  int Final(std::wstring &hex, bool uc) {
+    unsigned char buf[256];
+    KangarooTwelve_Final(&instance, buf, reinterpret_cast<const unsigned char *>(""), 0);
+    HashEncodeEx(buf, 32, hex, uc);
+    return 0;
+  }
+
+private:
+  KangarooTwelve_Instance instance;
+};
+
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
   using namespace algorithm;
   // Sumizer *sumizer = nullptr;
@@ -220,6 +241,10 @@ std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
     sumizer = std::make_shared<blake2bsumizer>();
     sumizer->Initialize();
     break;
+  case belautils::algorithm::hash_t::KangarooTwelve:
+    sumizer = std::make_shared<k12sumizer>();
+    sumizer->Initialize();
+    break;
   default:
     break;
   }
@@ -243,7 +268,8 @@ std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
       {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
       {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
       {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
-      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B}
+      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B},
+      {L"KangarooTwelve", belautils::algorithm::hash_t::KangarooTwelve},
       //
   };
   for (const auto &h : hav) {
@@ -273,7 +299,8 @@ algorithm::hash_t lookup_algorithm(std::wstring_view alg) {
       {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
       {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
       {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
-      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B}
+      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B},
+      {L"KangarooTwelve", belautils::algorithm::hash_t::KangarooTwelve},
       //
   };
   for (const auto &h : hav) {
