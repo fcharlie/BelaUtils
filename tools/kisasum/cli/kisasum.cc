@@ -25,11 +25,15 @@ OPTIONS:
 Algorithm:
   SHA224     SHA256     SHA384     SHA512
   SHA3-224   SHA3-256   SHA3-384   SHA3-512
-  BLAKE3     BLAKE2s    BLAKE2b    KangarooTwelve
+  BLAKE3     BLAKE2s    BLAKE2b    KangarooTwelve*
 
 Formats:
   text     format to text, support progress
   json     format to json
+
+Notes:
+  KangarooTwelve Experimental Support
+
 )";
   bela::FPrintF(stderr, L"%s\n", ua);
 }
