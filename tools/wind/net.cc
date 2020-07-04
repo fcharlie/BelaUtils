@@ -3,10 +3,12 @@
 #include <bela/env.hpp>
 #include <bela/path.hpp>
 #include <bela/strip.hpp>
+#include <bela/strcat.hpp>
 #include <winhttp.h>
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <filesystem>
 #include "indicators.hpp"
 #include "net.hpp"
 #include "wind.hpp"
@@ -262,12 +264,17 @@ void Response::ParseHeadersString(std::wstring_view hdr) {
   std::vector<std::wstring_view> hlines =
       bela::StrSplit(hdr, bela::ByString(L"\r\n"), bela::SkipEmpty());
   for (const auto ln : hlines) {
+    baulk::DbgPrint(L"%s", ln);
     if (auto pos = ln.find(':'); pos != std::wstring_view::npos) {
       auto k = bela::StripTrailingAsciiWhitespace(ln.substr(0, pos));
       auto v = bela::StripTrailingAsciiWhitespace(ln.substr(pos + 1));
       hkv.emplace(k, v);
     }
   }
+}
+
+inline std::wstring_view wstring_cast(const char *data, size_t n) {
+  return std::wstring_view{reinterpret_cast<const wchar_t *>(data), n / 2};
 }
 
 std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstring_view url,
@@ -342,6 +349,12 @@ std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstri
     return std::nullopt;
   }
   Response resp;
+  DWORD dwSize = sizeof(resp.statuscode);
+  if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, nullptr,
+                          &resp.statuscode, &dwSize, nullptr) != TRUE) {
+    ec = make_net_error_code();
+    return std::nullopt;
+  }
   DWORD headerBufferLength = 0;
   query_header_length(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
   std::string hdbf;
@@ -351,16 +364,9 @@ std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstri
     ec = make_net_error_code();
     return std::nullopt;
   }
-  resp.ParseHeadersString(
-      std::wstring_view{reinterpret_cast<const wchar_t *>(hdbf.data()), headerBufferLength / 2});
+  resp.ParseHeadersString(wstring_cast(hdbf.data(), headerBufferLength));
   std::vector<char> readbuf;
   readbuf.reserve(64 * 1024);
-  DWORD dwSize = sizeof(resp.statuscode);
-  if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, nullptr,
-                          &resp.statuscode, &dwSize, nullptr) != TRUE) {
-    ec = make_net_error_code();
-    return std::nullopt;
-  }
   do {
     DWORD downloaded_size = 0;
     if (WinHttpQueryDataAvailable(hRequest, &dwSize) != TRUE) {
@@ -377,6 +383,22 @@ std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstri
     resp.body.append(readbuf.data(), dwSize);
   } while (dwSize > 0);
   return std::make_optional(std::move(resp));
+}
+
+std::optional<std::wstring> FindNotExistsName(std::wstring_view path, bela::error_code &ec) {
+  std::filesystem::path p(path);
+  auto pp = p.parent_path().wstring();
+  auto filename = p.filename().wstring();
+  auto extension = p.extension().wstring();
+  auto filenameX = bela::StripSuffix(filename, extension);
+  for (int i = 1; i < 1001; i++) {
+    auto file = bela::StringCat(pp, L"\\", filenameX, L"-(", i, L")", extension);
+    if (!bela::PathExists(file)) {
+      return std::make_optional(std::move(file));
+    }
+  }
+  ec = bela::make_error_code(ERROR_FILE_EXISTS, L"'", path, L"' already exists");
+  return std::nullopt;
 }
 
 std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view workdir,
@@ -421,6 +443,25 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
     ec = make_net_error_code();
     return std::nullopt;
   }
+  if (baulk::IsDebugMode) {
+    Response resp;
+    DWORD dwSize = sizeof(resp.statuscode);
+    if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                            nullptr, &resp.statuscode, &dwSize, nullptr) != TRUE) {
+      ec = make_net_error_code();
+      return std::nullopt;
+    }
+    DWORD headerBufferLength = 0;
+    query_header_length(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
+    std::string hdbf;
+    hdbf.resize(headerBufferLength);
+    if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
+                            hdbf.data(), &headerBufferLength, WINHTTP_NO_HEADER_INDEX) != TRUE) {
+      ec = make_net_error_code();
+      return std::nullopt;
+    }
+    resp.ParseHeadersString(wstring_cast(hdbf.data(), headerBufferLength));
+  }
   baulk::ProgressBar bar;
   uint64_t blen = 0;
   if (BodyLength(hRequest, blen)) {
@@ -430,13 +471,17 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
 
   auto dest = bela::PathCat(workdir, uc.filename);
   if (bela::PathExists(dest)) {
-    if (!forceoverwrite) {
-      ec = bela::make_error_code(ERROR_FILE_EXISTS, L"'", dest, L"' already exists");
-      return std::nullopt;
-    }
-    if (DeleteFileW(dest.data()) != TRUE) {
-      ec = make_net_error_code();
-      return std::nullopt;
+    if (forceoverwrite) {
+      if (DeleteFileW(dest.data()) != TRUE) {
+        ec = make_net_error_code();
+        return std::nullopt;
+      }
+    } else {
+      auto destX = FindNotExistsName(dest, ec);
+      if (!destX) {
+        return std::nullopt;
+      }
+      dest.assign(std::move(*destX));
     }
   }
   size_t total_downloaded_size = 0;
@@ -444,7 +489,7 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
   std::vector<char> buf;
   buf.reserve(64 * 1024);
   auto file = FilePart::MakeFilePart(dest, ec);
-  bar.FileName(uc.filename);
+  bar.FileName(bela::BaseName(dest));
   bar.Execute();
   auto finish = bela::finally([&] {
     // finish progressbar
