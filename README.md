@@ -30,7 +30,7 @@ A faster hex dumper fork from [https://github.com/skeeto/hastyhex](https://githu
 
 ## Wind
 
-Wind - Interesting download tool. Can automatically use system agents to download files on the network.
+Wind - Interesting download tool. Auto use system proxy when download files from network.
 
 ![](./docs/images/wind.png)
 
