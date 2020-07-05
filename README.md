@@ -12,10 +12,22 @@ Tools reimplemented using Bela library
 
 Caelum is derived from [PEAnalyzer](https://github.com/fcharlie/PEAnalyzer/), which is a GUI PE analysis tool that can analyze the structure, dependency and other information of PE files.
 
+![](./docs/images/caelum.png)
+
 
 ## Kisasum Hash Utilities
 
-Kisasum is derived from [Kismet](https://github.com/fcharlie/Kismet) and is a CUI hash calculation tool that supports SHA1/SHA228/SHA256/SHA384/SHA512/SHA3/BAKE3
+Kisasum is derived from [Kismet](https://github.com/fcharlie/Kismet) and is a hash calculation tool that supports SHA228/SHA256/SHA384/SHA512/SHA3/BAKE3/KangarooTwelve/BLAKE2b/BLAKE2s.
+
+CLI usage:
+
+```shell
+kisasum -a BLAKE3 path/to/file
+```
+
+GUI Snapshot:
+
+![](./docs/images/kisasum-ui.png)
 
 
 ## Krycekium MSI unpacker
