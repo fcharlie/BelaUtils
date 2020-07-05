@@ -34,6 +34,8 @@ GUI Snapshot:
 
 Krycekium is derived from  [Krycekium](https://github.com/fcharlie/Krycekium) and is an MSI installation package decompression tool.
 
+![](./docs/images/krycekium.png)
+
 ## hastyhex
 
 A faster hex dumper fork from [https://github.com/skeeto/hastyhex](https://github.com/skeeto/hastyhex). 
