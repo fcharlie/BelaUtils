@@ -34,6 +34,10 @@ Wind - Interesting download tool. Can automatically use system agents to downloa
 
 ![](./docs/images/wind.png)
 
+Download success:
+
+![](./docs/images/wind2.png)
+
 ## Download
 
 Download the latest version of Baulk: [https://github.com/fcharlie/belautils/releases/latest](https://github.com/fcharlie/belautils/releases/latest)
