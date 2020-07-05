@@ -28,6 +28,12 @@ A faster hex dumper fork from [https://github.com/skeeto/hastyhex](https://githu
 
 ![](./docs/images/hastyhex.png)
 
+## Wind
+
+Wind - Interesting download tool. Can automatically use system agents to download files on the network.
+
+![](./docs/images/wind.png)
+
 ## Download
 
 Download the latest version of Baulk: [https://github.com/fcharlie/belautils/releases/latest](https://github.com/fcharlie/belautils/releases/latest)
