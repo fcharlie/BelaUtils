@@ -35,6 +35,8 @@ private:
 // timeout milliseconds
 std::optional<baulk::net::Conn> DialTimeout(std::wstring_view address, int port, int timeout,
                                             bela::error_code &ec); // second
+
+// incase string hash map
 struct StringCaseInsensitiveHash {
   using is_transparent = void;
   std::size_t operator()(std::wstring_view wsv) const noexcept {
@@ -71,7 +73,7 @@ struct Response {
   headers_t hkv;
   std::string body;
   long statuscode{0};
-  void ParseHeadersString(std::wstring_view hdr);
+  void ParseHeadersString(std::wstring_view hdr, bool ish2);
   [[nodiscard]] bool IsSuccessStatusCode() const { return statuscode >= 200 && statuscode <= 299; }
 };
 

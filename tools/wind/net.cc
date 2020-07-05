@@ -4,6 +4,10 @@
 #include <bela/path.hpp>
 #include <bela/strip.hpp>
 #include <bela/strcat.hpp>
+#include <bela/str_replace.hpp>
+#include <schannel.h>
+#include <ws2tcpip.h>
+// winhttp require schannel, ws2tcpip
 #include <winhttp.h>
 #include <cstdio>
 #include <cstdlib>
@@ -12,6 +16,15 @@
 #include "indicators.hpp"
 #include "net.hpp"
 #include "wind.hpp"
+
+struct WINHTTP_SECURITY_INFO_X {
+  SecPkgContext_ConnectionInfo ConnectionInfo;
+  SecPkgContext_CipherInfo CipherInfo;
+};
+
+#ifndef WINHTTP_OPTION_SECURITY_INFO
+#define WINHTTP_OPTION_SECURITY_INFO 151
+#endif
 
 namespace baulk::net {
 
@@ -143,6 +156,10 @@ inline void EnableTlsProxy(HINTERNET hSession) {
   DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3);
   WinHttpSetOption(hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols,
                    sizeof(secure_protocols));
+  // Enable HTTP2
+  DWORD dwFlags = WINHTTP_PROTOCOL_FLAG_HTTP2;
+  DWORD dwSize = sizeof(dwFlags);
+  WinHttpSetOption(hSession, WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL, &dwFlags, sizeof(dwFlags));
 }
 
 inline bool BodyLength(HINTERNET hReq, uint64_t &len) {
@@ -259,11 +276,63 @@ static inline void query_header_length(HINTERNET request_handle, DWORD header, D
                       WINHTTP_NO_OUTPUT_BUFFER, &length, WINHTTP_NO_HEADER_INDEX);
 }
 
-void Response::ParseHeadersString(std::wstring_view hdr) {
+inline std::optional<std::wstring> query_remote_address(HINTERNET hRequest) {
+  WINHTTP_CONNECTION_INFO coninfo;
+  DWORD dwSize = sizeof(WINHTTP_CONNECTION_INFO);
+  if (WinHttpQueryOption(hRequest, WINHTTP_OPTION_CONNECTION_INFO, &coninfo, &dwSize) != TRUE) {
+    return std::nullopt;
+  }
+  wchar_t addrw[256];
+  if (coninfo.RemoteAddress.ss_family == AF_INET) {
+    auto addr = reinterpret_cast<const struct sockaddr_in *>(&coninfo.RemoteAddress);
+    if (InetNtopW(AF_INET, &addr->sin_addr, addrw, sizeof(addrw) * 2) == nullptr) {
+      return std::nullopt;
+    }
+    return std::make_optional<std::wstring>(addrw);
+  }
+  if (coninfo.RemoteAddress.ss_family == AF_INET6) {
+    auto addr = reinterpret_cast<const struct sockaddr_in6 *>(&coninfo.RemoteAddress);
+    if (InetNtopW(AF_INET6, &addr->sin6_addr, addrw, sizeof(addrw) * 2) == nullptr) {
+      return std::nullopt;
+    }
+    return std::make_optional<std::wstring>(addrw);
+  }
+  return std::nullopt;
+}
+
+void connect_trace(HINTERNET hRequest) {
+  WINHTTP_SECURITY_INFO_X si;
+  DWORD dwSize = sizeof(si);
+  if (WinHttpQueryOption(hRequest, WINHTTP_OPTION_SECURITY_INFO, &si, &dwSize) != TRUE) {
+    return;
+  }
+  if ((si.ConnectionInfo.dwProtocol & SP_PROT_TLS1_2_CLIENT) != 0) {
+    bela::FPrintF(stderr, L"\x1b[33m* SSL connection using TLSv1.2 /%s\x1b[0m\n",
+                  si.CipherInfo.szCipherSuite);
+  }
+  if ((si.ConnectionInfo.dwProtocol & SP_PROT_TLS1_3_CLIENT) != 0) {
+    bela::FPrintF(stderr, L"\x1b[33m* SSL connection using TLSv1.3 /%s\x1b[0m\n",
+                  si.CipherInfo.szCipherSuite);
+  }
+}
+
+void Response::ParseHeadersString(std::wstring_view hdr, bool ish2) {
   constexpr std::wstring_view content_type = L"Content-Type";
   std::vector<std::wstring_view> hlines =
       bela::StrSplit(hdr, bela::ByString(L"\r\n"), bela::SkipEmpty());
-  for (const auto ln : hlines) {
+  if (hlines.size() < 2) {
+    return;
+  }
+  if (baulk::IsDebugMode) {
+    if (ish2) {
+      auto s = bela::StrReplaceAll(hlines[0], {{L"1.1", L"2.0"}});
+      baulk::DbgPrint(L"%s", s);
+    } else {
+      baulk::DbgPrint(L"%s", hlines[0]);
+    }
+  }
+  for (size_t i = 1; i < hlines.size(); i++) {
+    auto ln = hlines[i];
     baulk::DbgPrint(L"%s", ln);
     if (auto pos = ln.find(':'); pos != std::wstring_view::npos) {
       auto k = bela::StripTrailingAsciiWhitespace(ln.substr(0, pos));
@@ -355,6 +424,14 @@ std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstri
     ec = make_net_error_code();
     return std::nullopt;
   }
+  bool ish2 = false;
+  DWORD dwOption = 0;
+  DWORD dwlen = sizeof(dwOption);
+
+  WinHttpQueryOption(hRequest, WINHTTP_OPTION_HTTP_PROTOCOL_USED, &dwOption, &dwlen);
+  if ((dwOption & WINHTTP_PROTOCOL_FLAG_HTTP2) != 0) {
+    ish2 = true;
+  }
   DWORD headerBufferLength = 0;
   query_header_length(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
   std::string hdbf;
@@ -364,7 +441,7 @@ std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstri
     ec = make_net_error_code();
     return std::nullopt;
   }
-  resp.ParseHeadersString(wstring_cast(hdbf.data(), headerBufferLength));
+  resp.ParseHeadersString(wstring_cast(hdbf.data(), headerBufferLength), ish2);
   std::vector<char> readbuf;
   readbuf.reserve(64 * 1024);
   do {
@@ -443,6 +520,11 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
     ec = make_net_error_code();
     return std::nullopt;
   }
+  if (auto addr = query_remote_address(hRequest); addr) {
+    bela::FPrintF(stderr, L"\x1b[33mConnecting to %s (%s) %s|:%d connected.\x1b[0m\n", uc.host,
+                  uc.host, *addr, uc.nPort);
+  }
+  connect_trace(hRequest);
   if (baulk::IsDebugMode) {
     Response resp;
     DWORD dwSize = sizeof(resp.statuscode);
@@ -450,6 +532,14 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
                             nullptr, &resp.statuscode, &dwSize, nullptr) != TRUE) {
       ec = make_net_error_code();
       return std::nullopt;
+    }
+    bool ish2 = false;
+    DWORD dwOption = 0;
+    DWORD dwlen = sizeof(dwOption);
+
+    WinHttpQueryOption(hRequest, WINHTTP_OPTION_HTTP_PROTOCOL_USED, &dwOption, &dwlen);
+    if ((dwOption & WINHTTP_PROTOCOL_FLAG_HTTP2) != 0) {
+      ish2 = true;
     }
     DWORD headerBufferLength = 0;
     query_header_length(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
@@ -460,7 +550,7 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
       ec = make_net_error_code();
       return std::nullopt;
     }
-    resp.ParseHeadersString(wstring_cast(hdbf.data(), headerBufferLength));
+    resp.ParseHeadersString(wstring_cast(hdbf.data(), headerBufferLength), ish2);
   }
   baulk::ProgressBar bar;
   uint64_t blen = 0;
