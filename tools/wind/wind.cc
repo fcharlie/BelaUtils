@@ -122,20 +122,21 @@ int wmain(int argc, wchar_t **argv) {
     auto u = ww.urls[0];
     auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ec);
     if (!file) {
-      bela::FPrintF(stderr, L"download %s error: %s\n", u, ec.message);
+      bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       return 1;
     }
     if (MoveFileExW(file->data(), ww.outfile.data(),
                     MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != TRUE) {
       ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"unable move %s to %s error: %s\n", *file, ww.outfile, ec.message);
+      bela::FPrintF(stderr, L"unable move %s to %s error: \x1b[31m%s\x1b[0m\n", *file, ww.outfile,
+                    ec.message);
       return 1;
     }
     std::error_code e;
     auto p = std::filesystem::absolute(ww.outfile, e);
     if (e) {
       ec = bela::from_std_error_code(e);
-      bela::FPrintF(stderr, L"unable resolve absolute path: %s\n", ec.message);
+      bela::FPrintF(stderr, L"unable resolve absolute path: \x1b[31m%s\x1b[0m\n", ec.message);
       return 1;
     }
     bela::FPrintF(stdout, L"\x1b[32m'%s' saved\x1b[0m\n", p.wstring());
@@ -145,7 +146,7 @@ int wmain(int argc, wchar_t **argv) {
   for (const auto &u : ww.urls) {
     auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ec);
     if (!file) {
-      bela::FPrintF(stderr, L"download %s error: %s\n", u, ec.message);
+      bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       continue;
     }
     bela::FPrintF(stdout, L"\x1b[32m'%s' saved\x1b[0m\n", *file);
