@@ -358,8 +358,8 @@ bool Window::UpdateTheme() {
   return true;
 }
 constexpr const std::wstring_view HashAlgorithm[] = {
-    L"BLAKE3",   L"SHA224",   L"SHA256",   L"SHA384",  L"SHA512",  L"SHA3-224",
-    L"SHA3-256", L"SHA3-384", L"SHA3-512", L"BLAKE2s", L"BLAKE2b", L"KangarooTwelve", //
+    L"BLAKE3",   L"SHA224",   L"SHA256",  L"SHA384",  L"SHA512",         L"SHA3-224", L"SHA3-256",
+    L"SHA3-384", L"SHA3-512", L"BLAKE2s", L"BLAKE2b", L"KangarooTwelve", L"SM3", //
 };
 
 //////////////////////////
@@ -431,7 +431,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 
   hCheck = LambdaCreateWindow(WC_BUTTONW, L"", KWS_CHECKBOX, 20, areaheight + 30, 20, 20, nullptr);
 
-  hCombo = LambdaCreateWindow(WC_COMBOBOXW, L"", KWS_COMBOBOX, width - 420, areaheight + 25, 120,
+  hCombo = LambdaCreateWindow(WC_COMBOBOXW, L"", KWS_COMBOBOX, width - 427, areaheight + 25, 127,
                               27, nullptr);
 
   hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Clear", KWS_BUTTON, width - 290, areaheight + 25,

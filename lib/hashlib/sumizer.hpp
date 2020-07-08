@@ -41,6 +41,7 @@ enum class hash_t : int {
   BLAKE2B,
   BLAKE3,
   KangarooTwelve,
+  SM3,
   NONE = 999
 };
 [[maybe_unused]] constexpr auto NONE = hash_t::NONE;

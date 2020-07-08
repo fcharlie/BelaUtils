@@ -34,7 +34,7 @@ public:
                                : bela::hash::sha256::HashBits::SHA256);
     return 0;
   }
-  int Update(const unsigned char *b, size_t len) {
+  int Update(const uint8_t *b, size_t len) {
     hasher.Update(b, len);
     return 0;
   }
@@ -56,7 +56,7 @@ public:
                                : bela::hash::sha512::HashBits::SHA512);
     return 0;
   }
-  int Update(const unsigned char *b, size_t len) {
+  int Update(const uint8_t *b, size_t len) {
     hasher.Update(b, len);
     return 0;
   }
@@ -90,7 +90,7 @@ private:
     }
     return 0;
   }
-  int Update(const unsigned char *b, size_t len) {
+  int Update(const uint8_t *b, size_t len) {
     hasher.Update(b, len);
     return 0;
   }
@@ -111,9 +111,9 @@ public:
     (void)w;
     return blake2s_init(&ctx, BLAKE2S_OUTBYTES);
   }
-  int Update(const unsigned char *b, size_t len) { return blake2s_update(&ctx, b, len); }
+  int Update(const uint8_t *b, size_t len) { return blake2s_update(&ctx, b, len); }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[BLAKE2S_OUTBYTES];
+    uint8_t buf[BLAKE2S_OUTBYTES];
     auto n = blake2s_final(&ctx, buf, BLAKE2S_OUTBYTES);
     if (n != 0) {
       return n;
@@ -132,12 +132,12 @@ public:
     (void)w;
     return blake2b_init(&ctx, BLAKE2B_OUTBYTES);
   }
-  int Update(const unsigned char *b, size_t len) {
+  int Update(const uint8_t *b, size_t len) {
     //
     return blake2b_update(&ctx, b, len);
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[BLAKE2B_OUTBYTES];
+    uint8_t buf[BLAKE2B_OUTBYTES];
     auto n = blake2b_final(&ctx, buf, BLAKE2B_OUTBYTES);
     if (n != 0) {
       return n;
@@ -157,12 +157,12 @@ public:
     hasher.Initialize();
     return 0;
   }
-  int Update(const unsigned char *b, size_t len) {
+  int Update(const uint8_t *b, size_t len) {
     hasher.Update(b, len);
     return 0;
   }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[BLAKE3_OUT_LEN];
+    uint8_t buf[BLAKE3_OUT_LEN];
     hasher.Finalize(buf, BLAKE3_OUT_LEN);
     HashEncodeEx(buf, BLAKE3_OUT_LEN, hex, uc);
     return 0;
@@ -178,18 +178,38 @@ public:
     (void)w;
     return KangarooTwelve_Initialize(&instance, 33);
   }
-  int Update(const unsigned char *b, size_t len) {
-    return KangarooTwelve_Update(&instance, b, len);
-  }
+  int Update(const uint8_t *b, size_t len) { return KangarooTwelve_Update(&instance, b, len); }
   int Final(std::wstring &hex, bool uc) {
-    unsigned char buf[256];
-    KangarooTwelve_Final(&instance, buf, reinterpret_cast<const unsigned char *>(""), 0);
+    uint8_t buf[256];
+    KangarooTwelve_Final(&instance, buf, reinterpret_cast<const uint8_t *>(""), 0);
     HashEncodeEx(buf, 32, hex, uc);
     return 0;
   }
 
 private:
   KangarooTwelve_Instance instance;
+};
+
+class sm3sumizer : public Sumizer {
+public:
+  int Initialize(int w) {
+    (void)w;
+    hasher.Initialize();
+    return 0;
+  }
+  int Update(const uint8_t *b, size_t len) {
+    hasher.Update(b, len);
+    return 0;
+  }
+  int Final(std::wstring &hex, bool uc) {
+    uint8_t buf[bela::hash::sm3::sm3_digest_length];
+    hasher.Finalize(buf, sizeof(buf));
+    HashEncodeEx(buf, sizeof(buf), hex, uc);
+    return 0;
+  }
+
+private:
+  bela::hash::sm3::Hasher hasher;
 };
 
 std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
@@ -245,33 +265,36 @@ std::shared_ptr<Sumizer> make_sumizer(algorithm::hash_t alg) {
     sumizer = std::make_shared<k12sumizer>();
     sumizer->Initialize();
     break;
+  case belautils::algorithm::hash_t::SM3:
+    sumizer = std::make_shared<sm3sumizer>();
+    sumizer->Initialize();
+    break;
   default:
     break;
   }
   return sumizer;
 }
-
+constexpr struct hash_algorithm_map {
+  std::wstring_view s;
+  belautils::algorithm::hash_t h;
+} hav[] = {
+    //
+    {L"SHA224", belautils::algorithm::hash_t::SHA224},
+    {L"SHA256", belautils::algorithm::hash_t::SHA256},
+    {L"SHA384", belautils::algorithm::hash_t::SHA384},
+    {L"SHA512", belautils::algorithm::hash_t::SHA512},
+    {L"SHA3-224", belautils::algorithm::hash_t::SHA3_224},
+    {L"SHA3-256", belautils::algorithm::hash_t::SHA3_256},
+    {L"SHA3-384", belautils::algorithm::hash_t::SHA3_384},
+    {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
+    {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
+    {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
+    {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B},
+    {L"KangarooTwelve", belautils::algorithm::hash_t::KangarooTwelve},
+    {L"SM3", belautils::algorithm::hash_t::SM3},
+    //
+};
 std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
-  using namespace algorithm;
-  constexpr struct hash_algorithm_map {
-    std::wstring_view s;
-    hash_t h;
-  } hav[] = {
-      //
-      {L"SHA224", belautils::algorithm::hash_t::SHA224},
-      {L"SHA256", belautils::algorithm::hash_t::SHA256},
-      {L"SHA384", belautils::algorithm::hash_t::SHA384},
-      {L"SHA512", belautils::algorithm::hash_t::SHA512},
-      {L"SHA3-224", belautils::algorithm::hash_t::SHA3_224},
-      {L"SHA3-256", belautils::algorithm::hash_t::SHA3_256},
-      {L"SHA3-384", belautils::algorithm::hash_t::SHA3_384},
-      {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
-      {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
-      {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
-      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B},
-      {L"KangarooTwelve", belautils::algorithm::hash_t::KangarooTwelve},
-      //
-  };
   for (const auto &h : hav) {
     if (bela::EqualsIgnoreCase(h.s, alg)) {
       return make_sumizer(h.h);
@@ -281,34 +304,12 @@ std::shared_ptr<Sumizer> make_sumizer(std::wstring_view alg) {
 }
 
 algorithm::hash_t lookup_algorithm(std::wstring_view alg) {
-  using namespace algorithm;
-  constexpr struct hash_algorithm_map {
-    std::wstring_view s;
-    hash_t h;
-  } hav[] = {
-      //
-      {L"MD5", belautils::algorithm::hash_t::MD5},
-      {L"SHA1", belautils::algorithm::hash_t::SHA1},
-      {L"SHA224", belautils::algorithm::hash_t::SHA224},
-      {L"SHA256", belautils::algorithm::hash_t::SHA256},
-      {L"SHA384", belautils::algorithm::hash_t::SHA384},
-      {L"SHA512", belautils::algorithm::hash_t::SHA512},
-      {L"SHA3-224", belautils::algorithm::hash_t::SHA3_224},
-      {L"SHA3-256", belautils::algorithm::hash_t::SHA3_256},
-      {L"SHA3-384", belautils::algorithm::hash_t::SHA3_384},
-      {L"SHA3-512", belautils::algorithm::hash_t::SHA3_512},
-      {L"BLAKE3", belautils::algorithm::hash_t::BLAKE3},
-      {L"BLAKE2s", belautils::algorithm::hash_t::BLAKE2S},
-      {L"BLAKE2b", belautils::algorithm::hash_t::BLAKE2B},
-      {L"KangarooTwelve", belautils::algorithm::hash_t::KangarooTwelve},
-      //
-  };
   for (const auto &h : hav) {
     if (bela::EqualsIgnoreCase(h.s, alg)) {
       return h.h;
     }
   }
-  return NONE;
+  return belautils::algorithm::NONE;
 }
 
 } // namespace belautils
