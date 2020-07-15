@@ -658,8 +658,8 @@ LRESULT Window::Filesum(std::wstring_view file) {
   Concurrency::create_task([this, p, ha]() -> bool {
     auto closer = bela::finally([this] { this->locked = false; });
     auto file = p.wstring();
-    auto hFile = CreateFileW(file.data(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, nullptr);
+    auto hFile = CreateFileW(file.data(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE) {
       return false;
     }
