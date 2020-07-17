@@ -3,6 +3,7 @@
 #include <bela/strcat.hpp>
 #include <bela/terminal.hpp>
 #include <shellapi.h>
+#include <placement.hpp>
 #include "window.hpp"
 #include "kmutils.hpp"
 #include "resource.h"
@@ -189,13 +190,28 @@ HRESULT Window::OnRender() {
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
   auto cs = reinterpret_cast<CREATESTRUCTW const *>(lParam);
   dpiX = GetDpiForWindow(m_hWnd);
-  // Refresh Window use real DPI
-  RECT rect;
-  SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-  int cx = rect.right - rect.left;
+  WINDOWPLACEMENT placement;
+  auto initializer = [&]() {
+    if (!baulkenv.Initialize()) {
+      return false;
+    }
+    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\krycekium.pos.json");
+    return belautils::LoadPlacement(posfile, placement);
+  };
   auto w = MulDiv(700, dpiX, 96);
-  ::SetWindowPos(m_hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w, MulDiv(440, dpiX, 96),
-                 SWP_NOZORDER | SWP_NOACTIVATE);
+  auto h = MulDiv(440, dpiX, 96);
+  if (initializer()) {
+    ::SetWindowPos(m_hWnd, nullptr, placement.rcNormalPosition.left, placement.rcNormalPosition.top,
+                   w, h, SWP_NOZORDER | SWP_NOACTIVATE);
+  } else {
+    RECT rect;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+    int cx = rect.right - rect.left;
+    ::SetWindowPos(m_hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w, h,
+                   SWP_NOZORDER | SWP_NOACTIVATE);
+  }
+  // Refresh Window use real DPI
+
   // Enable Drag files
   ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
   ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
@@ -245,6 +261,14 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 }
 
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
+  if (!baulkenv.BaulkRoot().empty()) {
+    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\krycekium.pos.json");
+    WINDOWPLACEMENT placement;
+    placement.length = sizeof(WINDOWPLACEMENT);
+    if (::GetWindowPlacement(m_hWnd, &placement) == TRUE) {
+      belautils::SavePlacement(posfile, placement);
+    }
+  }
   PostQuitMessage(0);
   return S_OK;
 }

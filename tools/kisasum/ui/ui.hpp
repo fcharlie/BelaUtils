@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <wincodec.h>
+#include <baulkenv.hpp>
 #include "kisasum.hpp"
 
 namespace kisasum::ui {
@@ -92,6 +93,7 @@ private:
   HWND hCheck{nullptr};
   HBRUSH hBrush{nullptr};
   WindowSettings ws;
+  belautils::BaulkEnv baulkenv;
   std::wstring filetext;
   std::wstring sizetext;
   std::wstring hash;

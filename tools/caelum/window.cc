@@ -7,6 +7,7 @@
 #include <bela/path.hpp>
 #include <shellapi.h>
 #include "caelum.hpp"
+#include <placement.hpp>
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 
@@ -250,6 +251,14 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
     DestroyWindow(hWnd);
     return S_OK;
   case WM_DESTROY:
+    if (!baulkenv.BaulkRoot().empty()) {
+      auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\caelum.pos.json");
+      WINDOWPLACEMENT placement;
+      placement.length = sizeof(WINDOWPLACEMENT);
+      if (::GetWindowPlacement(hWnd, &placement) == TRUE) {
+        belautils::SavePlacement(posfile, placement);
+      }
+    }
     PostQuitMessage(0);
     return S_OK;
   case WM_SYSCOMMAND:
@@ -271,12 +280,28 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam,
 LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
   dpiX = GetDpiForWindow(hWnd);
   dpiY = dpiX;
-  RECT rect;
-  SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-  int cx = rect.right - rect.left;
+
+  WINDOWPLACEMENT placement;
+  auto initializer = [&]() {
+    if (!baulkenv.Initialize()) {
+      return false;
+    }
+    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\caelum.pos.json");
+    return belautils::LoadPlacement(posfile, placement);
+  };
   auto w = MulDiv(720, dpiX, 96);
-  SetWindowPos(hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w, MulDiv(500, dpiX, 96),
-               SWP_NOZORDER | SWP_NOACTIVATE);
+  auto h = MulDiv(500, dpiX, 96);
+  if (initializer()) {
+    SetWindowPos(hWnd, nullptr, placement.rcNormalPosition.left, placement.rcNormalPosition.top, w,
+                 h, SWP_NOZORDER | SWP_NOACTIVATE);
+  } else {
+      RECT rect;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+    int cx = rect.right - rect.left;
+    SetWindowPos(hWnd, nullptr, (cx - w) / 2, MulDiv(100, dpiX, 96), w, h,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+  }
+
   RefreshFont(hFont, dpiX);
   if (hFont == nullptr) {
     hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);

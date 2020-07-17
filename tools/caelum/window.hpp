@@ -12,6 +12,7 @@
 #include <optional>
 #include <mutex>
 #include <bela/base.hpp>
+#include "baulkenv.hpp"
 
 namespace caelum {
 namespace ui {
@@ -189,6 +190,8 @@ private:
   std::vector<Label> depends;
   //
   std::mutex mtx;
+  //
+  belautils::BaulkEnv baulkenv;
   //
   int dpiX{96};
   int dpiY{96};

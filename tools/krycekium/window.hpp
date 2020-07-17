@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <baulkenv.hpp>
 //
 #include "executor.hpp"
 
@@ -211,6 +212,7 @@ private:
   Widget wProgress;
   Widget wExecute;
   Widget wCancel;
+  belautils::BaulkEnv baulkenv;
   HFONT hFont{nullptr}; // GDI font
   UINT32 dpiX{96};
   //

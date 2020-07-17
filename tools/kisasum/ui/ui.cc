@@ -17,6 +17,7 @@
 #include <ppltasks.h>
 #include <bela/picker.hpp>
 #include <bela/fmt.hpp>
+#include <placement.hpp>
 #include "sumizer.hpp"
 
 #ifndef HINST_THISCOMPONENT
@@ -172,8 +173,22 @@ LRESULT Window::InitializeWindow() {
     std::terminate();
     return S_FALSE;
   }
+  WINDOWPLACEMENT placement;
+  auto initializer = [&]() {
+    if (!baulkenv.Initialize()) {
+      return false;
+    }
+    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\kisasum.pos.json");
+    return belautils::LoadPlacement(posfile, placement);
+  };
   RECT layout = {CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT + dpi_->Scale(700),
                  CW_USEDEFAULT + dpi_->Scale(370)};
+  if (initializer()) {
+    layout.left = placement.rcNormalPosition.left;
+    layout.top = placement.rcNormalPosition.top;
+    layout.right = layout.left + dpi_->Scale(700);
+    layout.bottom = layout.top + dpi_->Scale(370);
+  }
   width = 700;
   height = 370;
   areaheight = 250;
@@ -449,6 +464,14 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 }
 
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
+  if (!baulkenv.BaulkRoot().empty()) {
+    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\kisasum.pos.json");
+    WINDOWPLACEMENT placement;
+    placement.length = sizeof(WINDOWPLACEMENT);
+    if (::GetWindowPlacement(m_hWnd, &placement) == TRUE) {
+      belautils::SavePlacement(posfile, placement);
+    }
+  }
   if (hBrush) {
     DeleteObject(hBrush);
   }
