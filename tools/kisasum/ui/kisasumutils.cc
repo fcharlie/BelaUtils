@@ -70,7 +70,7 @@ bool WindowSettings::Update() {
   auto closer = bela::finally([&] { fclose(fd); });
   try {
     /* code */
-    auto j = nlohmann::json::parse(fd);
+    auto j = nlohmann::json::parse(fd, nullptr, true, true);
     if (auto it = j.find("title"); it != j.end()) {
       title = bela::ToWide(it->get<std::string_view>());
     }

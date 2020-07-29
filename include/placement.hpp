@@ -14,7 +14,7 @@ inline bool LoadPlacement(std::wstring_view file, WINDOWPLACEMENT &placement) {
   }
   auto closer = bela::finally([&] { fclose(fd); });
   try {
-    auto j = nlohmann::json::parse(fd);
+    auto j = nlohmann::json::parse(fd, nullptr, true, true);
     placement.flags = j["flags"];
     placement.ptMaxPosition.x = j["ptMaxPosition.X"];
     placement.ptMaxPosition.y = j["ptMaxPosition.Y"];
