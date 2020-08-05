@@ -5,6 +5,7 @@
 #include <bela/strip.hpp>
 #include <bela/strcat.hpp>
 #include <bela/str_replace.hpp>
+#include <bela/hash.hpp>
 #include <schannel.h>
 #include <ws2tcpip.h>
 // winhttp require schannel, ws2tcpip
@@ -558,11 +559,22 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
   std::vector<char> buf;
   buf.reserve(64 * 1024);
   auto file = FilePart::MakeFilePart(dest, ec);
-  bar.FileName(bela::BaseName(dest));
+  std::wstring filename(bela::BaseName(dest));
+  bar.FileName(filename);
   bar.Execute();
+  bela::hash::sha256::Hasher sha256;
+  sha256.Initialize();
+  bela::hash::blake3::Hasher b3;
+  b3.Initialize();
   auto finish = bela::finally([&] {
     // finish progressbar
     bar.Finish();
+    if (!ec) {
+      bela::FPrintF(stderr, L"\x1b[34mSHA256:%s %s\x1b[0m\n", sha256.Finalize(),
+                    bela::BaseName(filename));
+      bela::FPrintF(stderr, L"\x1b[34mBLAKE3:%s %s\x1b[0m\n", b3.Finalize(),
+                    bela::BaseName(filename));
+    }
   });
   do {
     DWORD downloaded_size = 0;
@@ -580,6 +592,8 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
       return std::nullopt;
     }
     file->Write(buf.data(), downloaded_size);
+    sha256.Update(buf.data(), downloaded_size);
+    b3.Update(buf.data(), downloaded_size);
     total_downloaded_size += downloaded_size;
     bar.Update(total_downloaded_size);
   } while (dwSize > 0);

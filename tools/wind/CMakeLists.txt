@@ -9,6 +9,7 @@ add_executable(wind
 )
 
 target_link_libraries(wind
+  belahash
   belawin
   winhttp
   ws2_32
