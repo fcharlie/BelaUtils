@@ -356,11 +356,11 @@ void connect_trace(HINTERNET hRequest) {
     return;
   }
   if ((si.ConnectionInfo.dwProtocol & SP_PROT_TLS1_2_CLIENT) != 0) {
-    bela::FPrintF(stderr, L"\x1b[33m* SSL connection using TLSv1.2 /%s\x1b[0m\n",
+    bela::FPrintF(stderr, L"\x1b[33m* SSL connection using TLSv1.2 / %s\x1b[0m\n",
                   si.CipherInfo.szCipherSuite);
   }
   if ((si.ConnectionInfo.dwProtocol & SP_PROT_TLS1_3_CLIENT) != 0) {
-    bela::FPrintF(stderr, L"\x1b[33m* SSL connection using TLSv1.3 /%s\x1b[0m\n",
+    bela::FPrintF(stderr, L"\x1b[33m* SSL connection using TLSv1.3 / %s\x1b[0m\n",
                   si.CipherInfo.szCipherSuite);
   }
 }
