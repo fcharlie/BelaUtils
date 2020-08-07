@@ -463,13 +463,16 @@ std::optional<Response> HttpClient::WinRest(std::wstring_view method, std::wstri
 }
 
 std::optional<std::wstring> FindNotExistsName(std::wstring_view path, bela::error_code &ec) {
-  std::filesystem::path p(path);
-  auto pp = p.parent_path().wstring();
-  auto filename = p.filename().wstring();
-  auto extension = p.extension().wstring();
-  auto filenameX = bela::StripSuffix(filename, extension);
+  auto dirname = bela::DirName(path);
+  auto filename = bela::BaseName(path);
+  auto ext = bela::ExtensionEx(filename);
+  if (ext.empty()) {
+    ext = L".out";
+  } else {
+    filename.remove_suffix(ext.size());
+  }
   for (int i = 1; i < 1001; i++) {
-    auto file = bela::StringCat(pp, L"\\", filenameX, L"-(", i, L")", extension);
+    auto file = bela::StringCat(dirname, L"\\", filename, L"-(", i, L")", ext);
     if (!bela::PathExists(file)) {
       return std::make_optional(std::move(file));
     }
