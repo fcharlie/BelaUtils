@@ -7,6 +7,7 @@
 
 namespace baulk {
 bool IsDebugMode = false;
+bool IsInsecureMode = false;
 wchar_t UserAgent[UerAgentMaximumLength] = L"Wget/5.0 (Baulk)";
 } // namespace baulk
 
@@ -17,6 +18,7 @@ Usage: wind [option]... [url]...
   -v|--version     Show version number and quit
   -V|--verbose     Make the operation more talkative
   -f|--force       Turn on force mode. such as overwrite exists file
+  -k|--insecure    Allow insecure server connections when using SSL
   -w|--workdir     Save the file to the specified directory
   -o|--out         Write file to the specified path
   --https-proxy    Use this proxy. Equivalent to setting the environment variable 'HTTPS_PROXY'
@@ -47,6 +49,7 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
       .Add(L"verbose", bela::no_argument, L'V')
       .Add(L"workdir", bela::required_argument, L'w')
       .Add(L"force", bela::no_argument, L'f')
+      .Add(L"insecure", bela::no_argument, L'k')
       .Add(L"out", bela::required_argument, L'o')
       .Add(L"user-agent", bela::required_argument, 'A')
       .Add(L"https-proxy", bela::required_argument, 1001); // option
@@ -65,6 +68,9 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
           break;
         case 'f':
           ww.force = true;
+          break;
+        case 'k':
+          baulk::IsInsecureMode = true;
           break;
         case 'w':
           ww.workdir = oa;
