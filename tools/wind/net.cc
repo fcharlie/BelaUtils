@@ -316,10 +316,12 @@ bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_cod
   }
   for (size_t i = 1; i < hlines.size(); i++) {
     auto ln = hlines[i];
-    baulk::DbgPrint(L"%s", ln);
     if (auto pos = ln.find(':'); pos != std::wstring_view::npos) {
       auto k = bela::StripTrailingAsciiWhitespace(ln.substr(0, pos));
       auto v = bela::StripTrailingAsciiWhitespace(ln.substr(pos + 1));
+      if (baulk::IsDebugMode) {
+        bela::FPrintF(stderr, L"\x1b[33m< \x1b[36m%s: \x1b[01;34m%s\x1b[0m\n", k, v);
+      }
       resp.hkv.emplace(k, v);
     }
   }
