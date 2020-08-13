@@ -277,6 +277,28 @@ std::wstring flatten_http_headers(const headers_t &headers,
   return flattened_headers;
 }
 
+void response_status_trace(Response &resp) {
+  if (!baulk::IsDebugMode) {
+    return;
+  }
+  int color = 31;
+  if (resp.statuscode < 200) {
+    color = 33;
+  } else if (resp.statuscode < 300) {
+    color = 35;
+  } else if (resp.statuscode < 400) {
+    color = 36;
+  }
+  std::wstring_view version = L"\x1b[33m1.1";
+  if (resp.protocol == net::Protocol::HTTP20) {
+    version = L"\x1b[01;33m2.0";
+  } else if (resp.protocol == net::Protocol::HTTP30) {
+    version = L"\x1b[01;36m3.0";
+  }
+  bela::FPrintF(stderr, L"\x1b[33m< \x1b[34mHTTP\x1b[37m/%s \x1b[36m%d \x1b[%dm%s\x1b[0m\n",
+                version, resp.statuscode, color, resp.status);
+}
+
 bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_code &ec) {
   DWORD dwOption = 0;
   DWORD dwlen = sizeof(dwOption);
@@ -289,6 +311,12 @@ bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_cod
                           &resp.statuscode, &dwSize, nullptr) != TRUE) {
     ec = make_net_error_code(L"status code");
     return false;
+  }
+  wchar_t stbuffer[64];
+  DWORD bufsize = sizeof(stbuffer) * 2;
+  if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_TEXT, nullptr, &stbuffer, &bufsize,
+                          nullptr) == TRUE) {
+    resp.status = stbuffer;
   }
   dwSize = 0;
   WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
@@ -306,19 +334,12 @@ bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_cod
   if (hlines.size() < 2) {
     return true;
   }
-  if (baulk::IsDebugMode) {
-    if (resp.protocol == Protocol::HTTP20) {
-      auto s = bela::StrReplaceAll(hlines[0], {{L"1.1", L"2.0"}});
-      baulk::DbgPrint(L"%s", s);
-    } else {
-      baulk::DbgPrint(L"%s", hlines[0]);
-    }
-  }
+  response_status_trace(resp);
   for (size_t i = 1; i < hlines.size(); i++) {
     auto ln = hlines[i];
     if (auto pos = ln.find(':'); pos != std::wstring_view::npos) {
-      auto k = bela::StripTrailingAsciiWhitespace(ln.substr(0, pos));
-      auto v = bela::StripTrailingAsciiWhitespace(ln.substr(pos + 1));
+      auto k = bela::StripAsciiWhitespace(ln.substr(0, pos));
+      auto v = bela::StripAsciiWhitespace(ln.substr(pos + 1));
       if (baulk::IsDebugMode) {
         bela::FPrintF(stderr, L"\x1b[33m< \x1b[36m%s: \x1b[01;34m%s\x1b[0m\n", k, v);
       }
@@ -587,6 +608,7 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
     // finish progressbar
     bar.Finish();
     if (!ec) {
+      // f72cbb4cb22cd8eb58f4309af18a7012722969560a53d20546875f4b24dc59eb *ReadMe.md
       bela::FPrintF(stderr, L"\x1b[34mSHA256:%s %s\x1b[0m\n", sha256.Finalize(),
                     bela::BaseName(filename));
       bela::FPrintF(stderr, L"\x1b[34mBLAKE3:%s %s\x1b[0m\n", b3.Finalize(),

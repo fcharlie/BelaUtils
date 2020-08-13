@@ -211,7 +211,7 @@ void kisasum_one_text(std::wstring_view file, belautils::algorithm::hash_t h) {
   bar.MarkCompleted();
   bar.Finish();
   bela::FPrintF(stderr, L"\x1b[2K\r");
-  bela::FPrintF(stdout, L"%s %s\n", hashhex, filename);
+  bela::FPrintF(stdout, L"\x1b[34m%s %s\x1b[0m\n", hashhex, filename);
 }
 
 bool kisasum_execute(const kisasum_options &opt) {

@@ -73,6 +73,7 @@ using headers_t = bela::flat_hash_map<std::wstring, std::wstring, StringCaseInse
 enum class Protocol { HTTP11, HTTP20, HTTP30 };
 struct Response {
   headers_t hkv;
+  std::wstring status;
   std::string body;
   long statuscode{0};
   Protocol protocol{Protocol::HTTP11};
