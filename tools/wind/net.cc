@@ -299,7 +299,8 @@ void response_status_trace(Response &resp) {
                 version, resp.statuscode, color, resp.status);
 }
 
-bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_code &ec) {
+bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_code &ec,
+                             bool headerdiscard = false) {
   DWORD dwOption = 0;
   DWORD dwlen = sizeof(dwOption);
   WinHttpQueryOption(hRequest, WINHTTP_OPTION_HTTP_PROTOCOL_USED, &dwOption, &dwlen);
@@ -317,6 +318,9 @@ bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_cod
   if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_TEXT, nullptr, &stbuffer, &bufsize,
                           nullptr) == TRUE) {
     resp.status = stbuffer;
+  }
+  if (headerdiscard && !baulk::IsDebugMode) {
+    return true;
   }
   dwSize = 0;
   WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
@@ -562,13 +566,19 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
     bela::FPrintF(stderr, L"\x1b[33mConnecting to %s (%s) %s|:%d connected.\x1b[0m\n", uc.host,
                   uc.host, *addr, uc.nPort);
   }
-
   if (baulk::IsDebugMode) {
     connect_trace(hRequest);
-    Response resp;
-    if (!resolve_response_header(hRequest, resp, ec)) {
-      return std::nullopt;
+  }
+  Response resp;
+  if (!resolve_response_header(hRequest, resp, ec, true)) {
+    return std::nullopt;
+  }
+  if (!resp.IsSuccessStatusCode()) {
+    ec = bela::make_error_code(1, L"Response status code ", resp.statuscode);
+    if (!resp.status.empty()) {
+      bela::StrAppend(&ec.message, L" ", resp.status);
     }
+    return std::nullopt;
   }
   baulk::ProgressBar bar;
   uint64_t blen = 0;
@@ -608,7 +618,8 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
     // finish progressbar
     bar.Finish();
     if (!ec) {
-      // f72cbb4cb22cd8eb58f4309af18a7012722969560a53d20546875f4b24dc59eb *ReadMe.md
+      // f72cbb4cb22cd8eb58f4309af18a7012722969560a53d20546875f4b24dc59eb
+      // *ReadMe.md
       bela::FPrintF(stderr, L"\x1b[34mSHA256:%s %s\x1b[0m\n", sha256.Finalize(),
                     bela::BaseName(filename));
       bela::FPrintF(stderr, L"\x1b[34mBLAKE3:%s %s\x1b[0m\n", b3.Finalize(),
