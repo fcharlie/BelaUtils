@@ -8,39 +8,39 @@
 namespace kisasum::ui {
 
 namespace color {
-int32_t Decode(std::string_view color) {
-  if (color.empty()) {
-    return -1;
+inline bool decode(std::string_view sr, COLORREF &cr) {
+  if (sr.empty()) {
+    return false;
   }
-  if (color[0] == '#') {
-    auto s = color.substr(1);
-    uint32_t cl = 0;
-    auto result = std::from_chars(s.data(), s.data() + s.size(), cl, 16);
-    if (result.ec != std::errc{}) {
-      return -1;
-    }
-    return cl;
+  if (sr.front() == '#') {
+    sr.remove_prefix(1);
   }
-  // RGB not support now
-  return -1;
+  if (sr.size() != 6) {
+    return false;
+  }
+  uint8_t r = 0;
+  uint8_t g = 0;
+  uint8_t b = 0;
+  auto r1 = std::from_chars(sr.data(), sr.data() + 2, r, 16);
+  auto r2 = std::from_chars(sr.data() + 2, sr.data() + 4, g, 16);
+  auto r3 = std::from_chars(sr.data() + 4, sr.data() + 6, b, 16);
+  if (r1.ec != std::errc{} || r2.ec != std::errc{} || r3.ec != std::errc{}) {
+    return false;
+  }
+  cr = RGB(r, g, b);
+  return true;
 }
 
-std::string Encode(uint32_t color) {
-  char buffer[256];
-  auto result = std::to_chars(buffer, buffer + sizeof(buffer), color, 16);
-  if (result.ec != std::errc{}) {
-    return "";
-  }
-  std::string_view sv(buffer, result.ptr - buffer);
-  if (sv.size() > 6) {
-    return "";
-  }
-  constexpr std::string_view zero = "#000000";
+inline std::string encode(COLORREF cr) {
   std::string s;
-  s.append(zero.substr(0, zero.size() - sv.size())).append(sv);
+  s.resize(8);
+  uint8_t r = GetRValue(cr);
+  uint8_t g = GetGValue(cr);
+  uint8_t b = GetBValue(cr);
+  _snprintf(s.data(), 8, "#%02x%02x%02x", r, g, b);
+  s.resize(7);
   return s;
 }
-
 } // namespace color
 
 void resolovecolor(nlohmann::json &j, const char *name, uint32_t &value) {
@@ -48,9 +48,10 @@ void resolovecolor(nlohmann::json &j, const char *name, uint32_t &value) {
   if (it == j.end()) {
     return;
   }
-  auto s = it->get<std::string>();
-  if (auto val = color::Decode(s); val >= 0) {
-    value = static_cast<uint32_t>(val);
+  auto s = it->get<std::string_view>();
+  COLORREF cr;
+  if (color::decode(s, cr)) {
+    value = static_cast<uint32_t>(cr);
   }
 }
 
@@ -94,10 +95,10 @@ bool WindowSettings::Flush(bela::error_code &ec) {
   try {
     nlohmann::json j;
     nlohmann::json cj;
-    cj["panel"] = color::Encode(panelcolor);
-    cj["text"] = color::Encode(textcolor);
-    cj["content"] = color::Encode(contentcolor);
-    cj["label"] = color::Encode(labelcolor);
+    cj["panel"] = color::encode(panelcolor);
+    cj["text"] = color::encode(textcolor);
+    cj["content"] = color::encode(contentcolor);
+    cj["label"] = color::encode(labelcolor);
     j["color"] = cj;
     j["font"] = bela::ToNarrow(font);
     j["title"] = bela::ToNarrow(title);
