@@ -26,8 +26,10 @@ struct WindowSettings {
   std::uint32_t labelcolor{0x000000};
   std::wstring title{L"Kisasum Immersive"};
   std::wstring font{L"Segoe UI"};
+  std::wstring profile;
+  std::wstring posfile;
   bool Update();
-  bool Flush();
+  bool Flush(bela::error_code &ec);
 };
 
 //// what's fuck HEX color and COLORREF color, red <-- --> blue
@@ -48,16 +50,16 @@ struct D2D1Checkbox {
 #define KISASUM_WINDOW_NAME L"Kisasum.UI"
 
 #ifndef SYSCOMMAND_ID_HANDLER
-#define SYSCOMMAND_ID_HANDLER(id, func)                                                            \
-  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                                             \
-    bHandled = TRUE;                                                                               \
-    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);                        \
-    if (bHandled)                                                                                  \
-      return TRUE;                                                                                 \
+#define SYSCOMMAND_ID_HANDLER(id, func)                                                                                \
+  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                                                                 \
+    bHandled = TRUE;                                                                                                   \
+    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);                                            \
+    if (bHandled)                                                                                                      \
+      return TRUE;                                                                                                     \
   }
 #endif
 
-#define NEON_WINDOW_CLASSSTYLE                                                                     \
+#define NEON_WINDOW_CLASSSTYLE                                                                                         \
   WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_CLIPSIBLINGS & ~WS_MAXIMIZEBOX
 typedef CWinTraits<NEON_WINDOW_CLASSSTYLE, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE> CMetroWindowTraits;
 
@@ -93,7 +95,6 @@ private:
   HWND hCheck{nullptr};
   HBRUSH hBrush{nullptr};
   WindowSettings ws;
-  belautils::BaulkEnv baulkenv;
   std::wstring filetext;
   std::wstring sizetext;
   std::wstring hash;

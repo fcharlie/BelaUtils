@@ -126,8 +126,8 @@ private:
 };
 
 Window::Window()
-    : pFactory(nullptr), AppPageBackgroundThemeBrush(nullptr), AppPageTextBrush(nullptr),
-      renderTarget(nullptr), pWriteFactory(nullptr), lableTextFormat(nullptr) {
+    : pFactory(nullptr), AppPageBackgroundThemeBrush(nullptr), AppPageTextBrush(nullptr), renderTarget(nullptr),
+      pWriteFactory(nullptr), lableTextFormat(nullptr) {
   dpi_ = std::make_unique<CDPI>();
   dpi_->GetAwareness();
   // dpi_->SetAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
@@ -147,10 +147,25 @@ Window::~Window() {
     DeleteObject(hBrush);
   }
 }
-#define WS_NORESIZEWINDOW                                                                          \
-  (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX)
+#define WS_NORESIZEWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX)
 
 LRESULT Window::InitializeWindow() {
+  auto initializer = [&]() {
+    belautils::BaulkEnv be;
+    if (!be.Initialize()) {
+      bela::error_code ec;
+      if (auto parent = bela::ExecutableFinalPathParent(ec); parent) {
+        ws.profile = bela::StringCat(*parent, L"\\kisasum-ui.json");
+        ws.posfile = bela::StringCat(*parent, L"\\kisasum.pos.json");
+      }
+      return false;
+    }
+    ws.profile = bela::StringCat(be.BaulkRoot(), L"\\bin\\etc\\kisasum-ui.json");
+    ws.posfile = bela::StringCat(be.BaulkRoot(), L"\\bin\\etc\\kisasum.pos.json");
+    return true;
+  };
+  initializer();
+  ws.Update();
   HMONITOR hMonitor;
   POINT pt;
   UINT dpix = 0, dpiy = 0;
@@ -174,16 +189,8 @@ LRESULT Window::InitializeWindow() {
     return S_FALSE;
   }
   WINDOWPLACEMENT placement;
-  auto initializer = [&]() {
-    if (!baulkenv.Initialize()) {
-      return false;
-    }
-    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\kisasum.pos.json");
-    return belautils::LoadPlacement(posfile, placement);
-  };
-  RECT layout = {CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT + dpi_->Scale(700),
-                 CW_USEDEFAULT + dpi_->Scale(370)};
-  if (initializer()) {
+  RECT layout = {CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT + dpi_->Scale(700), CW_USEDEFAULT + dpi_->Scale(370)};
+  if (belautils::LoadPlacement(ws.posfile, placement)) {
     layout.left = placement.rcNormalPosition.left;
     layout.top = placement.rcNormalPosition.top;
     layout.right = layout.left + dpi_->Scale(700);
@@ -204,9 +211,8 @@ HRESULT Window::CreateDeviceIndependentResources() {
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
                              reinterpret_cast<IUnknown **>(&pWriteFactory));
     if (SUCCEEDED(hr)) {
-      hr = pWriteFactory->CreateTextFormat(ws.font.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL,
-                                           DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-                                           16.0f, L"zh-CN", &lableTextFormat);
+      hr = pWriteFactory->CreateTextFormat(ws.font.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+                                           DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"zh-CN", &lableTextFormat);
     }
   }
   return hr;
@@ -228,12 +234,10 @@ HRESULT Window::CreateDeviceResources() {
     ::GetClientRect(m_hWnd, &rc);
     D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
     hr = pFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(),
-                                          D2D1::HwndRenderTargetProperties(m_hWnd, size),
-                                          &renderTarget);
+                                          D2D1::HwndRenderTargetProperties(m_hWnd, size), &renderTarget);
     if (SUCCEEDED(hr)) {
       ////
-      hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor),
-                                               &AppPageBackgroundThemeBrush);
+      hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor), &AppPageBackgroundThemeBrush);
     }
     if (SUCCEEDED(hr)) {
       hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(ws.labelcolor), &AppPageTextBrush);
@@ -246,8 +250,7 @@ void Window::DiscardDeviceResources() {
   SafeRelease(&AppPageTextBrush);
 }
 
-template <typename A, typename B, typename C, typename D>
-auto RectF(A left, B top, C right, D bottom) {
+template <typename A, typename B, typename C, typename D> auto RectF(A left, B top, C right, D bottom) {
   return D2D1::RectF(static_cast<FLOAT>(left), static_cast<FLOAT>(top), static_cast<FLOAT>(right),
                      static_cast<FLOAT>(bottom));
 }
@@ -261,71 +264,59 @@ HRESULT Window::OnRender() {
   renderTarget->BeginDraw();
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
   renderTarget->Clear(D2D1::ColorF(ws.contentcolor));
-  renderTarget->FillRectangle(RectF(0, areaheight, size.width, size.height),
-                              AppPageBackgroundThemeBrush);
+  renderTarget->FillRectangle(RectF(0, areaheight, size.width, size.height), AppPageBackgroundThemeBrush);
   constexpr std::wstring_view uppercase = L"Uppercase";
   renderTarget->DrawTextW(uppercase.data(), static_cast<UINT32>(uppercase.size()), lableTextFormat,
-                          RectF(40, areaheight + 28.0f, 200.0f, areaheight + 50.0f),
-                          AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                          DWRITE_MEASURING_MODE_NATURAL);
+                          RectF(40, areaheight + 28.0f, 200.0f, areaheight + 50.0f), AppPageTextBrush,
+                          D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   if (!filetext.empty()) {
     constexpr std::wstring_view name = L"Name:";
     renderTarget->DrawTextW(name.data(), static_cast<UINT32>(name.size()), lableTextFormat,
                             RectF(20, 5.0f, keywidth, lineheight), AppPageTextBrush,
-                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
     renderTarget->DrawTextW(filetext.data(), static_cast<UINT32>(filetext.size()), lableTextFormat,
                             RectF(keywidth, 5.0f, size.width - 20, lineheight), AppPageTextBrush,
-                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   }
   if (!sizetext.empty()) {
     constexpr std::wstring_view Size = L"Size:";
     renderTarget->DrawTextW(Size.data(), static_cast<UINT32>(Size.size()), lableTextFormat,
-                            RectF(20, lineheight + 5.0f, keywidth, lineheight * 2),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(20, lineheight + 5.0f, keywidth, lineheight * 2), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
     renderTarget->DrawTextW(sizetext.data(), static_cast<UINT32>(sizetext.size()), lableTextFormat,
-                            RectF(keywidth, lineheight + 5.0f, size.width - 20, lineheight * 2),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(keywidth, lineheight + 5.0f, size.width - 20, lineheight * 2), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   }
   if (!hash.empty()) {
     constexpr std::wstring_view Hash = L"Hash:";
     renderTarget->DrawTextW(Hash.data(), static_cast<UINT32>(Hash.size()), lableTextFormat,
-                            RectF(20, lineheight * 2 + 5.0f, keywidth, lineheight * 3),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(20, lineheight * 2 + 5.0f, keywidth, lineheight * 3), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
     renderTarget->DrawTextW(hash.data(), static_cast<UINT32>(hash.size()), lableTextFormat,
-                            RectF(keywidth, lineheight * 2 + 5.0f, size.width - 20, lineheight * 5),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(keywidth, lineheight * 2 + 5.0f, size.width - 20, lineheight * 5), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   }
   //// write progress 100 %
   if (progress == 100) {
     constexpr std::wstring_view Hundred = L"💯";
     renderTarget->DrawTextW(Hundred.data(), static_cast<UINT32>(Hundred.size()), lableTextFormat,
-                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   } else if (progress > 0 && progress < 100) {
     auto progressText = bela::StringCat(static_cast<uint32_t>(progress), L"%");
-    renderTarget->DrawTextW(
-        progressText.data(), static_cast<uint32_t>(progressText.size()), lableTextFormat,
-        RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
-        D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
+    renderTarget->DrawTextW(progressText.data(), static_cast<uint32_t>(progressText.size()), lableTextFormat,
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   } else if (showerror) {
     constexpr std::wstring_view fatal = L"😟";
     renderTarget->DrawTextW(fatal.data(), static_cast<UINT32>(fatal.size()), lableTextFormat,
-                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   } else {
     constexpr std::wstring_view text = L"\u2764Kisasum";
     renderTarget->DrawTextW(text.data(), (UINT32)text.size(), lableTextFormat,
-                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f),
-                            AppPageTextBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT,
-                            DWRITE_MEASURING_MODE_NATURAL);
+                            RectF(160.0f, areaheight + 28.0f, 250.0f, areaheight + 50.5f), AppPageTextBrush,
+                            D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   }
   hr = renderTarget->EndDraw();
   if (hr == D2DERR_RECREATE_TARGET) {
@@ -366,8 +357,7 @@ bool Window::UpdateTheme() {
   }
   hBrush = CreateSolidBrush(calcLuminance(ws.panelcolor));
   SafeRelease(&AppPageBackgroundThemeBrush);
-  auto hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor),
-                                                &AppPageBackgroundThemeBrush);
+  auto hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor), &AppPageBackgroundThemeBrush);
   ::InvalidateRect(hCheck, nullptr, TRUE);
   InvalidateRect(nullptr, TRUE);
   return true;
@@ -389,16 +379,13 @@ inline bool InitializeComboHash(HWND hWnd) {
 //// Window  style-ex
 #define KWS_WINDOWEX WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY
 //// Edit style
-#define KWS_EDIT                                                                                   \
-  WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL
+#define KWS_EDIT WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL
 /// push button style
 #define KWS_BUTTON BS_PUSHBUTTON | BS_FLAT | BS_TEXT | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE
 /// checkbox style
-#define KWS_CHECKBOX                                                                               \
-  BS_FLAT | BS_TEXT | BS_CHECKBOX | BS_AUTOCHECKBOX | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE
+#define KWS_CHECKBOX BS_FLAT | BS_TEXT | BS_CHECKBOX | BS_AUTOCHECKBOX | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE
 /// combobox style
-#define KWS_COMBOBOX                                                                               \
-  WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS
+#define KWS_COMBOBOX WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS
 #define DEFAULT_PADDING96 20
 
 LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
@@ -421,21 +408,20 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
   wcscpy_s(logFont.lfFaceName, L"Segoe UI");
 
   hFont = CreateFontIndirectW(&logFont);
-  auto LambdaCreateWindow = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X,
-                                int Y, int nWidth, int nHeight, HMENU hMenu) -> HWND {
-    auto hw = CreateWindowExW(KWS_WINDOWEX, lpClassName, lpWindowName, dwStyle, dpi_->Scale(X),
-                              dpi_->Scale(Y), dpi_->Scale(nWidth), dpi_->Scale(nHeight), m_hWnd,
-                              hMenu, HINST_THISCOMPONENT, nullptr);
+  auto LambdaCreateWindow = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth,
+                                int nHeight, HMENU hMenu) -> HWND {
+    auto hw = CreateWindowExW(KWS_WINDOWEX, lpClassName, lpWindowName, dwStyle, dpi_->Scale(X), dpi_->Scale(Y),
+                              dpi_->Scale(nWidth), dpi_->Scale(nHeight), m_hWnd, hMenu, HINST_THISCOMPONENT, nullptr);
     if (hw) {
       ::SendMessageW(hw, WM_SETFONT, (WPARAM)hFont, lParam);
     }
     return hw;
   };
-  auto LambdaCreateWindowEdge = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X,
-                                    int Y, int nWidth, int nHeight, HMENU hMenu) -> HWND {
-    auto hw = CreateWindowExW(KWS_WINDOWEX | WS_EX_CLIENTEDGE, lpClassName, lpWindowName, dwStyle,
-                              dpi_->Scale(X), dpi_->Scale(Y), dpi_->Scale(nWidth),
-                              dpi_->Scale(nHeight), m_hWnd, hMenu, HINST_THISCOMPONENT, nullptr);
+  auto LambdaCreateWindowEdge = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth,
+                                    int nHeight, HMENU hMenu) -> HWND {
+    auto hw = CreateWindowExW(KWS_WINDOWEX | WS_EX_CLIENTEDGE, lpClassName, lpWindowName, dwStyle, dpi_->Scale(X),
+                              dpi_->Scale(Y), dpi_->Scale(nWidth), dpi_->Scale(nHeight), m_hWnd, hMenu,
+                              HINST_THISCOMPONENT, nullptr);
     if (hw) {
       ::SendMessageW(hw, WM_SETFONT, (WPARAM)hFont, lParam);
     }
@@ -446,14 +432,13 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 
   hCheck = LambdaCreateWindow(WC_BUTTONW, L"", KWS_CHECKBOX, 20, areaheight + 30, 20, 20, nullptr);
 
-  hCombo = LambdaCreateWindow(WC_COMBOBOXW, L"", KWS_COMBOBOX, width - 427, areaheight + 25, 127,
-                              27, nullptr);
+  hCombo = LambdaCreateWindow(WC_COMBOBOXW, L"", KWS_COMBOBOX, width - 427, areaheight + 25, 127, 27, nullptr);
 
-  hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Clear", KWS_BUTTON, width - 290, areaheight + 25,
-                                   120, 27, HMENU(IDC_CLEAR_BUTTON));
+  hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Clear", KWS_BUTTON, width - 290, areaheight + 25, 120, 27,
+                                   HMENU(IDC_CLEAR_BUTTON));
 
-  hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Open", KWS_BUTTON, width - 160, areaheight + 25,
-                                   120, 27, HMENU(IDC_FILEOPEN_BUTTON));
+  hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Open", KWS_BUTTON, width - 160, areaheight + 25, 120, 27,
+                                   HMENU(IDC_FILEOPEN_BUTTON));
 
   InitializeComboHash(hCombo);
   hBrush = CreateSolidBrush(calcLuminance(ws.panelcolor));
@@ -464,12 +449,11 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 }
 
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
-  if (!baulkenv.BaulkRoot().empty()) {
-    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\kisasum.pos.json");
+  if (!ws.posfile.empty()) {
     WINDOWPLACEMENT placement;
     placement.length = sizeof(WINDOWPLACEMENT);
     if (::GetWindowPlacement(m_hWnd, &placement) == TRUE) {
-      belautils::SavePlacement(posfile, placement);
+      belautils::SavePlacement(ws.posfile, placement);
     }
   }
   if (hBrush) {
@@ -517,8 +501,7 @@ LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHan
   RECT *const prcNewWindow = (RECT *)lParam;
   ::SetWindowPos(m_hWnd, NULL, prcNewWindow->left, prcNewWindow->top,
                  dpi_->Scale(prcNewWindow->right - prcNewWindow->left),
-                 dpi_->Scale(prcNewWindow->bottom - prcNewWindow->top),
-                 SWP_NOZORDER | SWP_NOACTIVATE);
+                 dpi_->Scale(prcNewWindow->bottom - prcNewWindow->top), SWP_NOZORDER | SWP_NOACTIVATE);
   LOGFONTW logFont = {0};
   GetObjectW(hFont, sizeof(logFont), &logFont);
   DeleteObject(hFont);
@@ -530,9 +513,8 @@ LRESULT Window::OnDpiChanged(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHan
   auto UpdateWindowPos = [&](HWND hWnd) {
     RECT rect;
     ::GetClientRect(hWnd, &rect);
-    ::SetWindowPos(hWnd, NULL, dpi_->Scale(rect.left), dpi_->Scale(rect.top),
-                   dpi_->Scale(rect.right - rect.left), dpi_->Scale(rect.bottom - rect.top),
-                   SWP_NOZORDER | SWP_NOACTIVATE);
+    ::SetWindowPos(hWnd, NULL, dpi_->Scale(rect.left), dpi_->Scale(rect.top), dpi_->Scale(rect.right - rect.left),
+                   dpi_->Scale(rect.bottom - rect.top), SWP_NOZORDER | SWP_NOACTIVATE);
     ::SendMessageW(hWnd, WM_SETFONT, (WPARAM)hFont, lParam);
   };
   UpdateWindowPos(hCombo);
@@ -681,8 +663,8 @@ LRESULT Window::Filesum(std::wstring_view file) {
   Concurrency::create_task([this, p, ha]() -> bool {
     auto closer = bela::finally([this] { this->locked = false; });
     auto file = p.wstring();
-    auto hFile = CreateFileW(file.data(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    auto hFile = CreateFileW(file.data(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                             FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE) {
       return false;
     }
@@ -786,14 +768,17 @@ LRESULT Window::OnTheme(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled
     auto b = GetBValue(co.rgbResult);
     ws.panelcolor = (r << 16) + (g << 8) + b;
     UpdateTheme();
-    ws.Flush();
+    bela::error_code ec;
+    if (!ws.Flush(ec)) {
+      bela::BelaMessageBox(m_hWnd, L"Flush color error", ec.message.data(), nullptr, bela::mbs_t::FATAL);
+    }
   }
   return S_OK;
 }
 
 LRESULT Window::OnAbout(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled) {
-  bela::BelaMessageBox(m_hWnd, L"About Kisasum Hash Utilities", BELAUTILS_APPVERSION,
-                       BELAUTILS_APPLINK, bela::mbs_t::ABOUT);
+  bela::BelaMessageBox(m_hWnd, L"About Kisasum Hash Utilities", BELAUTILS_APPVERSION, BELAUTILS_APPLINK,
+                       bela::mbs_t::ABOUT);
   return S_OK;
 }
 

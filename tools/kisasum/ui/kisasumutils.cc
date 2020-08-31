@@ -2,7 +2,6 @@
 #include "ui.hpp"
 #include <PathCch.h>
 #include <json.hpp>
-#include <bela/path.hpp>
 #include <bela/io.hpp>
 #include <charconv>
 
@@ -43,7 +42,6 @@ std::string Encode(uint32_t color) {
 }
 
 } // namespace color
-constexpr const std::wstring_view profilename = L"kisasum-ui.json";
 
 void resolovecolor(nlohmann::json &j, const char *name, uint32_t &value) {
   auto it = j.find(name);
@@ -57,12 +55,10 @@ void resolovecolor(nlohmann::json &j, const char *name, uint32_t &value) {
 }
 
 bool WindowSettings::Update() {
-  bela::error_code ec;
-  auto parent = bela::ExecutableParent(ec);
-  if (!parent) {
+  if (profile.empty()) {
     return false;
   }
-  auto profile = bela::StringCat(*parent, L"\\", profilename);
+  bela::error_code ec;
   FILE *fd = nullptr;
   if (_wfopen_s(&fd, profile.data(), L"rb") != 0) {
     return false;
@@ -90,13 +86,11 @@ bool WindowSettings::Update() {
   return true;
 }
 
-bool WindowSettings::Flush() {
-  bela::error_code ec;
-  auto parent = bela::ExecutableParent(ec);
-  if (!parent) {
+bool WindowSettings::Flush(bela::error_code &ec) {
+  if (profile.empty()) {
+    ec = bela::make_error_code(1, L"profile not found");
     return false;
   }
-  auto profile = bela::StringCat(*parent, L"\\", profilename);
   try {
     nlohmann::json j;
     nlohmann::json cj;
@@ -108,11 +102,11 @@ bool WindowSettings::Flush() {
     j["font"] = bela::ToNarrow(font);
     j["title"] = bela::ToNarrow(title);
     auto s = j.dump(4);
-    bela::error_code ec;
     if (!bela::io::WriteTextAtomic(s, profile, ec)) {
       return false;
     }
-  } catch (const std::exception &) {
+  } catch (const std::exception &e) {
+    ec = bela::make_error_code(1, L"flush color: ", bela::ToWide(e.what()));
     return false;
   }
   return true;

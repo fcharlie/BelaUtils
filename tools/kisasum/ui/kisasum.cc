@@ -19,7 +19,6 @@ int WindowLoop() {
   InitCommonControlsEx(&info);
   kisasum::ui::Window window;
   MSG msg;
-  window.Settings().Update();
   if (window.InitializeWindow() != S_OK) {
     return 1;
   }

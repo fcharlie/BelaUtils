@@ -1,4 +1,6 @@
 ///
+#ifndef BAULKENV_HPP
+#define BAULKENV_HPP
 #include <bela/base.hpp>
 #include <bela/path.hpp>
 
@@ -34,4 +36,6 @@ public:
 private:
   std::wstring baulkroot;
 };
+
 } // namespace belautils
+#endif
