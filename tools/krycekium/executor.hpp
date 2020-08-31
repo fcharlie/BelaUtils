@@ -18,8 +18,7 @@ enum class Status {
 // task Packet
 struct Packet {
   Packet() = default;
-  Packet(std::wstring_view m, std::wstring_view o, HWND w, HWND p)
-      : msi(m), outdir(o), hWnd(w), hProgress(p) {}
+  Packet(std::wstring_view m, std::wstring_view o, HWND w, HWND p) : msi(m), outdir(o), hWnd(w), hProgress(p) {}
   Packet(Packet &&other) {
     msi = std::move(other.msi);
     outdir = std::move(other.outdir);

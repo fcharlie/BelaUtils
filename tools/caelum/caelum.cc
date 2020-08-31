@@ -19,8 +19,8 @@ public:
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
   dotcom_initializer di;
   if (!IsWindows10OrGreater()) {
-    bela::BelaMessageBox(nullptr, L"You need at least Windows 10",
-                         L"Please upgrade Your OS to Windows 10", nullptr, bela::mbs_t::FATAL);
+    bela::BelaMessageBox(nullptr, L"You need at least Windows 10", L"Please upgrade Your OS to Windows 10", nullptr,
+                         bela::mbs_t::FATAL);
     return -1;
   }
   HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);

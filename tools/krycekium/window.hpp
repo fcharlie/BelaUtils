@@ -17,12 +17,12 @@
 #include "executor.hpp"
 
 #ifndef SYSCOMMAND_ID_HANDLER
-#define SYSCOMMAND_ID_HANDLER(id, func)                                                            \
-  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                                             \
-    bHandled = TRUE;                                                                               \
-    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);                        \
-    if (bHandled)                                                                                  \
-      return TRUE;                                                                                 \
+#define SYSCOMMAND_ID_HANDLER(id, func)                                                                                \
+  if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) {                                                                 \
+    bHandled = TRUE;                                                                                                   \
+    lResult = func(HIWORD(wParam), LOWORD(wParam), (HWND)lParam, bHandled);                                            \
+    if (bHandled)                                                                                                      \
+      return TRUE;                                                                                                     \
   }
 #endif
 
@@ -144,17 +144,14 @@ private:
   HRESULT RefreshDxFont();
   HRESULT RefreshGdiFont();
   //  Feature
-  bool MakeWidget(Widget &w, LPCWSTR cn, LPCWSTR text, DWORD ds, int x, int y, int cx, int cy,
-                  ptrdiff_t id) {
-    constexpr const auto wndex =
-        WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
+  bool MakeWidget(Widget &w, LPCWSTR cn, LPCWSTR text, DWORD ds, int x, int y, int cx, int cy, ptrdiff_t id) {
+    constexpr const auto wndex = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
     w.X = x;
     w.Y = y;
     w.W = cx;
     w.H = cy;
-    w.hWnd = ::CreateWindowExW(wndex, cn, text, ds, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                               MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), m_hWnd,
-                               reinterpret_cast<HMENU>(id), hInst, nullptr);
+    w.hWnd = ::CreateWindowExW(wndex, cn, text, ds, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96),
+                               MulDiv(w.H, dpiX, 96), m_hWnd, reinterpret_cast<HMENU>(id), hInst, nullptr);
     if (w.hWnd == nullptr) {
       return false;
     }
@@ -162,17 +159,16 @@ private:
     return true;
   }
   bool MakeEdit(Widget &w, LPCWSTR text, int x, int y, int cx, int cy, ptrdiff_t id) {
-    constexpr const auto eex = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR |
-                               WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
-    constexpr const auto es =
-        WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+    constexpr const auto eex =
+        WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
+    constexpr const auto es = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
     w.X = x;
     w.Y = y;
     w.W = cx;
     w.H = cy;
-    w.hWnd = ::CreateWindowExW(eex, WC_EDITW, text, es, MulDiv(w.X, dpiX, 96),
-                               MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96),
-                               m_hWnd, reinterpret_cast<HMENU>(id), hInst, nullptr);
+    w.hWnd =
+        ::CreateWindowExW(eex, WC_EDITW, text, es, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96),
+                          MulDiv(w.H, dpiX, 96), m_hWnd, reinterpret_cast<HMENU>(id), hInst, nullptr);
     if (w.hWnd == nullptr) {
       return false;
     }
@@ -184,8 +180,8 @@ private:
     if (w.hWnd == nullptr) {
       return false;
     }
-    ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
+    ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96),
+                   MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }

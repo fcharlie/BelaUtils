@@ -12,8 +12,7 @@ namespace krycekium {
 // PostMessageW
 class Sender {
 public:
-  Sender(HWND hWnd, HWND hProgress, const Executor &ex)
-      : hWnd_(hWnd), hProgress_(hProgress), executor(ex) {
+  Sender(HWND hWnd, HWND hProgress, const Executor &ex) : hWnd_(hWnd), hProgress_(hProgress), executor(ex) {
     //
   }
   Sender(const Sender &) = delete;
@@ -214,13 +213,11 @@ bool Executor::execute(Packet &pk) {
   Sender sender(pk.hWnd, pk.hProgress, *this);
   MsiSetInternalUI(INSTALLUILEVEL(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY), nullptr);
   MsiSetExternalUIW(install_ui_callback,
-                    INSTALLLOGMODE_PROGRESS | INSTALLLOGMODE_FATALEXIT | INSTALLLOGMODE_ERROR |
-                        INSTALLLOGMODE_WARNING | INSTALLLOGMODE_USER | INSTALLLOGMODE_INFO |
-                        INSTALLLOGMODE_RESOLVESOURCE | INSTALLLOGMODE_OUTOFDISKSPACE |
-                        INSTALLLOGMODE_ACTIONSTART | INSTALLLOGMODE_ACTIONDATA |
-                        INSTALLLOGMODE_COMMONDATA | INSTALLLOGMODE_PROGRESS |
-                        INSTALLLOGMODE_INITIALIZE | INSTALLLOGMODE_TERMINATE |
-                        INSTALLLOGMODE_SHOWDIALOG,
+                    INSTALLLOGMODE_PROGRESS | INSTALLLOGMODE_FATALEXIT | INSTALLLOGMODE_ERROR | INSTALLLOGMODE_WARNING |
+                        INSTALLLOGMODE_USER | INSTALLLOGMODE_INFO | INSTALLLOGMODE_RESOLVESOURCE |
+                        INSTALLLOGMODE_OUTOFDISKSPACE | INSTALLLOGMODE_ACTIONSTART | INSTALLLOGMODE_ACTIONDATA |
+                        INSTALLLOGMODE_COMMONDATA | INSTALLLOGMODE_PROGRESS | INSTALLLOGMODE_INITIALIZE |
+                        INSTALLLOGMODE_TERMINATE | INSTALLLOGMODE_SHOWDIALOG,
                     &sender);
   if (MsiInstallProductW(pk.msi.data(), cmd.data()) == ERROR_SUCCESS) {
     sender.Notify(krycekium::Status::Completed, 0);
@@ -258,8 +255,7 @@ bool Executor::InitializeExecutor() {
   return !!t;
 }
 
-bool Executor::PushEvent(std::wstring_view msi, std::wstring_view outdir, HWND hWnd,
-                         HWND hProgress) {
+bool Executor::PushEvent(std::wstring_view msi, std::wstring_view outdir, HWND hWnd, HWND hProgress) {
   canceled = false;
   {
     std::unique_lock<std::recursive_mutex> lock(mtx);

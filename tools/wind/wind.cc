@@ -31,8 +31,8 @@ Example:
 }
 
 void Version() {
-  bela::FPrintF(stdout, L"wind %s\nRelease:    %s\nCommit:     %s\nBuild Time: %s\n",
-                BELAUTILS_VERSION, BELAUTILS_REFNAME, BELAUTILS_REVISION, BELAUTILS_BUILD_TIME);
+  bela::FPrintF(stdout, L"wind %s\nRelease:    %s\nCommit:     %s\nBuild Time: %s\n", BELAUTILS_VERSION,
+                BELAUTILS_REFNAME, BELAUTILS_REVISION, BELAUTILS_BUILD_TIME);
 }
 
 struct Whirlwind {
@@ -131,11 +131,9 @@ int wmain(int argc, wchar_t **argv) {
       bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       return 1;
     }
-    if (MoveFileExW(file->data(), ww.outfile.data(),
-                    MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != TRUE) {
+    if (MoveFileExW(file->data(), ww.outfile.data(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != TRUE) {
       ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"unable move %s to %s error: \x1b[31m%s\x1b[0m\n", *file, ww.outfile,
-                    ec.message);
+      bela::FPrintF(stderr, L"unable move %s to %s error: \x1b[31m%s\x1b[0m\n", *file, ww.outfile, ec.message);
       return 1;
     }
     std::error_code e;

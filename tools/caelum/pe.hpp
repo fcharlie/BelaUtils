@@ -18,7 +18,7 @@
 #endif
 
 #ifndef IMAGE_FILE_MACHINE_TARGET_HOST
-#define IMAGE_FILE_MACHINE_TARGET_HOST                                                             \
+#define IMAGE_FILE_MACHINE_TARGET_HOST                                                                                 \
   0x0001 // Useful for indicating we want to interact with the host and not a
          // WoW guest.
 #endif

@@ -129,11 +129,10 @@ private:
   void AttributesTablesDraw();
   bool InquisitivePE();
   bool ResolveLink(std::wstring_view file);
-  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle,
-                       int X, int Y, int nWidth, int nHeight, HMENU hMenu, Widget &w) {
-    auto hw = CreateWindowExW(dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96),
-                              MulDiv(Y, dpiX, 96), MulDiv(nWidth, dpiX, 96),
-                              MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
+  bool CreateSubWindow(DWORD dwStyleEx, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y,
+                       int nWidth, int nHeight, HMENU hMenu, Widget &w) {
+    auto hw = CreateWindowExW(dwStyleEx, lpClassName, lpWindowName, dwStyle, MulDiv(X, dpiX, 96), MulDiv(Y, dpiX, 96),
+                              MulDiv(nWidth, dpiX, 96), MulDiv(nHeight, dpiX, 96), hWnd, hMenu, hInst, nullptr);
     if (hw == nullptr) {
       return false;
     }
@@ -150,8 +149,8 @@ private:
     if (w.hWnd == nullptr) {
       return false;
     }
-    ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96),
-                   MulDiv(w.W, dpiX, 96), MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
+    ::SetWindowPos(w.hWnd, NULL, MulDiv(w.X, dpiX, 96), MulDiv(w.Y, dpiX, 96), MulDiv(w.W, dpiX, 96),
+                   MulDiv(w.H, dpiX, 96), SWP_NOZORDER | SWP_NOACTIVATE);
     ::SendMessageW(w.hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
     return true;
   }

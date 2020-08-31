@@ -9,8 +9,7 @@
 namespace caelum {
 // Fill
 
-inline std::wstring flatvector(const std::vector<std::wstring> &v,
-                               std::wstring_view delimiter = L", ") {
+inline std::wstring flatvector(const std::vector<std::wstring> &v, std::wstring_view delimiter = L", ") {
   std::wstring s;
   size_t total = 0;
   for (const auto &i : v) {
@@ -61,11 +60,10 @@ bool Window::InquisitivePE() {
     bela::StrAppend(&depends, L"**below is delay**\r\n", delaydepends);
   }
 
-  constexpr auto es = WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | ES_LEFT |
-                      ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY;
+  constexpr auto es =
+      WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | ES_LEFT | ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY;
   constexpr auto exs = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY;
-  CreateSubWindow(exs, WC_EDITW, strcharsv.data(), es, 185, (int)y, 460, 60, nullptr,
-                  wCharacteristics);
+  CreateSubWindow(exs, WC_EDITW, strcharsv.data(), es, 185, (int)y, 460, 60, nullptr, wCharacteristics);
   CreateSubWindow(exs, WC_EDITW, depends.data(), es, 185, (int)y + 65, 460, 80, nullptr, wDepends);
   return true;
 }
