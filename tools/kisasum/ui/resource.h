@@ -3,9 +3,7 @@
 
 #include "belautilsversion.h"
 
-#define IDI_KISASUM 101
-#define IDI_ICON_APP 102
-#define IDI_ICON_COPY 104
+#define IDI_KISASUM_ICON 101
 
 #define IDM_CHANGE_THEME 110
 #define IDM_APP_INFO 111

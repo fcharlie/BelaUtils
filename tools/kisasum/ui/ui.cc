@@ -392,7 +392,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
   dpiX = GetDpiForWindow(m_hWnd);
   dpiY = dpiX;
   dpi_->SetScale(dpiX);
-  HICON hIcon = LoadIconW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_KISASUM));
+  HICON hIcon = LoadIconW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_KISASUM_ICON));
   SetIcon(hIcon, TRUE);
   ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
   ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
@@ -575,36 +575,9 @@ LRESULT Window::OnRButtonUp(UINT, WPARAM wParam, LPARAM lParam, BOOL &bHandled) 
   }
   HMENU hMenu = ::LoadMenuW(GetModuleHandle(nullptr), MAKEINTRESOURCEW(IDM_MAIN_CONTEXT));
   HMENU hPopu = GetSubMenu(hMenu, 0);
-  auto resourceIcon2Bitmap = [](int id) -> HBITMAP {
-    HICON icon = LoadIconW(HINST_THISCOMPONENT, MAKEINTRESOURCEW(id));
-    HDC hDc = ::GetDC(NULL);
-    HDC hMemDc = CreateCompatibleDC(hDc);
-    auto hBitmap = CreateCompatibleBitmap(hDc, 16, 16);
-    SelectObject(hMemDc, hBitmap);
-    HBRUSH hBrush = GetSysColorBrush(COLOR_MENU);
-    DrawIconEx(hMemDc, 0, 0, icon, 16, 16, 0, hBrush, DI_NORMAL);
-    DeleteObject(hBrush);
-    DeleteDC(hMemDc);
-    ::ReleaseDC(NULL, hDc);
-    DestroyIcon(icon);
-    return hBitmap;
-  };
-  HBITMAP hBitmap = nullptr;
-  if (hash.empty()) {
-    EnableMenuItem(hPopu, IDM_CONTEXT_COPY, MF_DISABLED);
-  } else {
-    EnableMenuItem(hPopu, IDM_CONTEXT_COPY, MF_ENABLED);
-    hBitmap = resourceIcon2Bitmap(IDI_ICON_COPY);
-    if (hBitmap) {
-      SetMenuItemBitmaps(hPopu, IDM_CONTEXT_COPY, MF_BYCOMMAND, hBitmap, hBitmap);
-    }
-  }
-
+  EnableMenuItem(hPopu, IDM_CONTEXT_COPY, hash.empty() ? MF_DISABLED : MF_ENABLED);
   ::TrackPopupMenuEx(hPopu, TPM_RIGHTBUTTON, ptc.x, ptc.y, m_hWnd, nullptr);
   ::DestroyMenu(hMenu);
-  if (hBitmap) {
-    DeleteObject(hBitmap);
-  }
   return S_OK;
 }
 

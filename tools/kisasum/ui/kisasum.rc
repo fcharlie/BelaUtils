@@ -2,16 +2,13 @@
 #include "resource.h"
 #include "windows.h"
 
-IDI_KISASUM       ICON         "res\\kisasum.ico"
-IDI_ICON_APP  ICON         "res\\app.ico"
-IDI_ICON_COPY   ICON      "res\\copy.ico"
+IDI_KISASUM_ICON       ICON         "res\\kisasum.ico"
 
 IDM_MAIN_CONTEXT MENU
 BEGIN
 POPUP "0"
 BEGIN
-//MENUITEM "Change UI Color", IDM_CONTEXT_COLOR
-MENUITEM "Copy Hash\tCtrl+C", IDM_CONTEXT_COPY
+MENUITEM "🗒 Copy hash checksum\tCtrl+C", IDM_CONTEXT_COPY
 END
 END
 
