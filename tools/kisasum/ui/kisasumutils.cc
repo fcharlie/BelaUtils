@@ -7,51 +7,15 @@
 
 namespace kisasum::ui {
 
-namespace color {
-inline bool decode(std::string_view sr, COLORREF &cr) {
-  if (sr.empty()) {
-    return false;
-  }
-  if (sr.front() == '#') {
-    sr.remove_prefix(1);
-  }
-  if (sr.size() != 6) {
-    return false;
-  }
-  uint8_t r = 0;
-  uint8_t g = 0;
-  uint8_t b = 0;
-  auto r1 = std::from_chars(sr.data(), sr.data() + 2, r, 16);
-  auto r2 = std::from_chars(sr.data() + 2, sr.data() + 4, g, 16);
-  auto r3 = std::from_chars(sr.data() + 4, sr.data() + 6, b, 16);
-  if (r1.ec != std::errc{} || r2.ec != std::errc{} || r3.ec != std::errc{}) {
-    return false;
-  }
-  cr = RGB(r, g, b);
-  return true;
-}
-
-inline std::string encode(COLORREF cr) {
-  std::string s;
-  s.resize(8);
-  uint8_t r = GetRValue(cr);
-  uint8_t g = GetGValue(cr);
-  uint8_t b = GetBValue(cr);
-  _snprintf(s.data(), 8, "#%02x%02x%02x", r, g, b);
-  s.resize(7);
-  return s;
-}
-} // namespace color
-
-void resolovecolor(nlohmann::json &j, const char *name, uint32_t &value) {
+void resolovecolor(nlohmann::json &j, const char *name, bela::color &value) {
   auto it = j.find(name);
   if (it == j.end()) {
     return;
   }
   auto s = it->get<std::string_view>();
-  COLORREF cr;
-  if (color::decode(s, cr)) {
-    value = static_cast<uint32_t>(cr);
+  bela::color c;
+  if (bela::color::Decode(s, c)) {
+    value = c;
   }
 }
 
@@ -95,10 +59,10 @@ bool WindowSettings::Flush(bela::error_code &ec) {
   try {
     nlohmann::json j;
     nlohmann::json cj;
-    cj["panel"] = color::encode(panelcolor);
-    cj["text"] = color::encode(textcolor);
-    cj["content"] = color::encode(contentcolor);
-    cj["label"] = color::encode(labelcolor);
+    cj["panel"] = panelcolor.NarrowEncode();
+    cj["text"] = textcolor.NarrowEncode();
+    cj["content"] = contentcolor.NarrowEncode();
+    cj["label"] = labelcolor.NarrowEncode();
     j["color"] = cj;
     j["font"] = bela::ToNarrow(font);
     j["title"] = bela::ToNarrow(title);

@@ -14,16 +14,17 @@
 #include <vector>
 #include <wincodec.h>
 #include <baulkenv.hpp>
+#include <bela/color.hpp>
 #include "kisasum.hpp"
 
 namespace kisasum::ui {
 
 struct WindowSettings {
-  /// color
-  std::uint32_t panelcolor{0x7dbeff};
-  std::uint32_t contentcolor{0xffffff};
-  std::uint32_t textcolor{0x000000};
-  std::uint32_t labelcolor{0x000000};
+  WindowSettings() : panelcolor(125, 190, 255), contentcolor(255, 255, 255), textcolor(0, 0, 0), labelcolor(0, 0, 0) {}
+  bela::color panelcolor;
+  bela::color contentcolor;
+  bela::color textcolor;
+  bela::color labelcolor;
   std::wstring title{L"Kisasum Immersive"};
   std::wstring font{L"Segoe UI"};
   std::wstring profile;
@@ -32,14 +33,7 @@ struct WindowSettings {
   bool Flush(bela::error_code &ec);
 };
 
-//// what's fuck HEX color and COLORREF color, red <-- --> blue
-//// this is LE CPU, BE CPU don't call
-inline COLORREF calcLuminance(UINT32 cr) {
-  int r = (cr & 0xff0000) >> 16;
-  int g = (cr & 0xff00) >> 8;
-  int b = (cr & 0xff);
-  return RGB(r, g, b);
-}
+
 
 struct D2D1Checkbox {
   RECT Layout;

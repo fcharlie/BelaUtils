@@ -237,10 +237,10 @@ HRESULT Window::CreateDeviceResources() {
                                           D2D1::HwndRenderTargetProperties(m_hWnd, size), &renderTarget);
     if (SUCCEEDED(hr)) {
       ////
-      hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor), &AppPageBackgroundThemeBrush);
+      hr = renderTarget->CreateSolidColorBrush(ws.panelcolor, &AppPageBackgroundThemeBrush);
     }
     if (SUCCEEDED(hr)) {
-      hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(ws.labelcolor), &AppPageTextBrush);
+      hr = renderTarget->CreateSolidColorBrush(ws.labelcolor, &AppPageTextBrush);
     }
   }
   return hr;
@@ -263,7 +263,7 @@ HRESULT Window::OnRender() {
   auto size = renderTarget->GetSize();
   renderTarget->BeginDraw();
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderTarget->Clear(D2D1::ColorF(ws.contentcolor));
+  renderTarget->Clear(ws.contentcolor);
   renderTarget->FillRectangle(RectF(0, areaheight, size.width, size.height), AppPageBackgroundThemeBrush);
   constexpr std::wstring_view uppercase = L"Uppercase";
   renderTarget->DrawTextW(uppercase.data(), static_cast<UINT32>(uppercase.size()), lableTextFormat,
@@ -355,9 +355,9 @@ bool Window::UpdateTheme() {
   if (hBrush) {
     DeleteObject(hBrush);
   }
-  hBrush = CreateSolidBrush(calcLuminance(ws.panelcolor));
+  hBrush = CreateSolidBrush(ws.panelcolor);
   SafeRelease(&AppPageBackgroundThemeBrush);
-  auto hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF((UINT32)ws.panelcolor), &AppPageBackgroundThemeBrush);
+  auto hr = renderTarget->CreateSolidColorBrush(ws.panelcolor, &AppPageBackgroundThemeBrush);
   ::InvalidateRect(hCheck, nullptr, TRUE);
   InvalidateRect(nullptr, TRUE);
   return true;
@@ -441,7 +441,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
                                    HMENU(IDC_FILEOPEN_BUTTON));
 
   InitializeComboHash(hCombo);
-  hBrush = CreateSolidBrush(calcLuminance(ws.panelcolor));
+  hBrush = CreateSolidBrush(ws.panelcolor);
   HMENU hSystemMenu = ::GetSystemMenu(m_hWnd, FALSE);
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_CHANGE_THEME, L"Change Panel Color");
   InsertMenuW(hSystemMenu, SC_CLOSE, MF_ENABLED, IDM_APP_INFO, L"About Kisasum Immersive\tAlt+F1");
@@ -551,7 +551,7 @@ LRESULT Window::OnColorStatic(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHa
   if (hControl == hCheck) {
     SetBkMode(hdc, TRANSPARENT);
     // SetBkColor(hdc, RGB(255, 255, 255));
-    SetTextColor(hdc, calcLuminance(ws.labelcolor));
+    SetTextColor(hdc, ws.labelcolor);
     return (LRESULT)((HBRUSH)hBrush);
   }
   return ::DefWindowProc(m_hWnd, nMsg, wParam, lParam);
@@ -724,22 +724,18 @@ static COLORREF CustColors[] = {
 };
 
 LRESULT Window::OnTheme(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL &bHandled) {
-  auto color = calcLuminance(ws.panelcolor);
   CHOOSECOLORW co;
   ZeroMemory(&co, sizeof(co));
   co.lStructSize = sizeof(CHOOSECOLOR);
   co.hwndOwner = m_hWnd;
   co.lpCustColors = (LPDWORD)CustColors;
-  co.rgbResult = calcLuminance(ws.panelcolor);
+  co.rgbResult = ws.panelcolor;
   co.lCustData = 0;
   co.lpTemplateName = nullptr;
   co.lpfnHook = nullptr;
   co.Flags = CC_FULLOPEN | CC_RGBINIT;
   if (ChooseColorW(&co)) {
-    auto r = GetRValue(co.rgbResult);
-    auto g = GetGValue(co.rgbResult);
-    auto b = GetBValue(co.rgbResult);
-    ws.panelcolor = (r << 16) + (g << 8) + b;
+    ws.panelcolor = co.rgbResult;
     UpdateTheme();
     bela::error_code ec;
     if (!ws.Flush(ec)) {
