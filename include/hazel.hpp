@@ -110,7 +110,7 @@ std::optional<particulars_result> explore_file(std::wstring_view file, bela::err
 namespace endian {
 enum endian_t : unsigned { None, LittleEndian, BigEndian };
 }
-struct elf_minutiae_t {
+struct elf_particulars_result {
   std::wstring machine;
   std::wstring osabi;
   std::wstring etype;
@@ -118,9 +118,25 @@ struct elf_minutiae_t {
   std::wstring rupath;               // RUPATH
   std::wstring soname;               // SONAME
   std::vector<std::wstring> depends; /// require so
+  std::vector<hazel_attribute_t> attributes;
+  std::vector<hazel_multi_attribute_t> multi_attributes;
   int version;
   endian::endian_t endian;
   bool bit64{false}; /// 64 Bit
+  elf_particulars_result &add(std::wstring_view name, std::wstring_view value) {
+    attributes.emplace_back(name, value);
+    return *this;
+  }
+  elf_particulars_result &add(std::wstring_view name, std::vector<std::wstring> &&value) {
+    multi_attributes.emplace_back(name, std::move(value));
+    return *this;
+  }
+  template <typename... Args>
+  elf_particulars_result &add(std::wstring_view name, std::wstring_view value, std::wstring_view attr1, Args... attrN) {
+    std::vector<std::wstring> av{value, attr1, attrN...};
+    multi_attributes.emplace_back(name, std::move(av));
+    return *this;
+  }
 };
 
 struct pe_version_t {
@@ -128,27 +144,61 @@ struct pe_version_t {
   uint16_t minor{0};
 };
 
-struct pe_minutiae_t {
+struct pe_particulars_result {
   std::wstring machine;
   std::wstring subsystem;
   std::wstring clrmsg;
   std::vector<std::wstring> characteristics;
   std::vector<std::wstring> depends; /// DLL required
   std::vector<std::wstring> delays;  //
+  std::vector<hazel_attribute_t> attributes;
+  std::vector<hazel_multi_attribute_t> multi_attributes;
   pe_version_t osver;
   pe_version_t linkver;
   pe_version_t imagever;
   bool isdll;
+  pe_particulars_result &add(std::wstring_view name, std::wstring_view value) {
+    attributes.emplace_back(name, value);
+    return *this;
+  }
+  pe_particulars_result &add(std::wstring_view name, std::vector<std::wstring> &&value) {
+    multi_attributes.emplace_back(name, std::move(value));
+    return *this;
+  }
+  template <typename... Args>
+  pe_particulars_result &add(std::wstring_view name, std::wstring_view value, std::wstring_view attr1, Args... attrN) {
+    std::vector<std::wstring> av{value, attr1, attrN...};
+    multi_attributes.emplace_back(name, std::move(av));
+    return *this;
+  }
 };
 
-struct macho_minutiae_t {
+struct macho_particulars_result {
   std::wstring machine;
   std::wstring mtype; /// Mach-O type
+  std::vector<hazel_attribute_t> attributes;
+  std::vector<hazel_multi_attribute_t> multi_attributes;
   bool isfat{false};
   bool is64abi{false};
+  macho_particulars_result &add(std::wstring_view name, std::wstring_view value) {
+    attributes.emplace_back(name, value);
+    return *this;
+  }
+  macho_particulars_result &add(std::wstring_view name, std::vector<std::wstring> &&value) {
+    multi_attributes.emplace_back(name, std::move(value));
+    return *this;
+  }
+  template <typename... Args>
+  macho_particulars_result &add(std::wstring_view name, std::wstring_view value, std::wstring_view attr1,
+                                Args... attrN) {
+    std::vector<std::wstring> av{value, attr1, attrN...};
+    multi_attributes.emplace_back(name, std::move(av));
+    return *this;
+  }
 };
-std::optional<pe_minutiae_t> explore_pecoff(std::wstring_view sv, bela::error_code &ec);
-std::optional<elf_minutiae_t> explore_elf(std::wstring_view sv, bela::error_code &ec);
+/// PE/ELF these files need to be parsed in depth, perhaps to read more bytes of files.
+std::optional<pe_particulars_result> explore_pecoff(std::wstring_view sv, bela::error_code &ec);
+std::optional<elf_particulars_result> explore_elf(std::wstring_view sv, bela::error_code &ec);
 } // namespace hazel
 
 #endif

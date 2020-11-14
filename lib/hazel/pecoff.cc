@@ -298,8 +298,8 @@ inline std::wstring ClrMessage(bela::MemView mv, LPVOID nh, ULONG clrva) {
 }
 
 template <typename NtHeaderT>
-std::optional<pe_minutiae_t> pecoff_dump(bela::MemView mv, NtHeaderT *nh, bela::error_code &ec) {
-  pe_minutiae_t pm;
+std::optional<pe_particulars_result> pecoff_dump(bela::MemView mv, NtHeaderT *nh, bela::error_code &ec) {
+  pe_particulars_result pm;
   pm.machine = Machine(nh->FileHeader.Machine);
   pm.characteristics = Characteristics(nh->FileHeader.Characteristics, nh->OptionalHeader.DllCharacteristics);
   pm.osver = {nh->OptionalHeader.MajorOperatingSystemVersion, nh->OptionalHeader.MinorOperatingSystemVersion};
@@ -356,25 +356,24 @@ std::optional<pe_minutiae_t> pecoff_dump(bela::MemView mv, NtHeaderT *nh, bela::
 
   // IMAGE_DIRECTORY_ENTRY_RESOURCE resolve copyright
 
-  return std::make_optional<pe_minutiae_t>(std::move(pm));
+  return std::make_optional<pe_particulars_result>(std::move(pm));
 }
 
-std::optional<pe_minutiae_t> explore_pecoff(std::wstring_view sv, bela::error_code &ec) {
+std::optional<pe_particulars_result> explore_pecoff(std::wstring_view sv, bela::error_code &ec) {
   bela::MapView mmv;
   if (!mmv.MappingView(sv, ec, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
     return std::nullopt;
   }
   auto mv = mmv.subview();
-
   auto h = mv.cast<IMAGE_DOS_HEADER>(0);
   if (h == nullptr) {
-    ec = bela::make_error_code(1, L"PE file size tool small");
+    ec = bela::make_error_code(L"PE file size tool small");
     return std::nullopt;
   }
   // PE/PE+ lIMAGE_NT_HEADERS32 ayout
   auto nh = mv.cast<IMAGE_NT_HEADERS32>(h->e_lfanew);
   if (nh == nullptr) {
-    ec = bela::make_error_code(1, L"PE file size tool small");
+    ec = bela::make_error_code(L"PE file size tool small");
     return std::nullopt;
   }
   switch (nh->OptionalHeader.Magic) {

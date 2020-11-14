@@ -312,8 +312,8 @@ public:
     return bela::bswap(i);
   }
   std::string stroffset(size_t off, size_t end);
-  bool inquisitive(elf_minutiae_t &em, bela::error_code &ec);
-  bool inquisitive64(elf_minutiae_t &em, bela::error_code &ec);
+  bool inquisitive(elf_particulars_result &em, bela::error_code &ec);
+  bool inquisitive64(elf_particulars_result &em, bela::error_code &ec);
 
 private:
   const char *data_{nullptr};
@@ -333,7 +333,7 @@ std::string elf_memview::stroffset(size_t off, size_t end) {
 }
 
 //
-bool elf_memview::inquisitive64(elf_minutiae_t &em, bela::error_code &ec) {
+bool elf_memview::inquisitive64(elf_particulars_result &em, bela::error_code &ec) {
   auto h = cast<Elf64_Ehdr>(0);
   if (h == nullptr) {
     return false;
@@ -399,7 +399,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, bela::error_code &ec) {
   return true;
 }
 
-bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
+bool elf_memview::inquisitive(elf_particulars_result &em, bela::error_code &ec) {
   em.endian = Endian(static_cast<uint8_t>(data_[EI_DATA]));
   em.osabi = elf_osabi(data_[EI_OSABI]);
   em.version = data_[EI_VERSION];
@@ -475,15 +475,15 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
   return true;
 }
 } // namespace internal
-std::optional<elf_minutiae_t> explore_elf(std::wstring_view sv, bela::error_code &ec) {
+std::optional<elf_particulars_result> explore_elf(std::wstring_view sv, bela::error_code &ec) {
   bela::MapView mv;
   if (!mv.MappingView(sv, ec, sizeof(Elf32_Ehdr))) {
     return std::nullopt;
   }
   internal::elf_memview emv(mv.subview());
-  elf_minutiae_t em;
+  elf_particulars_result em;
   if (emv.inquisitive(em, ec)) {
-    return std::make_optional<elf_minutiae_t>(std::move(em));
+    return std::make_optional<elf_particulars_result>(std::move(em));
   }
   return std::nullopt;
 }
