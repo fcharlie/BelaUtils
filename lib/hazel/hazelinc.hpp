@@ -58,6 +58,28 @@ inline bela::ssize_t DbgPrintEx(char32_t prefix, const wchar_t *fmt) {
 
 namespace internal {
 
+/*
+ * Compute the length of an array with constant length.  (Use of this method
+ * with a non-array pointer will not compile.)
+ *
+ * Beware of the implicit trailing '\0' when using this with string constants.
+ */
+template <typename T, size_t N> constexpr size_t ArrayLength(T (&aArr)[N]) { return N; }
+
+template <typename T, size_t N> constexpr T *ArrayEnd(T (&aArr)[N]) { return aArr + ArrayLength(aArr); }
+
+/**
+ * std::equal has subpar ergonomics.
+ */
+
+template <typename T, typename U, size_t N> bool ArrayEqual(const T (&a)[N], const U (&b)[N]) {
+  return std::equal(a, a + N, b);
+}
+
+template <typename T, typename U> bool ArrayEqual(const T *const a, const U *const b, const size_t n) {
+  return std::equal(a, a + n, b);
+}
+
 using byte_t = unsigned char;
 typedef enum hazel_status_e : int {
   None = 0,

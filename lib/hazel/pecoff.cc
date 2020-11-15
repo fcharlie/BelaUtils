@@ -325,10 +325,8 @@ std::optional<pe_particulars_result> pecoff_dump(bela::MemView mv, NtHeaderT *nh
     }
     auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
     while (imdes->Name != 0) {
-      //
       // ASCIIZ
-      auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
-      if (!dnw.empty()) {
+      if (auto dnw = DllName(mv, (LPVOID)nh, imdes->Name); !dnw.empty()) {
         pm.depends.emplace_back(std::move(dnw));
       }
       imdes++;
@@ -344,10 +342,8 @@ std::optional<pe_particulars_result> pecoff_dump(bela::MemView mv, NtHeaderT *nh
     }
     auto imdes = reinterpret_cast<PIMAGE_DELAYLOAD_DESCRIPTOR>(va);
     while (imdes->DllNameRVA != 0) {
-      //
       // ASCIIZ
-      auto dnw = DllName(mv, (LPVOID)nh, imdes->DllNameRVA);
-      if (!dnw.empty()) {
+      if (auto dnw = DllName(mv, (LPVOID)nh, imdes->DllNameRVA); !dnw.empty()) {
         pm.delays.emplace_back(std::move(dnw));
       }
       imdes++;
