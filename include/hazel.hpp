@@ -23,10 +23,12 @@ struct hazel_multi_attribute_t {
   hazel_multi_attribute_t(const std::wstring_view n, const std::vector<std::wstring> &v) : name(n), values(v) {}
   hazel_multi_attribute_t(std::wstring &&n, std::vector<std::wstring> &&v) : name(std::move(n)), values(std::move(v)) {}
 };
+// export
+const wchar_t *lookup_mime(types::catalog_t t);
 
 class particulars_result {
 public:
-  static constexpr size_t deslen = sizeof("Description") - 1;
+  static constexpr size_t deslen = sizeof("Description: ") - 1;
   particulars_result() = default;
   particulars_result(std::wstring_view n, types::catalog_t ct = types::catalog_t::none) { assign(n, ct); }
   particulars_result(particulars_result &&other) { assign(std::move(other)); }
@@ -96,6 +98,7 @@ public:
     alignlen = deslen;
     t = types::catalog_t::none;
   }
+  std::wstring_view mime() const { return lookup_mime(t); }
 
 private:
   std::wstring name;
@@ -111,28 +114,33 @@ namespace endian {
 enum endian_t : unsigned { None, LittleEndian, BigEndian };
 }
 struct elf_particulars_result {
-  std::wstring machine;
-  std::wstring osabi;
-  std::wstring etype;
-  std::wstring rpath;                // RPATH or some
+  static constexpr size_t deslen = sizeof("machine: ") - 1;
+  std::wstring machine;              // machine
+  std::wstring osabi;                // abi
+  std::wstring etype;                // type
+  std::wstring rpath;                // RPATH
   std::wstring rupath;               // RUPATH
   std::wstring soname;               // SONAME
   std::vector<std::wstring> depends; /// require so
   std::vector<hazel_attribute_t> attributes;
   std::vector<hazel_multi_attribute_t> multi_attributes;
+  std::size_t alignlen{deslen}; // description
   int version;
   endian::endian_t endian;
   bool bit64{false}; /// 64 Bit
   elf_particulars_result &add(std::wstring_view name, std::wstring_view value) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     attributes.emplace_back(name, value);
     return *this;
   }
   elf_particulars_result &add(std::wstring_view name, std::vector<std::wstring> &&value) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     multi_attributes.emplace_back(name, std::move(value));
     return *this;
   }
   template <typename... Args>
   elf_particulars_result &add(std::wstring_view name, std::wstring_view value, std::wstring_view attr1, Args... attrN) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     std::vector<std::wstring> av{value, attr1, attrN...};
     multi_attributes.emplace_back(name, std::move(av));
     return *this;
@@ -145,6 +153,7 @@ struct pe_version_t {
 };
 
 struct pe_particulars_result {
+  static constexpr size_t deslen = sizeof("characteristics: ") - 1;
   std::wstring machine;
   std::wstring subsystem;
   std::wstring clrmsg;
@@ -156,17 +165,21 @@ struct pe_particulars_result {
   pe_version_t osver;
   pe_version_t linkver;
   pe_version_t imagever;
+  std::size_t alignlen{deslen}; // description
   bool isdll;
   pe_particulars_result &add(std::wstring_view name, std::wstring_view value) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     attributes.emplace_back(name, value);
     return *this;
   }
   pe_particulars_result &add(std::wstring_view name, std::vector<std::wstring> &&value) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     multi_attributes.emplace_back(name, std::move(value));
     return *this;
   }
   template <typename... Args>
   pe_particulars_result &add(std::wstring_view name, std::wstring_view value, std::wstring_view attr1, Args... attrN) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     std::vector<std::wstring> av{value, attr1, attrN...};
     multi_attributes.emplace_back(name, std::move(av));
     return *this;
@@ -174,23 +187,28 @@ struct pe_particulars_result {
 };
 
 struct macho_particulars_result {
+  static constexpr size_t deslen = sizeof("machine: ") - 1;
   std::wstring machine;
   std::wstring mtype; /// Mach-O type
   std::vector<hazel_attribute_t> attributes;
   std::vector<hazel_multi_attribute_t> multi_attributes;
+  std::size_t alignlen{deslen}; // description
   bool isfat{false};
   bool is64abi{false};
   macho_particulars_result &add(std::wstring_view name, std::wstring_view value) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     attributes.emplace_back(name, value);
     return *this;
   }
   macho_particulars_result &add(std::wstring_view name, std::vector<std::wstring> &&value) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     multi_attributes.emplace_back(name, std::move(value));
     return *this;
   }
   template <typename... Args>
   macho_particulars_result &add(std::wstring_view name, std::wstring_view value, std::wstring_view attr1,
                                 Args... attrN) {
+    alignlen = (std::max)(alignlen, bela::StringWidth(name) + 2);
     std::vector<std::wstring> av{value, attr1, attrN...};
     multi_attributes.emplace_back(name, std::move(av));
     return *this;

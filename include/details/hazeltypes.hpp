@@ -113,7 +113,8 @@ enum catalog_t {
   gitpack,
   gitpkindex,
   gitmidx,
-  shelllink // Windows shelllink
+  shelllink, // Windows shelllink
+  iso
 };
 
 } // namespace hazel::types
