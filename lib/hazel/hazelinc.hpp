@@ -4,6 +4,7 @@
 #include "hazel.hpp"
 #include <bela/mapview.hpp>
 #include <bela/terminal.hpp>
+#include <bela/endian.hpp>
 
 namespace hazel {
 // DbgPrint added newline

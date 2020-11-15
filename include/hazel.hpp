@@ -217,6 +217,8 @@ struct macho_particulars_result {
 /// PE/ELF these files need to be parsed in depth, perhaps to read more bytes of files.
 std::optional<pe_particulars_result> explore_pecoff(std::wstring_view sv, bela::error_code &ec);
 std::optional<elf_particulars_result> explore_elf(std::wstring_view sv, bela::error_code &ec);
+std::optional<macho_particulars_result> explore_macho(std::wstring_view sv, bela::error_code &ec);
+
 } // namespace hazel
 
 #endif

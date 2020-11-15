@@ -5,7 +5,6 @@
 // Windows PE32 executable (console) Intel 80386, for MS Windows file command
 // not support check arm and arm64
 #include "hazelinc.hpp"
-#include <bela/endian.hpp>
 #include <bela/codecvt.hpp>
 #include <bela/pe.hpp>
 
