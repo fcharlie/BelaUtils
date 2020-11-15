@@ -5,12 +5,12 @@
 #include <bela/terminal.hpp>
 #include <bela/narrow/strcat.hpp>
 
-inline std::vector<std::string> NarrowArray(const std::vector<std::wstring> &wv) {
-  std::vector<std::string> av;
+inline nlohmann::json json_array(const std::vector<std::wstring> &wv) {
+  auto jv = nlohmann::json::array();
   for (const auto &v : wv) {
-    av.emplace_back(bela::ToNarrow(v));
+    jv.emplace_back(bela::ToNarrow(v));
   }
-  return av;
+  return jv;
 }
 
 bool WriteToJson(FILE *fd, const hazel::particulars_result &pr) {
@@ -19,10 +19,10 @@ bool WriteToJson(FILE *fd, const hazel::particulars_result &pr) {
     j["description"] = bela::ToNarrow(pr.description());
     j["mime"] = bela::ToNarrow(pr.mime());
     for (const auto &it : pr.attributes()) {
-      j[bela::ToNarrow(it.name)] = bela::ToNarrow(it.value);
+      j[bela::ToNarrow(it.first)] = bela::ToNarrow(it.second);
     }
     for (const auto &it : pr.multi_attributes()) {
-      j[bela::ToNarrow(it.name)] = NarrowArray(it.values);
+      j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
     auto body = j.dump(4);
     fwrite(body.data(), 1, body.size(), fd);
@@ -37,22 +37,22 @@ inline std::string make_version(hazel::pe_version_t pv) { return bela::narrow::S
 bool WriteToJson(FILE *fd, const hazel::pe_particulars_result &pr) {
   try {
     nlohmann::json j;
-    j["description"] = L"PE executable file";
-    j["mime"] = L"application/vnd.microsoft.portable-executable";
+    j["description"] = "PE executable file";
+    j["mime"] = "application/vnd.microsoft.portable-executable";
     j["subsystem"] = bela::ToNarrow(pr.subsystem);
     j["machine"] = bela::ToNarrow(pr.machine);
-    j["characteristics"] = NarrowArray(pr.characteristics);
-    j["depends"] = NarrowArray(pr.depends);
-    j["delay_depends"] = NarrowArray(pr.delays);
+    j["characteristics"] = json_array(pr.characteristics);
+    j["depends"] = json_array(pr.depends);
+    j["delay_depends"] = json_array(pr.delays);
     j["is_dll"] = pr.isdll;
     j["os_version"] = make_version(pr.osver);
     j["linker_version"] = make_version(pr.linkver);
     j["image_version"] = make_version(pr.imagever);
     for (const auto &it : pr.attributes) {
-      j[bela::ToNarrow(it.name)] = bela::ToNarrow(it.value);
+      j[bela::ToNarrow(it.first)] = bela::ToNarrow(it.second);
     }
     for (const auto &it : pr.multi_attributes) {
-      j[bela::ToNarrow(it.name)] = NarrowArray(it.values);
+      j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
     auto body = j.dump(4);
     fwrite(body.data(), 1, body.size(), fd);
@@ -65,8 +65,8 @@ bool WriteToJson(FILE *fd, const hazel::pe_particulars_result &pr) {
 bool WriteToJson(FILE *fd, const hazel::elf_particulars_result &pr) {
   try {
     nlohmann::json j;
-    j["description"] = L"ELF executable binary";
-    j["mime"] = L"application/x-executable";
+    j["description"] = "ELF executable binary";
+    j["mime"] = "application/x-executable";
     j["machine"] = bela::ToNarrow(pr.machine);
     j["abi"] = bela::ToNarrow(pr.osabi);
     j["elf_type"] = bela::ToNarrow(pr.etype);
@@ -85,12 +85,12 @@ bool WriteToJson(FILE *fd, const hazel::elf_particulars_result &pr) {
     } else {
       j["endian"] = "LittleEndian";
     }
-    j["depends"] = NarrowArray(pr.depends);
+    j["depends"] = json_array(pr.depends);
     for (const auto &it : pr.attributes) {
-      j[bela::ToNarrow(it.name)] = bela::ToNarrow(it.value);
+      j[bela::ToNarrow(it.first)] = bela::ToNarrow(it.second);
     }
     for (const auto &it : pr.multi_attributes) {
-      j[bela::ToNarrow(it.name)] = NarrowArray(it.values);
+      j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
     auto body = j.dump(4);
     fwrite(body.data(), 1, body.size(), fd);
@@ -103,13 +103,13 @@ bool WriteToJson(FILE *fd, const hazel::elf_particulars_result &pr) {
 bool WriteToJson(FILE *fd, const hazel::macho_particulars_result &pr) {
   try {
     nlohmann::json j;
-    j["description"] = L"Mach-O Executable binary";
-    j["mime"] = L"application/x-mach-binary";
+    j["description"] = "Mach-O Executable binary";
+    j["mime"] = "application/x-mach-binary";
     for (const auto &it : pr.attributes) {
-      j[bela::ToNarrow(it.name)] = bela::ToNarrow(it.value);
+      j[bela::ToNarrow(it.first)] = bela::ToNarrow(it.second);
     }
     for (const auto &it : pr.multi_attributes) {
-      j[bela::ToNarrow(it.name)] = NarrowArray(it.values);
+      j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
     auto body = j.dump(4);
     fwrite(body.data(), 1, body.size(), fd);
