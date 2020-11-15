@@ -3,6 +3,7 @@
 
 add_executable(hazel
   driver.cc
+  jsonwriter.cc
   hazel.rc
   hazel.manifest
 )

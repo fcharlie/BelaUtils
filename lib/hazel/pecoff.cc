@@ -297,7 +297,7 @@ inline std::wstring ClrMessage(bela::MemView mv, LPVOID nh, ULONG clrva) {
 }
 
 template <typename NtHeaderT>
-std::optional<pe_particulars_result> pecoff_dump(bela::MemView mv, NtHeaderT *nh, bela::error_code &ec) {
+std::optional<pe_particulars_result> pecoff_analyze_template(bela::MemView mv, NtHeaderT *nh, bela::error_code &ec) {
   pe_particulars_result pm;
   pm.machine = Machine(nh->FileHeader.Machine);
   pm.characteristics = Characteristics(nh->FileHeader.Characteristics, nh->OptionalHeader.DllCharacteristics);
@@ -373,9 +373,9 @@ std::optional<pe_particulars_result> explore_pecoff(std::wstring_view sv, bela::
   }
   switch (nh->OptionalHeader.Magic) {
   case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-    return pecoff_dump(mv, (PIMAGE_NT_HEADERS64)nh, ec);
+    return pecoff_analyze_template(mv, (PIMAGE_NT_HEADERS64)nh, ec);
   case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-    return pecoff_dump(mv, (PIMAGE_NT_HEADERS32)nh, ec);
+    return pecoff_analyze_template(mv, (PIMAGE_NT_HEADERS32)nh, ec);
   case IMAGE_ROM_OPTIONAL_HDR_MAGIC: {
     // ROM
   } break;
