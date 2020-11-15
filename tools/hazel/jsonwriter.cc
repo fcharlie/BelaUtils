@@ -24,8 +24,7 @@ bool WriteToJson(FILE *fd, const hazel::particulars_result &pr) {
     for (const auto &it : pr.multi_attributes()) {
       j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
-    auto body = j.dump(4);
-    fwrite(body.data(), 1, body.size(), fd);
+    bela::terminal::WriteAuto(fd, j.dump(4));
   } catch (const std::exception &) {
     return false;
   }
@@ -54,8 +53,7 @@ bool WriteToJson(FILE *fd, const hazel::pe_particulars_result &pr) {
     for (const auto &it : pr.multi_attributes) {
       j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
-    auto body = j.dump(4);
-    fwrite(body.data(), 1, body.size(), fd);
+    bela::terminal::WriteAuto(fd, j.dump(4));
   } catch (const std::exception &) {
     return false;
   }
@@ -92,8 +90,7 @@ bool WriteToJson(FILE *fd, const hazel::elf_particulars_result &pr) {
     for (const auto &it : pr.multi_attributes) {
       j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
-    auto body = j.dump(4);
-    fwrite(body.data(), 1, body.size(), fd);
+    bela::terminal::WriteAuto(fd, j.dump(4));
   } catch (const std::exception &) {
     return false;
   }
@@ -111,8 +108,7 @@ bool WriteToJson(FILE *fd, const hazel::macho_particulars_result &pr) {
     for (const auto &it : pr.multi_attributes) {
       j[bela::ToNarrow(it.first)] = json_array(it.second);
     }
-    auto body = j.dump(4);
-    fwrite(body.data(), 1, body.size(), fd);
+    bela::terminal::WriteAuto(fd, j.dump(4));
   } catch (const std::exception &) {
     return false;
   }
