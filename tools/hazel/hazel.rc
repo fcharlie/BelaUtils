@@ -1,0 +1,49 @@
+//Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION BELAUTILS_VERSION_MAJOR, BELAUTILS_VERSION_MINOR, BELAUTILS_VERSION_PATCH, BELAUTILS_VERSION_BUILD
+PRODUCTVERSION BELAUTILS_VERSION_MAJOR, BELAUTILS_VERSION_MINOR, BELAUTILS_VERSION_PATCH, BELAUTILS_VERSION_BUILD
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x1L
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+BLOCK "StringFileInfo"
+BEGIN
+BLOCK "080404b0"
+BEGIN
+VALUE "CompanyName", "Force Charlie"
+VALUE "FileDescription", "hazel - Interesting file type viewer"
+VALUE "FileVersion", BELAUTILS_VERSION
+VALUE "InternalName", "hazel.exe"
+VALUE "LegalCopyright", BELAUTILSUI_COPYRIGHT,
+VALUE "OriginalFilename", "hazel.exe"
+VALUE "ProductName", "hazel - Interesting file type viewer"
+VALUE "ProductVersion", BELAUTILS_VERSION
+END
+END
+BLOCK "VarFileInfo"
+BEGIN
+VALUE "Translation", 0x804, 1200
+END
+END
+

@@ -103,7 +103,7 @@ FE FF	UTF-16, big-endian
 FF FE	UTF-16, little-endian
 EF BB BF	UTF-8
 */
-status_t inquisitive_text(bela::MemView mv, particulars_result &pr) {
+status_t explore_text(bela::MemView mv, particulars_result &pr) {
   //
   switch (mv[0]) {
   case 0x2B:
@@ -147,7 +147,7 @@ status_t inquisitive_text(bela::MemView mv, particulars_result &pr) {
   return None;
 }
 //////// --------------> use chardet
-status_t inquisitive_chardet(bela::MemView mv, particulars_result &pr) {
+status_t explore_chardet(bela::MemView mv, particulars_result &pr) {
   if (buffer_is_binary(mv)) {
     pr.assign(L"Binary data");
     return Found;

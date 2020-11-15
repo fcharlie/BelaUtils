@@ -88,7 +88,7 @@ public:
   // return
   const auto &attributes() const { return attrs; }
   const auto &multi_attributes() const { return mattrs; }
-  std::wstring_view class_name() const { return name; }
+  std::wstring_view description() const { return name; }
   auto catalog() const { return t; }
   auto align_length() const { return alignlen; }
   void clear() {
