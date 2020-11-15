@@ -296,23 +296,25 @@ inline std::wstring ClrMessage(bela::MemView mv, LPVOID nh, ULONG clrva) {
   return bela::ToWide(std::string_view((const char *)clrmsg + sizeof(STORAGESIGNATURE), clrmsg->Length));
 }
 
+// TODO resolve IMAGE_IMPORT_DESCRIPTOR load import func
+
 template <typename NtHeaderT>
 std::optional<pe_particulars_result> pecoff_analyze_template(bela::MemView mv, NtHeaderT *nh, bela::error_code &ec) {
-  pe_particulars_result pm;
-  pm.machine = Machine(nh->FileHeader.Machine);
-  pm.characteristics = Characteristics(nh->FileHeader.Characteristics, nh->OptionalHeader.DllCharacteristics);
-  pm.osver = {nh->OptionalHeader.MajorOperatingSystemVersion, nh->OptionalHeader.MinorOperatingSystemVersion};
-  pm.subsystem = Subsystem(nh->OptionalHeader.Subsystem);
-  pm.linkver = {nh->OptionalHeader.MajorLinkerVersion, nh->OptionalHeader.MinorLinkerVersion};
-  pm.imagever = {nh->OptionalHeader.MajorImageVersion, nh->OptionalHeader.MinorImageVersion};
-  pm.isdll = ((nh->FileHeader.Characteristics & IMAGE_FILE_DLL) != 0);
+  pe_particulars_result pr;
+  pr.machine = Machine(nh->FileHeader.Machine);
+  pr.characteristics = Characteristics(nh->FileHeader.Characteristics, nh->OptionalHeader.DllCharacteristics);
+  pr.osver = {nh->OptionalHeader.MajorOperatingSystemVersion, nh->OptionalHeader.MinorOperatingSystemVersion};
+  pr.subsystem = Subsystem(nh->OptionalHeader.Subsystem);
+  pr.linkver = {nh->OptionalHeader.MajorLinkerVersion, nh->OptionalHeader.MinorLinkerVersion};
+  pr.imagever = {nh->OptionalHeader.MajorImageVersion, nh->OptionalHeader.MinorImageVersion};
+  pr.isdll = ((nh->FileHeader.Characteristics & IMAGE_FILE_DLL) != 0);
 
   // https://docs.microsoft.com/zh-cn/windows/desktop/api/winnt/ns-winnt-_image_data_directory
   auto clre = &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COMHEADER]);
   auto end = mv.data() + mv.size();
   if (clre->Size == sizeof(IMAGE_COR20_HEADER)) {
     // Exists IMAGE_COR20_HEADER
-    pm.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
+    pr.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
   }
 
   // Import
@@ -320,13 +322,13 @@ std::optional<pe_particulars_result> pecoff_analyze_template(bela::MemView mv, N
   if (import_->Size != 0) {
     auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(), import_->VirtualAddress, nullptr);
     if (va == nullptr || (const uint8_t *)va + import_->Size >= end) {
-      return std::make_optional<>(pm);
+      return std::make_optional(std::move(pr));
     }
     auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
-    while (imdes->Name != 0) {
+    while (imdes->Name != 0 && (const uint8_t *)imdes + sizeof(IMAGE_IMPORT_DESCRIPTOR) < end) {
       // ASCIIZ
       if (auto dnw = DllName(mv, (LPVOID)nh, imdes->Name); !dnw.empty()) {
-        pm.depends.emplace_back(std::move(dnw));
+        pr.depends.emplace_back(std::move(dnw));
       }
       imdes++;
     }
@@ -337,13 +339,13 @@ std::optional<pe_particulars_result> pecoff_analyze_template(bela::MemView mv, N
   if (delay_->Size != 0) {
     auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(), delay_->VirtualAddress, nullptr);
     if (va == nullptr || (const uint8_t *)va + delay_->Size >= end) {
-      return std::make_optional<>(pm);
+      return std::make_optional(std::move(pr));
     }
     auto imdes = reinterpret_cast<PIMAGE_DELAYLOAD_DESCRIPTOR>(va);
-    while (imdes->DllNameRVA != 0) {
+    while (imdes->DllNameRVA != 0 && (const uint8_t *)imdes + sizeof(IMAGE_IMPORT_DESCRIPTOR) < end) {
       // ASCIIZ
       if (auto dnw = DllName(mv, (LPVOID)nh, imdes->DllNameRVA); !dnw.empty()) {
-        pm.delays.emplace_back(std::move(dnw));
+        pr.delays.emplace_back(std::move(dnw));
       }
       imdes++;
     }
@@ -351,7 +353,7 @@ std::optional<pe_particulars_result> pecoff_analyze_template(bela::MemView mv, N
 
   // IMAGE_DIRECTORY_ENTRY_RESOURCE resolve copyright
 
-  return std::make_optional<pe_particulars_result>(std::move(pm));
+  return std::make_optional(std::move(pr));
 }
 
 std::optional<pe_particulars_result> explore_pecoff(std::wstring_view sv, bela::error_code &ec) {
