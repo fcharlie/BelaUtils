@@ -60,11 +60,10 @@ bool Window::InquisitivePE() {
                   bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
     tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
   }
-
-  // if (!pea->clrmsg.empty()) {
-  //   tables.Append(L"CLR Details:", pea->clrmsg);
-  // }
-
+  std::string clrver;
+  if (file->LookupClrVersion(clrver, ec) && !clrver.empty()) {
+    tables.Append(L"CLR Details:", bela::ToWide(clrver));
+  }
   tables.Append(L"Characteristics:");
   tables.Append(L"Depends:");
 
