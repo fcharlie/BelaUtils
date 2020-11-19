@@ -50,13 +50,15 @@ bool Window::InquisitivePE() {
   if (file->Is64Bit()) {
     auto oh = file->Oh64();
     dllcharacteristics = oh->DllCharacteristics;
-    tables.Append(L"OS Version:", bela::StringCat(oh->MajorOperatingSystemVersion, oh->MinorOperatingSystemVersion));
-    tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, oh->MajorLinkerVersion));
+    tables.Append(L"OS Version:",
+                  bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
+    tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
   } else {
     auto oh = file->Oh64();
     dllcharacteristics = oh->DllCharacteristics;
-    tables.Append(L"OS Version:", bela::StringCat(oh->MajorOperatingSystemVersion, oh->MinorOperatingSystemVersion));
-    tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, oh->MajorLinkerVersion));
+    tables.Append(L"OS Version:",
+                  bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
+    tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
   }
 
   // if (!pea->clrmsg.empty()) {
