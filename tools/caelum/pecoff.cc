@@ -41,7 +41,7 @@ bool Window::InquisitivePE() {
   }
   auto vi = bela::pe::LookupVersion(path, ec);
   if (vi && !vi->ProductName.empty()) {
-    tables.Append(L"ProductName:", vi->ProductName);
+    tables.Append(L"Description:", vi->FileDescription);
   }
   tables.Append(L"Machine:", caelum::Machine(static_cast<uint32_t>(file->Machine())));
   tables.Append(L"Subsystem:", caelum::Subsystem(static_cast<uint32_t>(file->Subsystem())));
