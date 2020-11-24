@@ -91,6 +91,8 @@ const wchar_t *lookup_mime(types::catalog_t t) {
       {types::xlsx, L"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
       {types::ppt, L"application/vnd.ms-powerpoint"},
       {types::pptx, L"application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+      //
+      {types::ofd, L"application/ofd"}, // Open Fixed layout Document
       // font
       {types::woff, L"application/font-woff"},
       {types::woff2, L"application/font-woff"},

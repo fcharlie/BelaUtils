@@ -143,11 +143,59 @@ status_t inquisitive_msxmldocs(bela::MemView mv, particulars_result &pr) {
   return None;
 }
 
+status_t ofdsubview(bela::MemView mv, particulars_result &pr) {
+  if (mv.StartsWith("OFD.xml")) {
+    pr.assign(L"Open Fixed layout Document (.ofd)", types::ofd);
+    return Found;
+  }
+  return None;
+}
+
+status_t inquisitive_ofd(bela::MemView mv, particulars_result &pr) {
+  // OFD.xml
+  if (mv.IndexsWith(0x1E, "OFD.xml")) {
+    pr.assign(L"Open Fixed layout Document (.ofd)", types::ofd);
+    return Found;
+  }
+  auto hd = mv.cast<zip_file_header_t>(0);
+  if (hd == nullptr) {
+    return None;
+  }
+  ssize_t startoffset = bela::readle<uint32_t>(mv.data() + 18) + 49;
+  auto index = MagicIndex(mv, startoffset);
+  if (index == -1) {
+    return None;
+  }
+  startoffset = index + 4 + 26;
+  index = MagicIndex(mv, startoffset);
+  if (index == -1) {
+    return None;
+  }
+  startoffset = index + 4 + 26;
+  if (ofdsubview(mv.submv(startoffset), pr) == Found) {
+    return Found;
+  }
+  startoffset += 26;
+  index = MagicIndex(mv, startoffset);
+  if (index == -1) {
+    return None;
+  }
+  startoffset = index + 4 + 26;
+  if (ofdsubview(mv.submv(startoffset), pr) == Found) {
+    return Found;
+  }
+
+  return None;
+}
+
 status_t explore_zip_family(bela::MemView mv, particulars_result &pr) {
   if (!IsZip(mv.data(), mv.size())) {
     return None;
   }
   if (inquisitive_msxmldocs(mv, pr) == Found) {
+    return Found;
+  }
+  if (inquisitive_ofd(mv, pr) == Found) {
     return Found;
   }
   pr.assign(L"Zip archive data", types::zip);

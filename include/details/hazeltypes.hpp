@@ -86,6 +86,8 @@ enum catalog_t {
   xlsx,
   ppt,
   pptx,
+  //
+  ofd, // Open Fixed layout Document GB/T 33190-2016
   // font
   woff,
   woff2,
