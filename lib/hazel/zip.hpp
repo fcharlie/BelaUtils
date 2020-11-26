@@ -7,7 +7,7 @@ namespace hazel {
 // https://www.hanshq.net/zip.html
 
 // https://github.com/nih-at/libzip/blob/master/lib/zip.h
-typedef enum method_e : uint16_t {
+typedef enum zip_method_e : uint16_t {
   ZIP_STORE = 0,    /* stored (uncompressed) */
   ZIP_SHRINK = 1,   /* shrunk */
   ZIP_REDUCE_1 = 2, /* reduced with factor 1 */
@@ -33,7 +33,7 @@ typedef enum method_e : uint16_t {
   ZIP_JPEG = 96,    /* Compressed Jpeg data */
   ZIP_WAVPACK = 97, /* WavPack compressed data */
   ZIP_PPMD = 98,    /* PPMd version I, Rev 1 */
-} method_t;
+} zip_method_t;
 
 #pragma pack(2)
 struct zip_file_header_t {
@@ -69,9 +69,16 @@ struct zip_file_info64_t {
 
 #pragma pack()
 
-struct zip_t{
-    
+struct zipmemb_t {
+  std::string name;
+  time_t mtime;
+  uint64_t compressed_size{0};
+  uint64_t uncompressed_size{0};
+  zip_method_t method;
+  bool isdir{false};
 };
+
+struct zip_t {};
 
 } // namespace hazel
 
