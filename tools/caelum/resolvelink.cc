@@ -1,7 +1,6 @@
 ///
 #include "caelum.hpp"
 #include <bela/path.hpp>
-#include <bela/repasepoint.hpp>
 #include <bela/endian.hpp>
 #include <bela/mapview.hpp>
 #include <bela/strcat.hpp>
@@ -210,32 +209,11 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code
   return std::make_optional(target);
 }
 
-std::optional<std::wstring> FindAttributeName(const std::vector<bela::FileAttributePair> &attrs,
-                                              std::wstring_view name) {
-  for (const auto &a : attrs) {
-    if (name == a.name) {
-      return std::make_optional(a.value);
-    }
-  }
-  return std::nullopt;
-}
-
-inline bool IsTarget(unsigned long i) {
-  return i == bela::ReparsePointTagIndex::APPEXECLINK || i == bela::ReparsePointTagIndex::SYMLINK ||
-         i == bela::ReparsePointTagIndex::MOUNT_POINT;
-}
-
 std::optional<std::wstring> ResolveLink(std::wstring_view file, bela::error_code &ec) {
-  bela::ReparsePoint rp;
-  if (!rp.Analyze(file, ec)) {
-    if (ec.code != ERROR_NOT_A_REPARSE_POINT) {
-      return std::nullopt;
-    }
+  auto p = bela::RealPathEx(file, ec);
+  if (!p) {
     return ResolveShLink(file, ec);
   }
-  if (IsTarget(rp.ReparseTagValue())) {
-    return FindAttributeName(rp.Attributes(), L"Target");
-  }
-  return std::make_optional(std::wstring(file));
+  return ResolveShLink(*p, ec);
 }
 } // namespace caelum

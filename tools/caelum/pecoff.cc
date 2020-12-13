@@ -29,46 +29,47 @@ inline std::wstring flatvector(const std::vector<std::wstring> &v, std::wstring_
 bool Window::InquisitivePE() {
   auto path = wUrl.Content();
   bela::error_code ec;
-  auto file = bela::pe::NewFile(path, ec);
-  if (!file) {
+  bela::pe::File file;
+
+  if (!file.NewFile(path, ec)) {
     bela::BelaMessageBox(hWnd, L"Inquisitive PE ", ec.message.data(), nullptr, bela::mbs_t::FATAL);
     return false;
   }
   bela::pe::FunctionTable ft;
-  if (!file->LookupFunctionTable(ft, ec)) {
+  if (!file.LookupFunctionTable(ft, ec)) {
     bela::BelaMessageBox(hWnd, L"Inquisitive PE ", ec.message.data(), nullptr, bela::mbs_t::FATAL);
     return false;
   }
-  auto vi = bela::pe::LookupVersion(path, ec);
+  auto vi = bela::pe::Lookup(path, ec);
   if (vi && !vi->ProductName.empty()) {
     tables.Append(L"Description:", vi->FileDescription);
   }
-  tables.Append(L"Machine:", caelum::Machine(static_cast<uint32_t>(file->Machine())));
-  tables.Append(L"Subsystem:", caelum::Subsystem(static_cast<uint32_t>(file->Subsystem())));
+  tables.Append(L"Machine:", caelum::Machine(static_cast<uint32_t>(file.Machine())));
+  tables.Append(L"Subsystem:", caelum::Subsystem(static_cast<uint32_t>(file.Subsystem())));
 
   uint16_t dllcharacteristics{0};
-  if (file->Is64Bit()) {
-    auto oh = file->Oh64();
+  if (file.Is64Bit()) {
+    auto oh = file.Oh64();
     dllcharacteristics = oh->DllCharacteristics;
     tables.Append(L"OS Version:",
                   bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
     tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
   } else {
-    auto oh = file->Oh64();
+    auto oh = file.Oh64();
     dllcharacteristics = oh->DllCharacteristics;
     tables.Append(L"OS Version:",
                   bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
     tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
   }
   std::string clrver;
-  if (file->LookupClrVersion(clrver, ec) && !clrver.empty()) {
+  if (file.LookupClrVersion(clrver, ec) && !clrver.empty()) {
     tables.Append(L"CLR Details:", bela::ToWide(clrver));
   }
   tables.Append(L"Characteristics:");
   tables.Append(L"Depends:");
 
   auto y = 80 + 30 * tables.ats.size();
-  auto charsv = caelum::Characteristics(file->Fh().Characteristics, dllcharacteristics);
+  auto charsv = caelum::Characteristics(file.Fh().Characteristics, dllcharacteristics);
   // depends lab append
   std::wstring depends;
   for (auto &im : ft.imports) {
