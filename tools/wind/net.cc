@@ -3,7 +3,6 @@
 #include <bela/env.hpp>
 #include <bela/path.hpp>
 #include <bela/strip.hpp>
-#include <bela/strcat.hpp>
 #include <bela/str_replace.hpp>
 #include <bela/hash.hpp>
 #include <schannel.h>

@@ -1,6 +1,5 @@
 ///
 #include <bela/picker.hpp>
-#include <bela/strcat.hpp>
 #include <bela/terminal.hpp>
 #include <shellapi.h>
 #include <placement.hpp>

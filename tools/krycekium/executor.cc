@@ -1,7 +1,6 @@
 // executor.cc
 #include "krycekium.hpp"
 #include "executor.hpp"
-#include <bela/strcat.hpp>
 #include <bela/picker.hpp>
 #include <windowsx.h>
 #include <CommCtrl.h>

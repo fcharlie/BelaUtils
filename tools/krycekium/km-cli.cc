@@ -7,7 +7,7 @@
 #include <windows.h>
 #endif
 #include "kmutils.hpp"
-#include <bela/strcat.hpp>
+#include <bela/base.hpp>
 #include <Msi.h>
 
 

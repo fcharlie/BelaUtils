@@ -2,7 +2,6 @@
 #include "caelum.hpp"
 #include "window.hpp"
 #include <bela/picker.hpp>
-#include <bela/strcat.hpp>
 #include <CommCtrl.h>
 #include "pe.hpp"
 

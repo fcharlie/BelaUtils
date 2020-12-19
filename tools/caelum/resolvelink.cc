@@ -3,7 +3,6 @@
 #include <bela/path.hpp>
 #include <bela/endian.hpp>
 #include <bela/mapview.hpp>
-#include <bela/strcat.hpp>
 #include "shl.hpp"
 
 namespace caelum {
@@ -27,14 +26,14 @@ public:
     if (size_ < sizeof(shl::shell_link_t)) {
       return false;
     }
-    auto dwSize = bela::readle<uint32_t>(data_);
+    auto dwSize = bela::cast_fromle<uint32_t>(data_);
     if (dwSize != 0x0000004C) {
       return false;
     }
     if (memcmp(data_ + 4, shuuid, std::size(shuuid)) != 0) {
       return false;
     }
-    linkflags_ = bela::readle<uint32_t>(data_ + 20);
+    linkflags_ = bela::cast_fromle<uint32_t>(data_ + 20);
     IsUnicode = (linkflags_ & shl::IsUnicode) != 0;
     return true;
   }
@@ -63,7 +62,7 @@ public:
     // default code page, or a Unicode string with a length specified by the
     // CountCharacters field. This string MUST NOT be NULL-terminated.
 
-    auto len = bela::readle<uint16_t>(data_ + pos); /// Ch
+    auto len = bela::cast_fromle<uint16_t>(data_ + pos); /// Ch
     if (IsUnicode) {
       sdlen = len * 2 + 2;
       if (sdlen + pos >= size_) {
@@ -73,7 +72,7 @@ public:
       sd.clear();
       for (size_t i = 0; i < len; i++) {
         // Winodws UTF16LE
-        sd.push_back(bela::swaple(p[i]));
+        sd.push_back(bela::fromle(p[i]));
       }
       return true;
     }
@@ -107,7 +106,7 @@ public:
       if (*it == 0) {
         return true;
       }
-      su.push_back(bela::swaple(*it));
+      su.push_back(bela::fromle(*it));
     }
     return false;
   }
@@ -154,7 +153,7 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code
     if (shm.size() <= offset + 2) {
       return std::make_optional(std::wstring(sv));
     }
-    auto l = bela::readle<uint16_t>(shm.data() + offset);
+    auto l = bela::cast_fromle<uint16_t>(shm.data() + offset);
     if (l + 2 + offset >= shm.size()) {
       return std::make_optional(std::wstring(sv));
     }
@@ -167,24 +166,24 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code
     if (li == nullptr) {
       return std::make_optional(std::wstring(sv));
     }
-    auto liflag = bela::swaple(li->dwFlags);
+    auto liflag = bela::fromle(li->dwFlags);
     if ((liflag & shl::VolumeIDAndLocalBasePath) != 0) {
       bool isunicode;
       size_t pos;
       std::wstring target;
-      if (bela::swaple(li->cbHeaderSize) < 0x00000024) {
+      if (bela::fromle(li->cbHeaderSize) < 0x00000024) {
         isunicode = false;
-        pos = offset + bela::swaple(li->cbLocalBasePathOffset);
+        pos = offset + bela::fromle(li->cbLocalBasePathOffset);
       } else {
         isunicode = true;
-        pos = offset + bela::swaple(li->cbLocalBasePathUnicodeOffset);
+        pos = offset + bela::fromle(li->cbLocalBasePathUnicodeOffset);
       }
       if (!shm.stringvalue(pos, isunicode, target)) {
         return std::make_optional(std::wstring(sv));
       }
       return std::make_optional(target);
     }
-    offset += bela::swaple(li->cbSize);
+    offset += bela::fromle(li->cbSize);
   }
 
   std::wstring placeholder;
