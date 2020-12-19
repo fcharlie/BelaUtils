@@ -86,10 +86,10 @@ inline void AssignError(nlohmann::json *j, const bela::error_code &ec) {
   }
 }
 
-bool ViewPE(bela::File &fd, size_t alen, nlohmann::json *j);
-bool ViewZIP(bela::File &fd, size_t alen, nlohmann::json *j);
-bool ViewELF(bela::File &fd, size_t alen, nlohmann::json *j);
-bool ViewMachO(bela::File &fd, size_t alen, nlohmann::json *j);
+bool AnalysisPE(bela::File &fd, size_t alen, nlohmann::json *j);
+bool AnalysisZIP(bela::File &fd, size_t alen, nlohmann::json *j);
+bool AnalysisELF(bela::File &fd, size_t alen, nlohmann::json *j);
+bool AnalysisMachO(bela::File &fd, size_t alen, nlohmann::json *j);
 
 } // namespace bona
 

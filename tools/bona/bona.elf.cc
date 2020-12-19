@@ -2,7 +2,7 @@
 #include "bona.hpp"
 
 namespace bona {
-bool ViewELF(bela::File &fd, size_t alen, nlohmann::json *j) {
+bool AnalysisELF(bela::File &fd, size_t alen, nlohmann::json *j) {
 
   //
   return true;

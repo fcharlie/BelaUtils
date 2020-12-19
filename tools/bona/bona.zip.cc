@@ -3,7 +3,7 @@
 #include <hazel/zip.hpp>
 
 namespace bona {
-bool ViewZIP(bela::File &fd, size_t alen, nlohmann::json *j) {
+bool AnalysisZIP(bela::File &fd, size_t alen, nlohmann::json *j) {
   hazel::zip::Reader r;
   bela::error_code ec;
   if (!r.OpenReader(fd.FD(), bela::SizeUnInitialized, ec)) {

@@ -6,10 +6,10 @@
 namespace bona {
 bool IsDebugMode = false;
 
-bool ViewFile(std::wstring_view file, nlohmann::json *j) {
+bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   hazel::fs::FileReparsePoint frp;
   bela::error_code ec;
-  std::wstring realPath(file);
+  std::wstring realPath = bela::PathAbsolute(file);
   bool areRsp = false;
   if (areRsp = hazel::fs::LookupReparsePoint(file, frp, ec); areRsp) {
     if (auto it = frp.attributes.find(L"Target"); it != frp.attributes.end()) {
@@ -40,16 +40,16 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
     }
     auto append = bela::finally([&]() { j->push_back(std::move(j2)); });
     if (hr.LooksLikeZIP()) {
-      return ViewZIP(fd, hr.align_length(), &j2);
+      return AnalysisZIP(fd, hr.align_length(), &j2);
     }
     if (hr.LooksLikePE()) {
-      return ViewPE(fd, hr.align_length(), &j2);
+      return AnalysisPE(fd, hr.align_length(), &j2);
     }
     if (hr.LooksLikeELF()) {
-      return ViewELF(fd, hr.align_length(), &j2);
+      return AnalysisELF(fd, hr.align_length(), &j2);
     }
     if (hr.LooksLikeMachO()) {
-      return ViewMachO(fd, hr.align_length(), &j2);
+      return AnalysisMachO(fd, hr.align_length(), &j2);
     }
     for (const auto &[k, v] : hr.values()) {
       auto nk = bela::ToNarrow(bela::AsciiStrToLower(k));
@@ -95,16 +95,16 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
     }
   }
   if (hr.LooksLikeZIP()) {
-    return ViewZIP(fd, alen, nullptr);
+    return AnalysisZIP(fd, alen, nullptr);
   }
   if (hr.LooksLikePE()) {
-    return ViewPE(fd, alen, nullptr);
+    return AnalysisPE(fd, alen, nullptr);
   }
   if (hr.LooksLikeELF()) {
-    return ViewELF(fd, alen, nullptr);
+    return AnalysisELF(fd, alen, nullptr);
   }
   if (hr.LooksLikeMachO()) {
-    return ViewMachO(fd, alen, nullptr);
+    return AnalysisMachO(fd, alen, nullptr);
   }
   // https://en.cppreference.com/w/cpp/utility/variant/visit
   for (const auto &[k, v] : hr.values()) {
@@ -150,8 +150,31 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
 
 struct options {
   std::vector<std::wstring_view> files;
-  bool toJSON{false};
+  int AnalysisResultToJson();
+  int AnalysisResultToText();
+  bool formatToJson{false};
 };
+
+int options::AnalysisResultToJson() {
+  nlohmann::json j;
+  for (const auto file : files) {
+    bona::AnalysisFile(file, &j);
+  }
+  try {
+    bela::terminal::WriteAuto(stdout, j.dump(4));
+    /* code */
+  } catch (const std::exception &e) {
+    bela::FPrintF(stderr, L"dump to json: %s\n", e.what());
+    return 1;
+  }
+  return 0;
+}
+int options::AnalysisResultToText() {
+  for (const auto file : files) {
+    bona::AnalysisFile(file, nullptr);
+  }
+  return 0;
+}
 
 bool ParseArgv(int argc, wchar_t **argv, options &opt) {
   bela::ParseArgv pa(argc, argv);
@@ -172,12 +195,11 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
           bona::IsDebugMode = true;
           break;
         case 'J':
-          opt.toJSON = true;
+          opt.formatToJson = true;
           break;
         default:
           break;
         }
-
         return true;
       },
       ec);
@@ -194,9 +216,9 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
 }
 
 int wmain(int argc, wchar_t **argv) {
-  //
-  for (int i = 1; i < argc; i++) {
-    bona::ViewFile(argv[i], nullptr);
+  options opt;
+  if (!ParseArgv(argc, argv, opt)) {
+    return 1;
   }
-  return 0;
+  return opt.formatToJson ? opt.AnalysisResultToJson() : opt.AnalysisResultToText();
 }

@@ -2,7 +2,7 @@
 #include "bona.hpp"
 
 namespace bona {
-bool ViewPE(bela::File &fd, size_t alen, nlohmann::json *j) {
+bool AnalysisPE(bela::File &fd, size_t alen, nlohmann::json *j) {
   bela::pe::File file;
   bela::error_code ec;
   if (!file.NewFile(fd.FD(), bela::SizeUnInitialized, ec)) {
