@@ -2,7 +2,7 @@
 #include "belaview.hpp"
 
 namespace belaview {
-bool ViewMachO(bela::File &fd, nlohmann::json *j) {
+bool ViewMachO(bela::File &fd, size_t alen, nlohmann::json *j) {
 
   //
   return true;

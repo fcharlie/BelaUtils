@@ -1,8 +1,11 @@
 ///
 #include "belaview.hpp"
 #include <hazel/fs.hpp>
+#include <bela/parseargv.hpp>
 
 namespace belaview {
+bool IsDebugMode = false;
+
 bool ViewFile(std::wstring_view file, nlohmann::json *j) {
   hazel::fs::FileReparsePoint frp;
   bela::error_code ec;
@@ -15,13 +18,13 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
   }
   bela::File fd;
   if (!fd.Open(realPath, ec)) {
-    RecordErrorCode(j, file, ec);
+    AppenError(j, file, ec);
     bela::FPrintF(stderr, L"Open file %s error: %s\n", file, ec.message);
     return false;
   }
   hazel::hazel_result hr;
   if (!hazel::LookupFile(fd, hr, ec)) {
-    RecordErrorCode(j, file, ec);
+    AppenError(j, file, ec);
     bela::FPrintF(stderr, L"Lookup file %s error: %s\n", file, ec.message);
     return false;
   }
@@ -34,17 +37,18 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
         j2[bela::ToNarrow(k)] = bela::ToNarrow(v);
       }
     }
+    auto append = bela::finally([&]() { j->push_back(std::move(j2)); });
     if (hr.LooksLikeZIP()) {
-      return ViewZIP(fd, &j2);
+      return ViewZIP(fd, hr.align_length(), &j2);
     }
     if (hr.LooksLikePE()) {
-      return ViewPE(fd, &j2);
+      return ViewPE(fd, hr.align_length(), &j2);
     }
     if (hr.LooksLikeELF()) {
-      return ViewELF(fd, &j2);
+      return ViewELF(fd, hr.align_length(), &j2);
     }
     if (hr.LooksLikeMachO()) {
-      return ViewMachO(fd, &j2);
+      return ViewMachO(fd, hr.align_length(), &j2);
     }
     for (const auto &[k, v] : hr.values()) {
       std::visit(hazel::overloaded{
@@ -69,17 +73,16 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
                  },
                  v);
     }
-    j->push_back(std::move(j2));
     return true;
   }
   std::wstring space;
-  auto len = hr.align_length();
+  auto alen = hr.align_length();
   if (areRsp) {
     for (const auto &[k, v] : frp.attributes) {
-      len = (std::max)(len, k.size());
+      alen = (std::max)(alen, k.size());
     }
   }
-  space.resize(len + 2, ' ');
+  space.resize(alen + 2, ' ');
   std::wstring_view spaceview(space);
   constexpr const std::wstring_view desc = L"Description";
   bela::FPrintF(stdout, L"Description:%s%s\n", spaceview.substr(0, spaceview.size() - 11 - 1), hr.description());
@@ -90,16 +93,16 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
     }
   }
   if (hr.LooksLikeZIP()) {
-    return ViewZIP(fd, nullptr);
+    return ViewZIP(fd, alen, nullptr);
   }
   if (hr.LooksLikePE()) {
-    return ViewPE(fd, nullptr);
+    return ViewPE(fd, alen, nullptr);
   }
   if (hr.LooksLikeELF()) {
-    return ViewELF(fd, nullptr);
+    return ViewELF(fd, alen, nullptr);
   }
   if (hr.LooksLikeMachO()) {
-    return ViewMachO(fd, nullptr);
+    return ViewMachO(fd, alen, nullptr);
   }
   // https://en.cppreference.com/w/cpp/utility/variant/visit
   for (const auto &[k, v] : hr.values()) {
@@ -140,7 +143,35 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
   }
   return true;
 }
+
 } // namespace belaview
+
+struct options {
+  std::vector<std::wstring_view> files;
+};
+
+bool ParseArgv(int argc, wchar_t **argv, options &opt) {
+  bela::ParseArgv pa(argc, argv);
+  pa.Add(L"help", bela::no_argument, 'h')
+      .Add(L"version", bela::no_argument, 'v')
+      .Add(L"verbose", bela::no_argument, 'V')
+      .Add(L"json", bela::no_argument, 'J');
+  bela::error_code ec;
+  auto result = pa.Execute(
+      [&](int val, const wchar_t *oa, const wchar_t *raw) {
+        switch (val) {
+        case 'h':
+          break;
+        case 'v':
+          break;
+        }
+
+        return true;
+      },
+      ec);
+
+  return true;
+}
 
 int wmain(int argc, wchar_t **argv) {
   //
