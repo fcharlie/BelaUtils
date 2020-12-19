@@ -1,7 +1,7 @@
 ///
-#include "belaview.hpp"
+#include "bona.hpp"
 
-namespace belaview {
+namespace bona {
 bool ViewPE(bela::File &fd, size_t alen, nlohmann::json *j) {
   bela::pe::File file;
   bela::error_code ec;
@@ -17,4 +17,4 @@ bool ViewPE(bela::File &fd, size_t alen, nlohmann::json *j) {
   return true;
 }
 
-} // namespace belaview
+} // namespace bona

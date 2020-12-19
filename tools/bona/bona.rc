@@ -31,12 +31,12 @@ BEGIN
 BLOCK "080404b0"
 BEGIN
 VALUE "CompanyName", "Force Charlie"
-VALUE "FileDescription", "belaview - Modern file feature viewer"
+VALUE "FileDescription", "bona - Modern file feature viewer"
 VALUE "FileVersion", BELAUTILS_VERSION
-VALUE "InternalName", "belaview.exe"
+VALUE "InternalName", "bona.exe"
 VALUE "LegalCopyright", BELAUTILSUI_COPYRIGHT
-VALUE "OriginalFilename", "belaview.exe"
-VALUE "ProductName", "belaview - Modern file feature viewer"
+VALUE "OriginalFilename", "bona.exe"
+VALUE "ProductName", "bona - Modern file feature viewer"
 VALUE "ProductVersion", BELAUTILS_VERSION
 END
 END

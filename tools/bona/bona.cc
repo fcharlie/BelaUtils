@@ -1,9 +1,9 @@
 ///
-#include "belaview.hpp"
+#include "bona.hpp"
 #include <hazel/fs.hpp>
 #include <bela/parseargv.hpp>
 
-namespace belaview {
+namespace bona {
 bool IsDebugMode = false;
 
 bool ViewFile(std::wstring_view file, nlohmann::json *j) {
@@ -146,7 +146,7 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
   return true;
 }
 
-} // namespace belaview
+} // namespace bona
 
 struct options {
   std::vector<std::wstring_view> files;
@@ -169,7 +169,7 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
         case 'v':
           break;
         case 'V':
-          belaview::IsDebugMode = true;
+          bona::IsDebugMode = true;
           break;
         case 'J':
           opt.toJSON = true;
@@ -196,7 +196,7 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
 int wmain(int argc, wchar_t **argv) {
   //
   for (int i = 1; i < argc; i++) {
-    belaview::ViewFile(argv[i], nullptr);
+    bona::ViewFile(argv[i], nullptr);
   }
   return 0;
 }

@@ -1,6 +1,6 @@
 ///
-#ifndef BELAVIEW_HPP
-#define BELAVIEW_HPP
+#ifndef bona_HPP
+#define bona_HPP
 #include <bela/terminal.hpp>
 #include <bela/pe.hpp>
 #include <bela/time.hpp>
@@ -10,7 +10,7 @@
 #include <hazel/macho.hpp>
 #include <json.hpp>
 
-namespace belaview {
+namespace bona {
 extern bool IsDebugMode;
 // DbgPrint added newline
 template <typename... Args> bela::ssize_t DbgPrint(const wchar_t *fmt, const Args &...args) {
@@ -91,6 +91,6 @@ bool ViewZIP(bela::File &fd, size_t alen, nlohmann::json *j);
 bool ViewELF(bela::File &fd, size_t alen, nlohmann::json *j);
 bool ViewMachO(bela::File &fd, size_t alen, nlohmann::json *j);
 
-} // namespace belaview
+} // namespace bona
 
 #endif

@@ -1,8 +1,8 @@
 ///
-#include "belaview.hpp"
+#include "bona.hpp"
 #include <hazel/zip.hpp>
 
-namespace belaview {
+namespace bona {
 bool ViewZIP(bela::File &fd, size_t alen, nlohmann::json *j) {
   hazel::zip::Reader r;
   bela::error_code ec;
@@ -14,4 +14,4 @@ bool ViewZIP(bela::File &fd, size_t alen, nlohmann::json *j) {
   return true;
 }
 
-} // namespace belaview
+} // namespace bona

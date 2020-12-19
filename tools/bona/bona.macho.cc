@@ -1,11 +1,11 @@
 ///
-#include "belaview.hpp"
+#include "bona.hpp"
 
-namespace belaview {
+namespace bona {
 bool ViewMachO(bela::File &fd, size_t alen, nlohmann::json *j) {
 
   //
   return true;
 }
 
-} // namespace belaview
+} // namespace bona
