@@ -2,18 +2,20 @@
 #include "bona.hpp"
 #include <hazel/fs.hpp>
 #include <bela/parseargv.hpp>
+#include "resource.h"
 
 namespace bona {
 bool IsDebugMode = false;
-
+bool IsFullMode = false;
 bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
-  hazel::fs::FileReparsePoint frp;
   bela::error_code ec;
-  std::wstring realPath = bela::PathAbsolute(file);
+  auto absPath = bela::PathAbsolute(file);
+  auto realPath = absPath;
+  hazel::fs::FileReparsePoint frp;
   bool areRsp = false;
-  if (areRsp = hazel::fs::LookupReparsePoint(file, frp, ec); areRsp) {
+  if (areRsp = hazel::fs::LookupReparsePoint(absPath, frp, ec); areRsp) {
     if (auto it = frp.attributes.find(L"Target"); it != frp.attributes.end()) {
-      realPath = it->second;
+      realPath = bela::PathAbsolute(it->second);
     }
   }
   bela::File fd;
@@ -30,7 +32,7 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   }
   if (j != nullptr) {
     nlohmann::json j2;
-    j2.emplace("file", bela::ToNarrow(file));
+    j2.emplace("file", bela::ToNarrow(absPath));
     j2.emplace("description", bela::ToNarrow(hr.description()));
     j2.emplace("size", hr.size());
     if (areRsp) {
@@ -153,6 +155,7 @@ struct options {
   int AnalysisResultToJson();
   int AnalysisResultToText();
   bool formatToJson{false};
+  bool fullMode{false};
 };
 
 int options::AnalysisResultToJson() {
@@ -176,26 +179,49 @@ int options::AnalysisResultToText() {
   return 0;
 }
 
+void Usage() {
+  constexpr std::wstring_view usage = LR"(bona - Modern file feature viewer
+Usage: bona [option]... [file]...
+  -h|--help        Show usage text and quit
+  -v|--version     Show version number and quit
+  -V|--verbose     Make the operation more talkative
+  -F|--full        Full mode, view more detailed information of the file.
+  -J|--json        Format and output file information into JSON.
+
+)";
+  bela::terminal::WriteAuto(stderr, usage);
+}
+
+void Version() {
+  bela::FPrintF(stdout, L"bona %s\nRelease:    %s\nCommit:     %s\nBuild Time: %s\n", BELAUTILS_VERSION,
+                BELAUTILS_REFNAME, BELAUTILS_REVISION, BELAUTILS_BUILD_TIME);
+}
+
 bool ParseArgv(int argc, wchar_t **argv, options &opt) {
   bela::ParseArgv pa(argc, argv);
   pa.Add(L"help", bela::no_argument, 'h')
       .Add(L"version", bela::no_argument, 'v')
       .Add(L"verbose", bela::no_argument, 'V')
       .Add(L"json", bela::no_argument, 'J')
-      .Add(L"full", bela::no_argument, 'F'); // Detailed mode
+      .Add(L"full", bela::no_argument, 'F'); // Full mode
   bela::error_code ec;
   auto result = pa.Execute(
       [&](int val, const wchar_t *oa, const wchar_t *raw) {
         switch (val) {
         case 'h':
-          break;
+          Usage();
+          exit(0);
         case 'v':
-          break;
+          Version();
+          exit(0);
         case 'V':
           bona::IsDebugMode = true;
           break;
         case 'J':
           opt.formatToJson = true;
+          break;
+        case 'F':
+          bona::IsFullMode = true;
           break;
         default:
           break;
