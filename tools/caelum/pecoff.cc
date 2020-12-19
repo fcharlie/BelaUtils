@@ -25,6 +25,17 @@ inline std::wstring flatvector(const std::vector<std::wstring> &v, std::wstring_
   return s;
 }
 
+inline void BindFileVersion(const bela::pe::Version &ver, caelum::AttributesTables &at) {
+  if (!ver.FileDescription.empty() && ver.FileDescription.size() < 50) {
+    at.Append(L"FileDescription:", ver.FileDescription);
+    return;
+  }
+  if (!ver.ProductName.empty() && ver.ProductName.size() < 50) {
+    at.Append(L"ProductName:", ver.ProductName);
+    return;
+  }
+}
+
 bool Window::InquisitivePE() {
   auto path = wUrl.Content();
   bela::error_code ec;
@@ -39,9 +50,8 @@ bool Window::InquisitivePE() {
     bela::BelaMessageBox(hWnd, L"Inquisitive PE ", ec.message.data(), nullptr, bela::mbs_t::FATAL);
     return false;
   }
-  auto vi = bela::pe::Lookup(path, ec);
-  if (vi && !vi->ProductName.empty()) {
-    tables.Append(L"Description:", vi->FileDescription);
+  if (auto vi = bela::pe::Lookup(path, ec); vi) {
+    BindFileVersion(*vi, tables);
   }
   tables.Append(L"Machine:", caelum::Machine(static_cast<uint32_t>(file.Machine())));
   tables.Append(L"Subsystem:", caelum::Subsystem(static_cast<uint32_t>(file.Subsystem())));
