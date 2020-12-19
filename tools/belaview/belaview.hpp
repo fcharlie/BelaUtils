@@ -13,7 +13,7 @@
 namespace belaview {
 extern bool IsDebugMode;
 // DbgPrint added newline
-template <typename... Args> bela::ssize_t DbgPrint(const wchar_t *fmt, const Args &... args) {
+template <typename... Args> bela::ssize_t DbgPrint(const wchar_t *fmt, const Args &...args) {
   if (!IsDebugMode) {
     return 0;
   }
@@ -38,7 +38,7 @@ inline bela::ssize_t DbgPrint(const wchar_t *fmt) {
   return bela::terminal::WriteAuto(stderr, bela::StringCat(L"\x1b[33m* ", msg, L"\x1b[0m\n"));
 }
 
-template <typename... Args> bela::ssize_t DbgPrintEx(char32_t prefix, const wchar_t *fmt, const Args &... args) {
+template <typename... Args> bela::ssize_t DbgPrintEx(char32_t prefix, const wchar_t *fmt, const Args &...args) {
   if (!IsDebugMode) {
     return 0;
   }
@@ -67,9 +67,9 @@ inline void AppenError(nlohmann::json *j, std::wstring_view file, const bela::er
   }
   try {
     nlohmann::json j2;
-    j2["code"] = ec.code;
-    j2["file"] = bela::ToNarrow(file);
-    j2["message"] = bela::ToNarrow(ec.message);
+    j2.emplace("code", ec.code);
+    j2.emplace("file", bela::ToNarrow(file));
+    j2.emplace("message", bela::ToNarrow(ec.message));
     j->push_back(std::move(j2));
   } catch (const std::exception &) {
   }
@@ -80,8 +80,8 @@ inline void AssignError(nlohmann::json *j, const bela::error_code &ec) {
     return;
   }
   try {
-    (*j)["code"] = ec.code;
-    (*j)["message"] = bela::ToNarrow(ec.message);
+    j->emplace("code", ec.code);
+    j->emplace("message", bela::ToNarrow(ec.message));
   } catch (const std::exception &) {
   }
 }

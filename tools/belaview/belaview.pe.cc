@@ -11,9 +11,7 @@ bool ViewPE(bela::File &fd, size_t alen, nlohmann::json *j) {
     return false;
   }
   if (j != nullptr) {
-    auto &jr = *j;
-    jr["Subsystem"] = static_cast<int>(file.Subsystem());
-
+    //
     return true;
   }
   return true;

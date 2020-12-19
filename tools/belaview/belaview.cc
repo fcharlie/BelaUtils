@@ -30,11 +30,12 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
   }
   if (j != nullptr) {
     nlohmann::json j2;
-    j2["Description"] = bela::ToNarrow(hr.description());
-    j2["Size"] = hr.size();
+    j2.emplace("file", bela::ToNarrow(file));
+    j2.emplace("description", bela::ToNarrow(hr.description()));
+    j2.emplace("size", hr.size());
     if (areRsp) {
       for (const auto &[k, v] : frp.attributes) {
-        j2[bela::ToNarrow(k)] = bela::ToNarrow(v);
+        j2.emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), bela::ToNarrow(v));
       }
     }
     auto append = bela::finally([&]() { j->push_back(std::move(j2)); });
@@ -51,25 +52,26 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
       return ViewMachO(fd, hr.align_length(), &j2);
     }
     for (const auto &[k, v] : hr.values()) {
+      auto nk = bela::ToNarrow(bela::AsciiStrToLower(k));
       std::visit(hazel::overloaded{
                      [](auto arg) {}, // ignore
-                     [&](const std::wstring &sv) { j2[bela::ToNarrow(k)] = bela::ToNarrow(sv); },
-                     [&](const std::string &sv) { j2[bela::ToNarrow(k)] = sv; },
-                     [&](int16_t i) { j2[bela::ToNarrow(k)] = i; },
-                     [&](int32_t i) { j2[bela::ToNarrow(k)] = i; },
-                     [&](int64_t i) { j2[bela::ToNarrow(k)] = i; },
-                     [&](uint16_t i) { j2[bela::ToNarrow(k)] = i; },
-                     [&](uint32_t i) { j2[bela::ToNarrow(k)] = i; },
-                     [&](uint64_t i) { j2[bela::ToNarrow(k)] = i; },
-                     [&](bela::Time t) { j2[bela::ToNarrow(k)] = bela::ToNarrow(bela::FormatTime(t)); },
+                     [&](const std::wstring &sv) { j2.emplace(nk, bela::ToNarrow(sv)); },
+                     [&](const std::string &sv) { j2.emplace(nk, sv); },
+                     [&](int16_t i) { j2.emplace(nk, i); },
+                     [&](int32_t i) { j2.emplace(nk, i); },
+                     [&](int64_t i) { j2.emplace(nk, i); },
+                     [&](uint16_t i) { j2.emplace(nk, i); },
+                     [&](uint32_t i) { j2.emplace(nk, i); },
+                     [&](uint64_t i) { j2.emplace(nk, i); },
+                     [&](bela::Time t) { j2.emplace(nk, bela::ToNarrow(bela::FormatTime(t))); },
                      [&](const std::vector<std::wstring> &v) {
                        auto av = nlohmann::json::array();
                        for (const auto s : v) {
                          av.emplace_back(bela::ToNarrow(s));
                        }
-                       j2[bela::ToNarrow(k)] = std::move(av);
+                       j2.emplace(nk, std::move(av));
                      },
-                     [&](const std::vector<std::string> &v) { j2[bela::ToNarrow(k)] = nlohmann::json::array({v}); },
+                     [&](const std::vector<std::string> &v) { j2.emplace(nk, v); },
                  },
                  v);
     }
@@ -148,6 +150,7 @@ bool ViewFile(std::wstring_view file, nlohmann::json *j) {
 
 struct options {
   std::vector<std::wstring_view> files;
+  bool toJSON{false};
 };
 
 bool ParseArgv(int argc, wchar_t **argv, options &opt) {
@@ -155,7 +158,8 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
   pa.Add(L"help", bela::no_argument, 'h')
       .Add(L"version", bela::no_argument, 'v')
       .Add(L"verbose", bela::no_argument, 'V')
-      .Add(L"json", bela::no_argument, 'J');
+      .Add(L"json", bela::no_argument, 'J')
+      .Add(L"full", bela::no_argument, 'F'); // Detailed mode
   bela::error_code ec;
   auto result = pa.Execute(
       [&](int val, const wchar_t *oa, const wchar_t *raw) {
@@ -164,12 +168,28 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
           break;
         case 'v':
           break;
+        case 'V':
+          belaview::IsDebugMode = true;
+          break;
+        case 'J':
+          opt.toJSON = true;
+          break;
+        default:
+          break;
         }
 
         return true;
       },
       ec);
-
+  if (!result) {
+    bela::FPrintF(stderr, L"ParseArgv: \x1b[31m%s\x1b[0m\n", ec.message);
+    return false;
+  }
+  opt.files = pa.UnresolvedArgs();
+  if (opt.files.empty()) {
+    bela::FPrintF(stderr, L"bv: missing input file\n");
+    return false;
+  }
   return true;
 }
 
