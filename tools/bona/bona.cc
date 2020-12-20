@@ -47,6 +47,7 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   w->Write(L"Description", hr.description());
   w->Write(L"Path", absPath);
   w->Write(L"Size", hr.size());
+  w->Write(L"MIME", hazel::LookupMIME(hr.type()));
   if (areRsp) {
     for (const auto &[k, v] : frp.attributes) {
       w->Write(k, v);
@@ -101,13 +102,13 @@ int options::AnalysisResultToJson() {
 int options::AnalysisResultToText() {
   for (const auto file : files) {
     bona::AnalysisFile(file, nullptr);
+    bela::FPrintF(stdout, L"\n");
   }
-  bela::FPrintF(stdout, L"\n");
   return 0;
 }
 
 void Usage() {
-  constexpr std::wstring_view usage = LR"(bona - Modern file feature viewer
+  constexpr std::wstring_view usage = LR"(bona - Modern and interesting file format viewer
 Usage: bona [option]... [file]...
   -h|--help        Show usage text and quit
   -v|--version     Show version number and quit
@@ -120,8 +121,9 @@ Usage: bona [option]... [file]...
 }
 
 void Version() {
-  bela::FPrintF(stdout, L"bona %s\nRelease:    %s\nCommit:     %s\nBuild Time: %s\n", BELAUTILS_VERSION,
-                BELAUTILS_REFNAME, BELAUTILS_REVISION, BELAUTILS_BUILD_TIME);
+  bela::FPrintF(
+      stdout, L"bona %s - Modern and interesting file format viewer\nRelease:    %s\nCommit:     %s\nBuild Time: %s\n",
+      BELAUTILS_VERSION, BELAUTILS_REFNAME, BELAUTILS_REVISION, BELAUTILS_BUILD_TIME);
 }
 
 bool ParseArgv(int argc, wchar_t **argv, options &opt) {
