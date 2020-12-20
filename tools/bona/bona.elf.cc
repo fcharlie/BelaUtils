@@ -1,8 +1,9 @@
 ///
 #include "bona.hpp"
+#include "writer.hpp"
 
 namespace bona {
-bool AnalysisELF(bela::File &fd, size_t alen, nlohmann::json *j) {
+bool AnalysisELF(bela::File &fd, Writer &w) {
 
   //
   return true;

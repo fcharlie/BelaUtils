@@ -2,12 +2,6 @@
 #ifndef bona_HPP
 #define bona_HPP
 #include <bela/terminal.hpp>
-#include <bela/pe.hpp>
-#include <bela/time.hpp>
-#include <bela/datetime.hpp>
-#include <hazel/hazel.hpp>
-#include <hazel/elf.hpp>
-#include <hazel/macho.hpp>
 #include <json.hpp>
 
 namespace bona {
@@ -75,23 +69,6 @@ inline void AppenError(nlohmann::json *j, std::wstring_view file, const bela::er
   } catch (const std::exception &) {
   }
 }
-
-inline void AssignError(nlohmann::json *j, const bela::error_code &ec) {
-  if (j = nullptr) {
-    return;
-  }
-  try {
-    j->emplace("code", ec.code);
-    j->emplace("message", bela::ToNarrow(ec.message));
-  } catch (const std::exception &) {
-  }
-}
-
-bool AnalysisPE(bela::File &fd, size_t alen, nlohmann::json *j);
-bool AnalysisZIP(bela::File &fd, size_t alen, nlohmann::json *j);
-bool AnalysisELF(bela::File &fd, size_t alen, nlohmann::json *j);
-bool AnalysisMachO(bela::File &fd, size_t alen, nlohmann::json *j);
-
 } // namespace bona
 
 #endif

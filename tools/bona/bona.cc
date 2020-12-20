@@ -1,7 +1,9 @@
 ///
-#include "bona.hpp"
-#include <hazel/fs.hpp>
 #include <bela/parseargv.hpp>
+#include <bela/path.hpp>
+#include <hazel/fs.hpp>
+#include "bona.hpp"
+#include "writer.hpp"
 #include "resource.h"
 
 namespace bona {
@@ -30,121 +32,43 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
     bela::FPrintF(stderr, L"Lookup file %s error: %s\n", file, ec.message);
     return false;
   }
-  if (j != nullptr) {
-    nlohmann::json j2;
-    j2.emplace("file", bela::ToNarrow(absPath));
-    j2.emplace("description", bela::ToNarrow(hr.description()));
-    j2.emplace("size", hr.size());
-    if (areRsp) {
-      for (const auto &[k, v] : frp.attributes) {
-        j2.emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), bela::ToNarrow(v));
-      }
-    }
-    auto append = bela::finally([&]() { j->push_back(std::move(j2)); });
-    if (hr.LooksLikeZIP()) {
-      return AnalysisZIP(fd, hr.align_length(), &j2);
-    }
-    if (hr.LooksLikePE()) {
-      return AnalysisPE(fd, hr.align_length(), &j2);
-    }
-    if (hr.LooksLikeELF()) {
-      return AnalysisELF(fd, hr.align_length(), &j2);
-    }
-    if (hr.LooksLikeMachO()) {
-      return AnalysisMachO(fd, hr.align_length(), &j2);
-    }
-    for (const auto &[k, v] : hr.values()) {
-      auto nk = bela::ToNarrow(bela::AsciiStrToLower(k));
-      std::visit(hazel::overloaded{
-                     [](auto arg) {}, // ignore
-                     [&](const std::wstring &sv) { j2.emplace(nk, bela::ToNarrow(sv)); },
-                     [&](const std::string &sv) { j2.emplace(nk, sv); },
-                     [&](int16_t i) { j2.emplace(nk, i); },
-                     [&](int32_t i) { j2.emplace(nk, i); },
-                     [&](int64_t i) { j2.emplace(nk, i); },
-                     [&](uint16_t i) { j2.emplace(nk, i); },
-                     [&](uint32_t i) { j2.emplace(nk, i); },
-                     [&](uint64_t i) { j2.emplace(nk, i); },
-                     [&](bela::Time t) { j2.emplace(nk, bela::ToNarrow(bela::FormatTime(t))); },
-                     [&](const std::vector<std::wstring> &v) {
-                       auto av = nlohmann::json::array();
-                       for (const auto s : v) {
-                         av.emplace_back(bela::ToNarrow(s));
-                       }
-                       j2.emplace(nk, std::move(av));
-                     },
-                     [&](const std::vector<std::string> &v) { j2.emplace(nk, v); },
-                 },
-                 v);
-    }
-    return true;
-  }
-  std::wstring space;
   auto alen = hr.align_length();
   if (areRsp) {
     for (const auto &[k, v] : frp.attributes) {
       alen = (std::max)(alen, k.size());
     }
   }
-  space.resize(alen + 2, ' ');
-  std::wstring_view spaceview(space);
-  constexpr const std::wstring_view desc = L"Description";
-  bela::FPrintF(stdout, L"Description:%s%s\n", spaceview.substr(0, spaceview.size() - 11 - 1), hr.description());
-  bela::FPrintF(stdout, L"Size:%s%d\n", spaceview.substr(0, spaceview.size() - 4 - 1), hr.size());
+  std::shared_ptr<Writer> w;
+  if (j != nullptr) {
+    w = std::make_shared<JsonWriter>(j);
+  } else {
+    w = std::make_shared<TextWriter>(alen);
+  }
+  w->Write(L"Description", hr.description());
+  w->Write(L"Path", absPath);
+  w->Write(L"Size", hr.size());
   if (areRsp) {
     for (const auto &[k, v] : frp.attributes) {
-      bela::FPrintF(stdout, L"%s:%s%s\n", k, spaceview.substr(0, spaceview.size() - k.size() - 1), v);
+      w->Write(k, v);
     }
   }
-  if (hr.LooksLikeZIP()) {
-    return AnalysisZIP(fd, alen, nullptr);
+
+  for (const auto &[k, v] : hr.values()) {
+    w->WriteVariant(k, v);
   }
   if (hr.LooksLikePE()) {
-    return AnalysisPE(fd, alen, nullptr);
+    return AnalysisPE(fd, *w);
   }
   if (hr.LooksLikeELF()) {
-    return AnalysisELF(fd, alen, nullptr);
+    return AnalysisELF(fd, *w);
   }
   if (hr.LooksLikeMachO()) {
-    return AnalysisMachO(fd, alen, nullptr);
+    return AnalysisMachO(fd, *w);
   }
-  // https://en.cppreference.com/w/cpp/utility/variant/visit
-  for (const auto &[k, v] : hr.values()) {
-    bela::FPrintF(stderr, L"%v:%s", k, spaceview.substr(0, spaceview.size() - k.size() - 1));
-    std::visit(hazel::overloaded{
-                   [](auto arg) {}, // ignore
-                   [](const std::wstring &sv) { bela::FPrintF(stdout, L"%s\n", sv); },
-                   [](const std::string &sv) { bela::FPrintF(stdout, L"%s\n", sv); },
-                   [](int16_t i) { bela::FPrintF(stdout, L"%d\n", i); },
-                   [](int32_t i) { bela::FPrintF(stdout, L"%d\n", i); },
-                   [](int64_t i) { bela::FPrintF(stdout, L"%d\n", i); },
-                   [](uint16_t i) { bela::FPrintF(stdout, L"%d\n", i); },
-                   [](uint32_t i) { bela::FPrintF(stdout, L"%d\n", i); },
-                   [](uint64_t i) { bela::FPrintF(stdout, L"%d\n", i); },
-                   [](bela::Time t) { bela::FPrintF(stdout, L"%s\n", bela::FormatTime(t)); },
-                   [spaceview](const std::vector<std::wstring> &v) {
-                     if (v.empty()) {
-                       bela::FPrintF(stdout, L"\n");
-                       return;
-                     }
-                     bela::FPrintF(stdout, L"%s\n", v[0]);
-                     for (size_t i = 1; i < v.size(); i++) {
-                       bela::FPrintF(stdout, L"%s%s\n", spaceview, v[0]);
-                     }
-                   },
-                   [spaceview](const std::vector<std::string> &v) {
-                     if (v.empty()) {
-                       bela::FPrintF(stdout, L"\n");
-                       return;
-                     }
-                     bela::FPrintF(stdout, L"%s\n", v[0]);
-                     for (size_t i = 1; i < v.size(); i++) {
-                       bela::FPrintF(stdout, L"%s%s\n", spaceview, v[0]);
-                     }
-                   },
-               },
-               v);
+  if (hr.LooksLikeZIP()) {
+    return AnalysisZIP(fd, *w);
   }
+
   return true;
 }
 
@@ -161,7 +85,9 @@ struct options {
 int options::AnalysisResultToJson() {
   nlohmann::json j;
   for (const auto file : files) {
-    bona::AnalysisFile(file, &j);
+    nlohmann::json cj;
+    bona::AnalysisFile(file, &cj);
+    j.emplace_back(std::move(cj));
   }
   try {
     bela::terminal::WriteAuto(stdout, j.dump(4));
@@ -176,6 +102,7 @@ int options::AnalysisResultToText() {
   for (const auto file : files) {
     bona::AnalysisFile(file, nullptr);
   }
+  bela::FPrintF(stdout, L"\n");
   return 0;
 }
 

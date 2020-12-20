@@ -1,6 +1,7 @@
 ///
-#include "bona.hpp"
 #include <hazel/zip.hpp>
+#include "bona.hpp"
+#include "writer.hpp"
 
 #define UTF8_ACCEPT 0
 #define UTF8_REJECT 1
@@ -90,11 +91,11 @@ bool validate_utf8(const char *c, size_t len) {
 }
 // TODO Filename encoding convert
 
-bool AnalysisZIP(bela::File &fd, size_t alen, nlohmann::json *j) {
+bool AnalysisZIP(bela::File &fd, Writer &w) {
   hazel::zip::Reader r;
   bela::error_code ec;
   if (!r.OpenReader(fd.FD(), bela::SizeUnInitialized, ec)) {
-    AssignError(j, ec);
+    w.WriteError(ec);
     bela::FPrintF(stderr, L"ZIP OpenReader: %s\n", ec.message);
     return false;
   }
