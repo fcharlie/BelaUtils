@@ -98,7 +98,7 @@ bool AnalysisZIP(bela::File &fd, size_t alen, nlohmann::json *j) {
     bela::FPrintF(stderr, L"ZIP OpenReader: %s\n", ec.message);
     return false;
   }
-  switch (r.LooksLikeOffice()) {
+  switch (r.LooksLikeMsZipContainer()) {
   case hazel::zip::OfficeDocx:
     return true;
   case hazel::zip::OfficePptx:
