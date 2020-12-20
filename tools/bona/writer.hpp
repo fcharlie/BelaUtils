@@ -227,10 +227,10 @@ public:
   void Write(std::wstring_view k, const std::vector<std::string> &val) {
     std::wstring_view spaceview{space};
     if (spaceview.size() >= k.size() + 2) {
-      bela::FPrintF(stdout, L"%s:%s\n", k, spaceview.substr(0, spaceview.size() - k.size() - 1));
-      return;
+      bela::FPrintF(stdout, L"%s:%s", k, spaceview.substr(0, spaceview.size() - k.size() - 1));
+    } else {
+      bela::FPrintF(stdout, L"%s:\n%s", k, spaceview);
     }
-    bela::FPrintF(stdout, L"%s:\n%s\n", k, spaceview);
     if (val.empty()) {
       bela::FPrintF(stdout, L"[]\n");
       return;
@@ -243,10 +243,10 @@ public:
   void Write(std::wstring_view k, const std::vector<std::wstring> &val) {
     std::wstring_view spaceview{space};
     if (spaceview.size() >= k.size() + 2) {
-      bela::FPrintF(stdout, L"%s:%s\n", k, spaceview.substr(0, spaceview.size() - k.size() - 1));
-      return;
+      bela::FPrintF(stdout, L"%s:%s", k, spaceview.substr(0, spaceview.size() - k.size() - 1));
+    } else {
+      bela::FPrintF(stdout, L"%s:\n%s", k, spaceview);
     }
-    bela::FPrintF(stdout, L"%s:\n%s\n", k, spaceview);
     if (val.empty()) {
       bela::FPrintF(stdout, L"[]\n");
       return;
