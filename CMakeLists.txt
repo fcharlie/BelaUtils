@@ -121,6 +121,7 @@ include_directories("${CMAKE_BINARY_DIR}/include" ./include ./vendor/bela/includ
 add_subdirectory(vendor/blake2)
 add_subdirectory(vendor/KangarooTwelve)
 add_subdirectory(vendor/bela)
+add_subdirectory(lib/ced)
 add_subdirectory(lib/hashlib)
 add_subdirectory(lib/winutils)
 add_subdirectory(tools/bona)
