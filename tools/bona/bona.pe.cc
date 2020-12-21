@@ -163,20 +163,36 @@ inline std::wstring_view Subsystem(uint32_t index) {
 
 bool writeFuctionTableFull(const bela::pe::FunctionTable &ft, bela::pe::SymbolSearcher &sse, Writer &w) {
   if (!ft.imports.empty()) {
-    w.Write(L"Depends");
+    w.Write(L"\x1b[36mDepends\x1b[0m");
     for (const auto &d : ft.imports) {
       w.Write(L"Depends", d.first, d.second, sse);
     }
   }
   if (!ft.delayimprots.empty()) {
-    w.Write(L"Delay");
+    w.Write(L"\x1b[36mDelay\x1b[0m");
     for (const auto &d : ft.delayimprots) {
       w.Write(L"Delay", d.first, d.second, sse);
     }
   }
-  if (!ft.exports.empty()) {
-    for (const auto &fun : ft.exports) {
+  if (ft.exports.empty()) {
+    return true;
+  }
+  if (auto j = w.Raw(); j != nullptr) {
+    auto av = nlohmann::json::array();
+    for (const auto &d : ft.exports) {
+      av.push_back(nlohmann::json{{"address", d.Address},
+                                  {"forwardname", d.ForwardName},
+                                  {"hint", d.Hint},
+                                  {"name", d.Name},
+                                  {"ordinal", d.Ordinal},
+                                  {"undecoratedname", d.UndecoratedName}});
     }
+    j->emplace("export", std::move(av));
+    return true;
+  }
+  for (const auto &d : ft.exports) {
+    bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d)\x1b[0m\n", d.Ordinal, d.Address, bela::demangle(d.Name),
+                  d.Hint);
   }
   return true;
 }
@@ -186,13 +202,13 @@ bool writeFuctionTable(const bela::pe::FunctionTable &ft, Writer &w) {
   for (const auto &t : ft.imports) {
     depends.emplace_back(t.first);
   }
-  w.Write(L"Depends", depends);
+  w.Write(L"\x1b[36mDepends\x1b[0m", depends);
   if (!ft.delayimprots.empty()) {
     std::vector<std::string> delay;
     for (const auto &t : ft.delayimprots) {
       delay.emplace_back(t.first);
     }
-    w.Write(L"Delay", delay);
+    w.Write(L"\x1b[36mDelay\x1b[0m", delay);
   }
   if (!ft.exports.empty()) {
     std::vector<std::string> exports;
@@ -203,7 +219,6 @@ bool writeFuctionTable(const bela::pe::FunctionTable &ft, Writer &w) {
       w.Write(L"Exports", exports);
     }
   }
-
   return true;
 }
 
@@ -232,6 +247,22 @@ bool AnalysisPE(bela::File &fd, Writer &w) {
       writeFuctionTableFull(ft, sse, w);
     } else {
       writeFuctionTable(ft, w);
+    }
+  }
+  if (auto j = w.Raw(); j != nullptr) {
+    std::vector<bela::pe::Symbol> syms;
+    if (file.LookupSymbols(syms, ec)) {
+      auto av = nlohmann::json::array();
+      for (const auto &s : syms) {
+        av.push_back(nlohmann::json{
+            {"name", s.Name},
+            {"sectionnumber", s.SectionNumber},
+            {"storageclass", s.StorageClass},
+            {"type", s.Type},
+            {"value", s.Value},
+        });
+      }
+      j->emplace("symbol", std::move(av));
     }
   }
   return true;

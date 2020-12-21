@@ -32,6 +32,7 @@ public:
   virtual void Write(std::wstring_view name) = 0;
   virtual void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
                      bela::pe::SymbolSearcher &sse) = 0;
+  virtual nlohmann::json *Raw() = 0;
 };
 
 inline void to_json(nlohmann::json &j, const bela::pe::Function &func) {
@@ -130,6 +131,7 @@ public:
       bela::FPrintF(stderr, L"Write Functions: %s\n", e.what());
     }
   }
+  nlohmann::json *Raw() { return j; }
 
 private:
   nlohmann::json *j{nullptr};
@@ -298,7 +300,7 @@ public:
   void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
              bela::pe::SymbolSearcher &sse) {
     std::wstring_view spaceview{space};
-    bela::FPrintF(stdout, L"%s:\n", d);
+    bela::FPrintF(stdout, L"\x1b[34m%s:\x1b[0m\n", d);
     bela::error_code ec;
     for (const auto &n : funs) {
       bela::AlphaNum an(n.Index);
@@ -314,6 +316,7 @@ public:
       bela::FPrintF(stdout, L"%s%s Ordinal%d (Ordinal %d)\n", sv, an.Piece(), n.Ordinal, n.Ordinal);
     }
   }
+  nlohmann::json *Raw() { return nullptr; }
 
 private:
   std::wstring space;
