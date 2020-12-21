@@ -29,6 +29,7 @@ public:
   virtual void Write(std::wstring_view k, std::wstring_view val) = 0;
   virtual void Write(std::wstring_view k, const std::vector<std::string> &val) = 0;
   virtual void Write(std::wstring_view k, const std::vector<std::wstring> &val) = 0;
+  virtual void Write(std::wstring_view name) = 0;
   virtual void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
                      bela::pe::SymbolSearcher &sse) = 0;
 };
@@ -102,6 +103,7 @@ public:
     }
     j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), std::move(av));
   }
+  void Write(std::wstring_view /*name*/) {}
   void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
              bela::pe::SymbolSearcher &sse) {
     try {
@@ -132,10 +134,10 @@ public:
 private:
   nlohmann::json *j{nullptr};
 };
-
+constexpr size_t amlen = 12;
 class TextWriter : public Writer {
 public:
-  TextWriter(size_t al) : alen(al) { space.resize(alen + 2, ' '); }
+  TextWriter(size_t al) : alen((std::max)(al, amlen)) { space.resize(alen + 2, ' '); }
   void WriteVariant(std::wstring_view key, const bona_value_t &val) {
     std::wstring_view spaceview{space};
     bela::FPrintF(stderr, L"%v:%s", key, spaceview.substr(0, spaceview.size() - key.size() - 1));
@@ -175,13 +177,8 @@ public:
   }
   void WriteError(const bela::error_code &ec) {
     std::wstring_view spaceview{space};
-    if (spaceview.size() > 10) {
-      bela::FPrintF(stdout, L"ErrorCode:%s%d\n", spaceview.substr(0, spaceview.size() - 9 - 1), ec.code);
-      bela::FPrintF(stdout, L"Message:%s%s\n", spaceview.substr(0, spaceview.size() - 7 - 1), ec.message);
-      return;
-    }
-    bela::FPrintF(stdout, L"ErrorCode: %d\n", ec.code);
-    bela::FPrintF(stdout, L"Message: %d\n", ec.message);
+    bela::FPrintF(stdout, L"ErrorCode:%s%d\n", spaceview.substr(0, spaceview.size() - 9 - 1), ec.code);
+    bela::FPrintF(stdout, L"Message:%s%s\n", spaceview.substr(0, spaceview.size() - 7 - 1), ec.message);
   }
   void WriteAddress(std::wstring_view k, std::ptrdiff_t val) {
     std::wstring_view spaceview{space};
@@ -297,25 +294,24 @@ public:
       bela::FPrintF(stdout, L"%s%s\n", spaceview, val[i]);
     }
   }
+  void Write(std::wstring_view name) { bela::FPrintF(stdout, L"%s:\n", name); }
   void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
              bela::pe::SymbolSearcher &sse) {
     std::wstring_view spaceview{space};
-    if (spaceview.size() >= 7 + 2) {
-      bela::FPrintF(stdout, L"%s:%s%s\n", k, spaceview.substr(0, spaceview.size() - k.size() - 1), d);
-    } else {
-      bela::FPrintF(stdout, L"%s:\n%s%s\n", k, spaceview, d);
-    }
+    bela::FPrintF(stdout, L"%s:\n", d);
     bela::error_code ec;
     for (const auto &n : funs) {
+      bela::AlphaNum an(n.Index);
+      auto sv = spaceview.substr(0, 10 - an.Piece().size());
       if (n.Ordinal == 0) {
-        bela::FPrintF(stdout, L"%s %d\n", bela::demangle(n.Name), n.Index);
+        bela::FPrintF(stdout, L"%s%s %s\n", sv, an.Piece(), bela::demangle(n.Name));
         continue;
       }
       if (auto fn = sse.LookupOrdinalFunctionName(d, n.Ordinal, ec); fn) {
-        bela::FPrintF(stdout, L"%s (Ordinal %d)\n", bela::demangle(*fn), n.Ordinal);
+        bela::FPrintF(stdout, L"%s%s %s (Ordinal %d)\n", sv, an.Piece(), bela::demangle(*fn), n.Ordinal);
         continue;
       }
-      bela::FPrintF(stdout, L"Ordinal%d (Ordinal %d)\n", n.Ordinal, n.Ordinal);
+      bela::FPrintF(stdout, L"%s%s Ordinal%d (Ordinal %d)\n", sv, an.Piece(), n.Ordinal, n.Ordinal);
     }
   }
 

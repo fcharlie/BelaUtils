@@ -162,11 +162,21 @@ inline std::wstring_view Subsystem(uint32_t index) {
 }
 
 bool writeFuctionTableFull(const bela::pe::FunctionTable &ft, bela::pe::SymbolSearcher &sse, Writer &w) {
-  for (const auto &d : ft.imports) {
-    w.Write(L"Depends", d.first, d.second, sse);
+  if (!ft.imports.empty()) {
+    w.Write(L"Depends");
+    for (const auto &d : ft.imports) {
+      w.Write(L"Depends", d.first, d.second, sse);
+    }
   }
-  for (const auto &d : ft.delayimprots) {
-    w.Write(L"Delay", d.first, d.second, sse);
+  if (!ft.delayimprots.empty()) {
+    w.Write(L"Delay");
+    for (const auto &d : ft.delayimprots) {
+      w.Write(L"Delay", d.first, d.second, sse);
+    }
+  }
+  if (!ft.exports.empty()) {
+    for (const auto &fun : ft.exports) {
+    }
   }
   return true;
 }
@@ -177,18 +187,23 @@ bool writeFuctionTable(const bela::pe::FunctionTable &ft, Writer &w) {
     depends.emplace_back(t.first);
   }
   w.Write(L"Depends", depends);
-  std::vector<std::string> delay;
-  for (const auto &t : ft.delayimprots) {
-    delay.emplace_back(t.first);
+  if (!ft.delayimprots.empty()) {
+    std::vector<std::string> delay;
+    for (const auto &t : ft.delayimprots) {
+      delay.emplace_back(t.first);
+    }
+    w.Write(L"Delay", delay);
   }
-  w.Write(L"Delay", delay);
-  std::vector<std::string> exports;
-  for (const auto &e : ft.exports) {
-    exports.emplace_back(bela::demangle(e.Name));
+  if (!ft.exports.empty()) {
+    std::vector<std::string> exports;
+    for (const auto &e : ft.exports) {
+      exports.emplace_back(bela::demangle(e.Name));
+    }
+    if (!exports.empty()) {
+      w.Write(L"Exports", exports);
+    }
   }
-  if (!exports.empty()) {
-    w.Write(L"Exports", exports);
-  }
+
   return true;
 }
 
