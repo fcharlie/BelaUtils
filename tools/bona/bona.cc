@@ -47,7 +47,9 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   w->Write(L"Description", hr.description());
   w->Write(L"Path", absPath);
   w->Write(L"Size", hr.size());
-  w->Write(L"MIME", hazel::LookupMIME(hr.type()));
+  if (auto it = hr.values().find(L"MIME"); it == hr.values().end()) {
+    w->Write(L"MIME", hazel::LookupMIME(hr.type()));
+  }
   if (areRsp) {
     for (const auto &[k, v] : frp.attributes) {
       w->Write(k, v);
