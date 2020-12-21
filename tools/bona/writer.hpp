@@ -7,6 +7,8 @@
 #include <bela/codecvt.hpp>
 #include <bela/terminal.hpp>
 #include <hazel/hazel.hpp>
+#include <bela/pe.hpp>
+#include <bela/und.hpp>
 #include <json.hpp>
 
 namespace bona {
@@ -27,7 +29,20 @@ public:
   virtual void Write(std::wstring_view k, std::wstring_view val) = 0;
   virtual void Write(std::wstring_view k, const std::vector<std::string> &val) = 0;
   virtual void Write(std::wstring_view k, const std::vector<std::wstring> &val) = 0;
+  virtual void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
+                     bela::pe::SymbolSearcher &sse) = 0;
 };
+
+inline void to_json(nlohmann::json &j, const bela::pe::Function &func) {
+  j = nlohmann::json{{"name", func.Name}, {"index", func.Index}, {"ordinal", func.Ordinal}};
+}
+
+inline std::string demangle(std::string_view name) {
+  if (name.empty()) {
+    return std::string(name);
+  }
+  return bela::demangle(name);
+}
 
 class JsonWriter : public Writer {
 public:
@@ -86,6 +101,32 @@ public:
       av.emplace_back(bela::ToNarrow(v));
     }
     j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), std::move(av));
+  }
+  void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
+             bela::pe::SymbolSearcher &sse) {
+    try {
+      bela::error_code ec;
+      auto o = nlohmann::json::array();
+      for (const auto &n : funs) {
+        if (n.Ordinal != 0) {
+          if (auto fn = sse.LookupOrdinalFunctionName(d, n.Ordinal, ec); fn) {
+            o.push_back(nlohmann::json{{"name", demangle(*fn)}, {"index", n.Index}, {"ordinal", n.Ordinal}});
+            continue;
+          }
+        }
+        o.push_back(nlohmann::json{{"name", demangle(n.Name)}, {"index", n.Index}, {"ordinal", n.Ordinal}});
+      }
+      auto lk = bela::ToNarrow(bela::AsciiStrToLower(k));
+      if (auto it = j->find(lk); it != j->end()) {
+        it.value().emplace(d, std::move(o));
+        return;
+      }
+      nlohmann::json jo;
+      jo.emplace(d, std::move(o));
+      j->emplace(lk, std::move(jo));
+    } catch (const std::exception &e) {
+      bela::FPrintF(stderr, L"Write Functions: %s\n", e.what());
+    }
   }
 
 private:
@@ -254,6 +295,27 @@ public:
     bela::FPrintF(stdout, L"%s\n", val[0]);
     for (size_t i = 1; i < val.size(); i++) {
       bela::FPrintF(stdout, L"%s%s\n", spaceview, val[i]);
+    }
+  }
+  void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
+             bela::pe::SymbolSearcher &sse) {
+    std::wstring_view spaceview{space};
+    if (spaceview.size() >= 7 + 2) {
+      bela::FPrintF(stdout, L"%s:%s%s\n", k, spaceview.substr(0, spaceview.size() - k.size() - 1), d);
+    } else {
+      bela::FPrintF(stdout, L"%s:\n%s%s\n", k, spaceview, d);
+    }
+    bela::error_code ec;
+    for (const auto &n : funs) {
+      if (n.Ordinal == 0) {
+        bela::FPrintF(stdout, L"%s %d\n", bela::demangle(n.Name), n.Index);
+        continue;
+      }
+      if (auto fn = sse.LookupOrdinalFunctionName(d, n.Ordinal, ec); fn) {
+        bela::FPrintF(stdout, L"%s (Ordinal %d)\n", bela::demangle(*fn), n.Ordinal);
+        continue;
+      }
+      bela::FPrintF(stdout, L"Ordinal%d (Ordinal %d)\n", n.Ordinal, n.Ordinal);
     }
   }
 

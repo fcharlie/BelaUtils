@@ -38,6 +38,9 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
       alen = (std::max)(alen, k.size());
     }
   }
+  if (hr.LooksLikePE()) {
+    alen = (std::max)(alen, sizeof("Characteristic") - 1);
+  }
   std::shared_ptr<Writer> w;
   if (j != nullptr) {
     w = std::make_shared<JsonWriter>(j);
