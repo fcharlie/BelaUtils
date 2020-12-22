@@ -69,6 +69,7 @@ inline void AppenError(nlohmann::json *j, std::wstring_view file, const bela::er
   } catch (const std::exception &) {
   }
 }
+std::wstring FileNameRecoding(std::string_view name);
 } // namespace bona
 
 #endif

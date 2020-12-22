@@ -76,10 +76,45 @@ void ZipAssginMethods(const hazel::zip::Reader &r, Writer &w) {
 
 bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
   auto fv = nlohmann::json::array();
+
   for (const auto &file : r.Files()) {
-    if (file.IsEncrypted()) {
+    if (file.utf8) {
+      if (file.IsEncrypted()) {
+        fv.push_back(nlohmann::json{
+            {"name", file.name},
+            {"method", file.method},
+            {"uncompressedsize", file.uncompressedSize},
+            {"compressedsize", file.compressedSize},
+            {"version", file.rversion},
+            {"position", file.position},
+            {"flags", file.flags},
+            {"comment", file.comment},
+            {"crc32", file.crc32},
+            {"time", bela::FormatUniversalTimeNarrow(file.time)},
+            {"attrs", file.externalAttrs},
+            {"aesversion", file.aesVersion},
+        });
+        continue;
+      }
       fv.push_back(nlohmann::json{
           {"name", file.name},
+          {"method", file.method},
+          {"uncompressedsize", file.uncompressedSize},
+          {"compressedsize", file.compressedSize},
+          {"version", file.rversion},
+          {"position", file.position},
+          {"flags", file.flags},
+          {"comment", file.comment},
+          {"crc32", file.crc32},
+          {"time", bela::FormatUniversalTimeNarrow(file.time)},
+          {"attrs", file.externalAttrs},
+      });
+      continue;
+    }
+    auto name = bela::ToNarrow(FileNameRecoding(file.name));
+    if (file.IsEncrypted()) {
+      fv.push_back(nlohmann::json{
+          {"name", name},
           {"method", file.method},
           {"uncompressedsize", file.uncompressedSize},
           {"compressedsize", file.compressedSize},
@@ -95,7 +130,7 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
       continue;
     }
     fv.push_back(nlohmann::json{
-        {"name", file.name},
+        {"name", name},
         {"method", file.method},
         {"uncompressedsize", file.uncompressedSize},
         {"compressedsize", file.compressedSize},
@@ -275,8 +310,14 @@ bool AnalysisZIP(bela::File &fd, Writer &w) {
   }
   // TODO fix zip ls
   for (const auto &file : r.Files()) {
+    // good UTF-8
+    if (file.utf8) {
+      bela::FPrintF(stdout, L"%s\t%s\t%d\t%s\t%s\n", ZipModeString(file), hazel::zip::Method(file.method),
+                    file.uncompressedSize, bela::FormatTime(file.time), file.name);
+      continue;
+    }
     bela::FPrintF(stdout, L"%s\t%s\t%d\t%s\t%s\n", ZipModeString(file), hazel::zip::Method(file.method),
-                  file.uncompressedSize, bela::FormatTime(file.time), file.name);
+                  file.uncompressedSize, bela::FormatTime(file.time), FileNameRecoding(file.name));
   }
   return true;
 }
