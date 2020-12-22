@@ -6,6 +6,8 @@
 #include "writer.hpp"
 #include "resource.h"
 
+// MIME: https://www.iana.org/assignments/media-types/media-types.xhtml
+
 namespace bona {
 bool IsDebugMode = false;
 bool IsFullMode = false;
