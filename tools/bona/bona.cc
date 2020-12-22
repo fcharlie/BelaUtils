@@ -50,8 +50,11 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   w->Write(L"Description", hr.description());
   w->Write(L"Path", absPath);
   w->Write(L"Size", hr.size());
-  if (auto it = hr.values().find(L"MIME"); it == hr.values().end()) {
-    w->Write(L"MIME", hazel::LookupMIME(hr.type()));
+  // Need to further analyze the mime of the ZIP container
+  if (!hr.LooksLikeZIP()) {
+    if (auto it = hr.values().find(L"MIME"); it == hr.values().end()) {
+      w->Write(L"MIME", hazel::LookupMIME(hr.type()));
+    }
   }
   if (areRsp) {
     for (const auto &[k, v] : frp.attributes) {
@@ -74,7 +77,6 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   if (hr.LooksLikeZIP()) {
     return AnalysisZIP(fd, *w);
   }
-
   return true;
 }
 

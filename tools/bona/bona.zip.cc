@@ -57,6 +57,7 @@ bool AnalysisZipFamily(const hazel::zip::Reader &r, Writer &w) {
     w.Write(L"MIME", odfmime);
     return true;
   }
+  w.Write(L"MIME", L"application/zip");
   return false;
 }
 
