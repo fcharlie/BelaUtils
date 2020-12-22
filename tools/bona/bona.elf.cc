@@ -63,7 +63,7 @@ bool AnalysisELF(bela::File &fd, Writer &w) {
     bela::FPrintF(stderr, L"unable new ELF file %s\n", ec.message);
     return false;
   }
-
+  w.Write(L"OSABI", elf_osabi(file.Fh().OSABI));
   if (auto soname = file.LibSoName(ec); soname) {
     w.Write(L"SoName", *soname);
   }
