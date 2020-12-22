@@ -8,6 +8,7 @@ add_executable(
   bona.macho.cc
   bona.pe.cc
   bona.zip.cc
+  bona.xml.cc
   bona.rc
   bona.manifest)
 
