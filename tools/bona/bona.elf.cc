@@ -3,12 +3,11 @@
 #include "writer.hpp"
 #include <hazel/elf.hpp>
 
-
 namespace bona {
-
 const wchar_t *elf_osabi(uint8_t osabi) {
+  using namespace hazel::elf;
   switch (osabi) {
-  case ELFOSABI_SYSV:
+  case ELFOSABI_NONE:
     return L"SYSV";
   case ELFOSABI_HPUX:
     return L"HP-UX";
@@ -16,8 +15,8 @@ const wchar_t *elf_osabi(uint8_t osabi) {
     return L"NetBSD";
   case ELFOSABI_LINUX:
     return L"Linux";
-  case 4: /// musl not defined
-    return L"GNU Hurd";
+  case ELFOSABI_HURD: /// musl not defined
+    return L"Hurd";
   case ELFOSABI_SOLARIS:
     return L"Solaris";
   case ELFOSABI_AIX:
@@ -64,6 +63,7 @@ bool AnalysisELF(bela::File &fd, Writer &w) {
     bela::FPrintF(stderr, L"unable new ELF file %s\n", ec.message);
     return false;
   }
+
   if (auto soname = file.LibSoName(ec); soname) {
     w.Write(L"SoName", *soname);
   }
