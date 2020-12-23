@@ -231,6 +231,7 @@ bool AnalysisPE(bela::File &fd, Writer &w) {
     return false;
   }
   w.Write(L"Machine", Machine(file.Fh().Machine));
+  w.WriteBool(L"Is64Bit", file.Is64Bit());
   auto fullPath = fd.FullPath();
   bela::pe::SymbolSearcher sse(fullPath, file.Machine());
   w.Write(L"Subsystem", Subsystem(static_cast<uint32_t>(file.Subsystem())));

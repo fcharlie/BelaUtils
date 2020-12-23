@@ -18,6 +18,7 @@ public:
   virtual void WriteVariant(std::wstring_view key, const bona_value_t &val) = 0;
   virtual void WriteError(const bela::error_code &ec) = 0;
   virtual void WriteAddress(std::wstring_view k, std::ptrdiff_t val) = 0;
+  virtual void WriteBool(std::wstring_view k, bool val) =0;
   virtual void Write(std::wstring_view k, std::int64_t val) = 0;
   virtual void Write(std::wstring_view k, std::uint64_t val) = 0;
   virtual void Write(std::wstring_view k, std::int32_t val) = 0;
@@ -80,6 +81,7 @@ public:
   void WriteAddress(std::wstring_view k, std::ptrdiff_t val) {
     j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val);
   }
+  void WriteBool(std::wstring_view k, bool val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
   void Write(std::wstring_view k, std::int64_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
   void Write(std::wstring_view k, std::uint64_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
   void Write(std::wstring_view k, std::int32_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
@@ -190,6 +192,14 @@ public:
       return;
     }
     bela::FPrintF(stdout, L"%s:\n%s0x%s\n", k, spaceview, an.Piece());
+  }
+  void WriteBool(std::wstring_view k, bool val) {
+    std::wstring_view spaceview{space};
+    if (spaceview.size() >= k.size() + 2) {
+      bela::FPrintF(stdout, L"%s:%s%b\n", k, spaceview.substr(0, spaceview.size() - k.size() - 1), val);
+      return;
+    }
+    bela::FPrintF(stdout, L"%s:\n%s%b\n", k, spaceview, val);
   }
   void Write(std::wstring_view k, std::int64_t val) {
     std::wstring_view spaceview{space};
