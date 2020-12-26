@@ -8,6 +8,27 @@
 Tools reimplemented using Bela library
 
 
+## Bona - Modern and interesting file format viewer
+
+A modern and interesting file format viewer
+
+Feature:
+
++   Support multiple file format detection
++   Support parsing zip container file format
++   Support the correct conversion of zip file name encoding after detection
++   Support analysis of PE/ELF/MachO binary format, dependencies, import/export symbols, etc.
+
+```txt
+bona - Modern and interesting file format viewer
+Usage: bona [option]... [file]...
+  -h|--help        Show usage text and quit
+  -v|--version     Show version number and quit
+  -V|--verbose     Make the operation more talkative
+  -f|--full        Full mode, view more detailed information of the file.
+  -j|--json        Format and output file information into JSON.
+```
+
 ## Caelum - PE Simple Analysis Tool
 
 Caelum is derived from [PEAnalyzer](https://github.com/fcharlie/PEAnalyzer/), which is a GUI PE analysis tool that can analyze the structure, dependency and other information of PE files.
