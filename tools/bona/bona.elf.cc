@@ -270,6 +270,12 @@ bool AnalysisELF(bela::File &fd, Writer &w) {
   if (auto soname = file.LibSoName(ec); soname) {
     w.Write(L"SONAME", *soname);
   }
+  if (auto rpath = file.Rpath(ec); rpath) {
+    w.Write(L"RPATH", *rpath);
+  }
+  if (auto rupath = file.Rpath(ec); rupath) {
+    w.Write(L"RUPATH", *rupath);
+  }
   return true;
 }
 

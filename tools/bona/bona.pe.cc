@@ -202,13 +202,13 @@ bool writeFuctionTable(const bela::pe::FunctionTable &ft, Writer &w) {
   for (const auto &t : ft.imports) {
     depends.emplace_back(t.first);
   }
-  w.Write(L"\x1b[36mDepends\x1b[0m", depends);
+  w.Write(L"Depends", depends);
   if (!ft.delayimprots.empty()) {
     std::vector<std::string> delay;
     for (const auto &t : ft.delayimprots) {
       delay.emplace_back(t.first);
     }
-    w.Write(L"\x1b[36mDelay\x1b[0m", delay);
+    w.Write(L"Delay", delay);
   }
   if (!ft.exports.empty()) {
     std::vector<std::string> exports;
@@ -220,6 +220,46 @@ bool writeFuctionTable(const bela::pe::FunctionTable &ft, Writer &w) {
     }
   }
   return true;
+}
+
+// 24:
+// section
+constexpr const wchar_t *format =
+    L"\x1b[%dm%s\x1b[0m\n  NumberOfLineNumbers:  %d\n  NumberOfRelocations:  %d\n  Characteristics:      %d\n  Offset: "
+    L"              %d\n  PointerToLineNumbers: %d\n  PointerToRelocations: %d\n  Size:                 %d\n  "
+    L"VirtualAddress:       %d\n  VirtualSize:          %d\n";
+
+void writeSections(const bela::pe::File &file, Writer &w) {
+  if (auto j = w.Raw(); j != nullptr) {
+    auto secs = nlohmann::json::array();
+    for (const auto &sec : file.Sections()) {
+      secs.push_back(nlohmann::json{
+          {"Name", sec.Header.Name},
+          {"NumberOfLineNumbers", sec.Header.NumberOfLineNumbers},
+          {"NumberOfRelocations", sec.Header.NumberOfRelocations},
+          {"Characteristics", sec.Header.Characteristics},
+          {"Offset", sec.Header.Offset},
+          {"PointerToLineNumbers", sec.Header.PointerToLineNumbers},
+          {"PointerToRelocations", sec.Header.PointerToRelocations},
+          {"Size", sec.Header.Size},
+          {"VirtualAddress", sec.Header.VirtualAddress},
+          {"VirtualSize", sec.Header.VirtualSize},
+      });
+    }
+    j->emplace("section", std::move(secs));
+    return;
+  }
+
+  bela::FPrintF(stdout, L"Sections:\n");
+  const int colors[] = {34, 35, 36};
+  size_t i = 0;
+  for (const auto &sec : file.Sections()) {
+    const auto &s = sec.Header;
+    bela::FPrintF(stdout, format, colors[i % std::size(colors)], s.Name, s.NumberOfLineNumbers, s.NumberOfRelocations,
+                  s.Characteristics, s.Offset, s.PointerToLineNumbers, s.PointerToRelocations, s.Size, s.VirtualAddress,
+                  s.VirtualSize);
+    i++;
+  }
 }
 
 bool AnalysisPE(bela::File &fd, Writer &w) {
@@ -241,6 +281,9 @@ bool AnalysisPE(bela::File &fd, Writer &w) {
   std::string clrver;
   if (file.LookupClrVersion(clrver, ec) && !clrver.empty()) {
     w.Write(L"CLRVersion", clrver);
+  }
+  if (IsFullMode) {
+    writeSections(file, w);
   }
   bela::pe::FunctionTable ft;
   if (file.LookupFunctionTable(ft, ec)) {
