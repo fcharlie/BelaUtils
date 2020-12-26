@@ -29,6 +29,10 @@ Usage: bona [option]... [file]...
   -j|--json        Format and output file information into JSON.
 ```
 
+![](https://s3.ax1x.com/2020/12/26/r4Rpex.png)
+
+![](https://s3.ax1x.com/2020/12/26/r4ReOI.png)
+
 ## Caelum - PE Simple Analysis Tool
 
 Caelum is derived from [PEAnalyzer](https://github.com/fcharlie/PEAnalyzer/), which is a GUI PE analysis tool that can analyze the structure, dependency and other information of PE files.
