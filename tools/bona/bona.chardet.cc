@@ -33,10 +33,11 @@ std::wstring FileNameRecoding(std::string_view name) {
   auto e = CompactEncDet::DetectEncoding(name.data(), static_cast<int>(name.size()), nullptr, nullptr, nullptr,
                                          UNKNOWN_ENCODING, UNKNOWN_LANGUAGE, CompactEncDet::WEB_CORPUS, false,
                                          &bytes_consumed, &is_reliable);
-  auto sz = MultiByteToWideChar(codePageSearch(e), 0, name.data(), (int)name.size(), nullptr, 0);
+  const auto cp = codePageSearch(e);
+  auto sz = MultiByteToWideChar(cp, 0, name.data(), (int)name.size(), nullptr, 0);
   std::wstring output;
   output.resize(sz);
-  MultiByteToWideChar(CP_ACP, 0, name.data(), (int)name.size(), output.data(), sz);
+  MultiByteToWideChar(cp, 0, name.data(), (int)name.size(), output.data(), sz);
   return output;
 }
 } // namespace bona
