@@ -6,19 +6,40 @@
 #include <bela/ascii.hpp>
 #include <bela/codecvt.hpp>
 #include <bela/terminal.hpp>
-#include <hazel/hazel.hpp>
+#include <bela/str_cat_narrow.hpp>
 #include <bela/pe.hpp>
 #include <bela/und.hpp>
+#include <hazel/hazel.hpp>
 #include <json.hpp>
 
 namespace bona {
+namespace internal {
+struct intName {
+  int i;
+  const char *val;
+};
+
+inline std::string stringNameInternal(uint32_t val, const intName *in, size_t len) {
+  for (size_t i = 0; i < len; i++) {
+    if (in[i].i == val) {
+      return in[i].val;
+    }
+  }
+  return std::string(bela::narrow::AlphaNum(val).Piece());
+}
+
+template <typename T, size_t N> std::string stringName(T v, const intName (&in)[N]) {
+  return stringNameInternal(static_cast<uint32_t>(v), in, N);
+}
+} // namespace internal
+
 using bona_value_t = hazel::hazel_value_t;
 class Writer {
 public:
   virtual void WriteVariant(std::wstring_view key, const bona_value_t &val) = 0;
   virtual void WriteError(const bela::error_code &ec) = 0;
   virtual void WriteAddress(std::wstring_view k, std::ptrdiff_t val) = 0;
-  virtual void WriteBool(std::wstring_view k, bool val) =0;
+  virtual void WriteBool(std::wstring_view k, bool val) = 0;
   virtual void Write(std::wstring_view k, std::int64_t val) = 0;
   virtual void Write(std::wstring_view k, std::uint64_t val) = 0;
   virtual void Write(std::wstring_view k, std::int32_t val) = 0;

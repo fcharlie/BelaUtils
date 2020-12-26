@@ -1,7 +1,6 @@
 ///
 #include "bona.hpp"
 #include "writer.hpp"
-#include <bela/str_cat_narrow.hpp>
 #include <hazel/elf.hpp>
 
 namespace bona {
@@ -9,24 +8,6 @@ namespace bona {
 
 namespace internal {
 using namespace hazel::elf;
-struct intName {
-  int i;
-  const char *val;
-};
-
-std::string stringNameInternal(uint32_t val, const intName *in, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    if (in[i].i == val) {
-      return in[i].val;
-    }
-  }
-  return std::string(bela::narrow::AlphaNum(val).Piece());
-}
-
-template <typename T, size_t N> std::string stringName(T v, const intName (&in)[N]) {
-  return stringNameInternal(static_cast<uint32_t>(v), in, N);
-}
-
 static constexpr const intName osabiName[] = {
     {ELFOSABI_NONE, "SYSV"},
     {ELFOSABI_HPUX, "HPUX"},
