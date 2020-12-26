@@ -260,18 +260,16 @@ bool AnalysisELF(bela::File &fd, Writer &w) {
     return false;
   }
   const auto &fh = file.Fh();
-  const auto endian = (fh.Data == hazel::elf::ELFDATA2LSB) ? "LSB" : "MSB";
   w.Write(L"Version", static_cast<int>(fh.Version));
+  w.Write(L"Machine", internal::stringName(fh.Machine, internal::machines));
   w.WriteBool(L"Is64Bit", file.Is64Bit());
-  w.Write(L"Endian", endian);
+  w.Write(L"Endian", (fh.Data == hazel::elf::ELFDATA2LSB) ? "LSB" : "MSB");
   w.Write(L"Type", internal::stringName(fh.Type, internal::typeStrings));
   w.Write(L"OSABI", internal::stringName(fh.ABI, internal::osabiName));
   w.Write(L"ABIVersion", fh.ABIVersion);
   if (auto soname = file.LibSoName(ec); soname) {
-    w.Write(L"SoName", *soname);
+    w.Write(L"SONAME", *soname);
   }
-  w.Write(L"Machine", internal::stringName(fh.Machine, internal::machines));
-
   return true;
 }
 
