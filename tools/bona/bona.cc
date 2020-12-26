@@ -122,8 +122,8 @@ Usage: bona [option]... [file]...
   -h|--help        Show usage text and quit
   -v|--version     Show version number and quit
   -V|--verbose     Make the operation more talkative
-  -F|--full        Full mode, view more detailed information of the file.
-  -J|--json        Format and output file information into JSON.
+  -f|--full        Full mode, view more detailed information of the file.
+  -j|--json        Format and output file information into JSON.
 
 )";
   bela::terminal::WriteAuto(stderr, usage);
@@ -140,8 +140,8 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
   pa.Add(L"help", bela::no_argument, 'h')
       .Add(L"version", bela::no_argument, 'v')
       .Add(L"verbose", bela::no_argument, 'V')
-      .Add(L"json", bela::no_argument, 'J')
-      .Add(L"full", bela::no_argument, 'F'); // Full mode
+      .Add(L"json", bela::no_argument, 'j')
+      .Add(L"full", bela::no_argument, 'f'); // Full mode
   bela::error_code ec;
   auto result = pa.Execute(
       [&](int val, const wchar_t *oa, const wchar_t *raw) {
@@ -155,10 +155,10 @@ bool ParseArgv(int argc, wchar_t **argv, options &opt) {
         case 'V':
           bona::IsDebugMode = true;
           break;
-        case 'J':
+        case 'j':
           opt.formatToJson = true;
           break;
-        case 'F':
+        case 'f':
           bona::IsFullMode = true;
           break;
         default:

@@ -276,6 +276,13 @@ bool AnalysisELF(bela::File &fd, Writer &w) {
   if (auto rupath = file.Rpath(ec); rupath) {
     w.Write(L"RUPATH", *rupath);
   }
+  std::vector<std::string> libs;
+  if (file.Depends(libs, ec)) {
+    w.Write(L"Depends", libs);
+  }
+  if (!IsFullMode) {
+    return true;
+  }
   return true;
 }
 
