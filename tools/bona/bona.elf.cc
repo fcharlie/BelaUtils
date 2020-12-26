@@ -251,6 +251,81 @@ static constexpr const intName machines[] = {
 
 } // namespace internal
 
+void writeSymbolsJson(const std::vector<hazel::elf::Symbol> &syms, std::string_view objname, nlohmann::json *j) {
+  if (syms.empty()) {
+    return;
+  }
+  auto av = nlohmann::json::array();
+  for (const auto &s : syms) {
+    av.push_back(nlohmann::json{
+        {"name", s.Name},
+        {"library", s.Library},
+        {"version", s.Version},
+        {"vaule", s.Value},
+        {"size", s.Size},
+        {"sectionindex", s.SectionIndex},
+        {"info", static_cast<int>(s.Info)},
+        {"other", static_cast<int>(s.Other)},
+    });
+  }
+  j->emplace(objname, std::move(av));
+}
+
+void writeSymbolsJson(const std::vector<hazel::elf::ImportedSymbol> &syms, std::string_view objname,
+                      nlohmann::json *j) {
+  if (syms.empty()) {
+    return;
+  }
+  auto av = nlohmann::json::array();
+  for (const auto &s : syms) {
+    av.push_back(nlohmann::json{
+        {"name", bela::demangle(s.Name)},
+        {"library", s.Library},
+        {"version", s.Version},
+    });
+  }
+  j->emplace(objname, std::move(av));
+}
+
+void writeSymbolsText(const std::vector<hazel::elf::Symbol> &syms, std::string_view objname) {
+  if (syms.empty()) {
+    return;
+  }
+  bela::FPrintF(stderr, L"\x1b[34m%s:\x1b[0m\n", objname);
+  for (const auto &s : syms) {
+    bela::FPrintF(stdout, L"%s(%s@%s)\n", s.Name, s.Library, s.Version);
+  }
+}
+
+void writeSymbolsText(const std::vector<hazel::elf::ImportedSymbol> &syms, std::string_view objname) {
+  if (syms.empty()) {
+    return;
+  }
+  bela::FPrintF(stderr, L"\x1b[34m%s:\x1b[0m\n", objname);
+  for (const auto &s : syms) {
+    bela::FPrintF(stdout, L"%s (%s@%s)\n", bela::demangle(s.Name), s.Library, s.Version);
+  }
+}
+
+bool writeSymbols(hazel::elf::File &file, Writer &w) {
+  auto j = w.Raw();
+  std::vector<hazel::elf::Symbol> syms;
+  bela::error_code ec;
+  if (file.DynamicSymbols(syms, ec)) {
+    (j != nullptr) ? writeSymbolsJson(syms, "dynamicsymbols", j) : writeSymbolsText(syms, "Dynamic Symbols");
+  }
+  syms.clear();
+  if (file.Symbols(syms, ec)) {
+    (j != nullptr) ? writeSymbolsJson(syms, "symbols", j) : writeSymbolsText(syms, "Symbols");
+  }
+  std::vector<hazel::elf::ImportedSymbol> isyms;
+  if (file.ImportedSymbols(isyms, ec)) {
+    (j != nullptr) ? writeSymbolsJson(syms, "symbols", j) : writeSymbolsText(syms, "Symbols");
+  }
+  //
+  return true;
+}
+
 bool AnalysisELF(bela::File &fd, Writer &w) {
   hazel::elf::File file;
   bela::error_code ec;
@@ -283,6 +358,7 @@ bool AnalysisELF(bela::File &fd, Writer &w) {
   if (!IsFullMode) {
     return true;
   }
+  writeSymbols(file, w);
   return true;
 }
 
