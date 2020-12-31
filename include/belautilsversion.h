@@ -24,8 +24,8 @@
   L"href=\"https://github.com/fcharlie/belautils/issues\">BelaUtils "                              \
   L"Issues</a>"
 
-#define BELAUTILS_APPVERSION L"Version: 0.1.0\nCopyright \xA9 2020, BelaUtils contributors."
+#define BELAUTILS_APPVERSION L"Version: 0.1.0\nCopyright \xA9 2021, BelaUtils contributors."
 
-#define BELAUTILSUI_COPYRIGHT L"Copyright \xA9 2020, BelaUtils contributors."
+#define BELAUTILSUI_COPYRIGHT L"Copyright \xA9 2021, BelaUtils contributors."
 
 #endif
