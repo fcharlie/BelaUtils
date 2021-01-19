@@ -282,6 +282,10 @@ bool AnalysisPE(bela::File &fd, Writer &w) {
   if (file.LookupClrVersion(clrver, ec) && !clrver.empty()) {
     w.Write(L"CLRVersion", clrver);
   }
+  // show overlay bytes
+  if (auto overlayLen = file.OverlayLength(); overlayLen > 0) {
+    w.Write(L"Overlay", overlayLen);
+  }
   if (IsFullMode) {
     writeSections(file, w);
   }
