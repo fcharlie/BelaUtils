@@ -405,12 +405,12 @@ LRESULT Window::DoAbout(WORD wNotifyCode) {
 
 LRESULT Window::DoPicker(WORD wNotifyCode) {
   constexpr const bela::filter_t filters[] = {
-      {L"Windows  Execute File (*.exe;*.com;*.dll;*.sys)", L"*.exe;*.com;*.dll;*.sys"},
-      {L"Windows Other File (*.scr;*.fon;*.drv)", L"*.scr;*.fon;*.drv"},
+      {L"Windows Execute File (*.exe;*.com;*.dll;*.sys)", L"*.exe;*.com;*.dll;*.sys"},
+      {L"Windows Other File (*.scr;*.fon;*.drv;*.ocx;*.efi)", L"*.scr;*.fon;*.drv;*.ocx;*.efi"},
       {L"All Files (*.*)", L"*.*"}};
   auto file = bela::FilePicker(hWnd, L"Select PE file", filters, std::size(filters));
   if (!file) {
-    //
+    // no pe select
     return S_OK;
   }
   ResolveLink(*file);
