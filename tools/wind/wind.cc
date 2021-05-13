@@ -19,6 +19,7 @@ Usage: wind [option]... [url]...
   -V|--verbose     Make the operation more talkative
   -f|--force       Turn on force mode. such as overwrite exists file
   -k|--insecure    Allow insecure server connections when using SSL
+  -n|--no-cache    Download directly without caching
   -w|--workdir     Save the file to the specified directory
   -o|--out         Write file to the specified path
   --https-proxy    Use this proxy. Equivalent to setting the environment variable 'HTTPS_PROXY'
@@ -39,6 +40,7 @@ struct Whirlwind {
   std::vector<std::wstring> urls;
   std::wstring workdir;
   std::wstring outfile;
+  bool nocache{false};
   bool force{false};
 };
 
@@ -50,6 +52,7 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
       .Add(L"workdir", bela::required_argument, L'w')
       .Add(L"force", bela::no_argument, L'f')
       .Add(L"insecure", bela::no_argument, L'k')
+      .Add(L"no-cache", bela::no_argument, L'n')
       .Add(L"out", bela::required_argument, L'o')
       .Add(L"user-agent", bela::required_argument, 'A')
       .Add(L"https-proxy", bela::required_argument, 1001); // option
@@ -71,6 +74,9 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
           break;
         case 'k':
           baulk::IsInsecureMode = true;
+          break;
+        case 'd':
+          ww.nocache = true;
           break;
         case 'w':
           ww.workdir = oa;
@@ -126,7 +132,7 @@ int wmain(int argc, wchar_t **argv) {
   bela::error_code ec;
   if (ww.urls.size() == 1 && !ww.outfile.empty()) {
     auto u = ww.urls[0];
-    auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ec);
+    auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ww.nocache, ec);
     if (!file) {
       bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       return 1;
@@ -148,7 +154,7 @@ int wmain(int argc, wchar_t **argv) {
   }
   size_t success = 0;
   for (const auto &u : ww.urls) {
-    auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ec);
+    auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ww.nocache, ec);
     if (!file) {
       bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       continue;

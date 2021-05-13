@@ -111,7 +111,7 @@ inline std::optional<Response> RestGet(std::wstring_view url, bela::error_code &
 }
 // Parse http
 // download some file to spec workdir
-std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view workdir, bool forceoverwrite,
+std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view workdir, bool forceoverwrite, bool nocache,
                                    bela::error_code &ec);
 std::uint64_t UrlResponseTime(std::wstring_view url);
 std::wstring_view BestUrl(const std::vector<std::wstring> &urls);

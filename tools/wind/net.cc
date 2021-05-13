@@ -509,7 +509,7 @@ std::optional<std::wstring> FindNotExistsName(std::wstring_view path, bela::erro
   return std::nullopt;
 }
 
-std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view workdir, bool forceoverwrite,
+std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view workdir, bool forceoverwrite, bool nocache,
                                    bela::error_code &ec) {
   HINTERNET hSession = nullptr;
   HINTERNET hConnect = nullptr;
@@ -536,8 +536,9 @@ std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view work
     ec = make_net_error_code();
     return std::nullopt;
   }
+  DWORD extractFlags = nocache ? WINHTTP_FLAG_REFRESH : 0;
   hRequest = WinHttpOpenRequest(hConnect, L"GET", uc.uri.data(), nullptr, WINHTTP_NO_REFERER,
-                                WINHTTP_DEFAULT_ACCEPT_TYPES, uc.TlsFlag());
+                                WINHTTP_DEFAULT_ACCEPT_TYPES, uc.TlsFlag() | extractFlags);
   if (hRequest == nullptr) {
     ec = make_net_error_code();
     return std::nullopt;
