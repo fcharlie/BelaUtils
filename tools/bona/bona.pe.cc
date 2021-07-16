@@ -19,6 +19,14 @@ namespace bona {
 #define IMAGE_FILE_MACHINE_CHPE_X86 0x3A64 /// defined in ntimage.h
 #endif
 
+#ifndef IMAGE_FILE_MACHINE_ARM64EC
+#define IMAGE_FILE_MACHINE_ARM64EC 0xA641
+#endif
+
+#ifndef IMAGE_FILE_MACHINE_ARM64X
+#define IMAGE_FILE_MACHINE_ARM64X 0xA64E
+#endif
+
 struct key_value_t {
   uint32_t index;
   const std::wstring_view value;
@@ -59,6 +67,8 @@ inline constexpr std::wstring_view Machine(uint32_t index) {
       {IMAGE_FILE_MACHINE_ARM64, L"ARM64"},
       {IMAGE_FILE_MACHINE_CEE, L"IMAGE_FILE_MACHINE_CEE"},
       {IMAGE_FILE_MACHINE_CHPE_X86, L"Hybrid PE"},
+      {IMAGE_FILE_MACHINE_ARM64EC, L"ARM64 Emulation Compatible(ARM64EC)"},
+      {IMAGE_FILE_MACHINE_ARM64X, L"ARM64X"},
       {IMAGE_FILE_MACHINE_RISCV32, L"RISC-V 32-bit"},
       {IMAGE_FILE_MACHINE_RISCV64, L"RISC-V 64-bit"},
       {IMAGE_FILE_MACHINE_RISCV128, L"RISC-V 128-bit"}
