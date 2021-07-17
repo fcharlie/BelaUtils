@@ -295,9 +295,9 @@ void response_status_trace(Response &resp) {
   }
   std::wstring_view version = L"\x1b[33m1.1";
   if (resp.protocol == net::Protocol::HTTP20) {
-    version = L"\x1b[01;33m2.0";
+    version = L"\x1b[33m2.0";
   } else if (resp.protocol == net::Protocol::HTTP30) {
-    version = L"\x1b[01;36m3.0";
+    version = L"\x1b[36m3.0";
   }
   bela::FPrintF(stderr, L"\x1b[33m< \x1b[34mHTTP\x1b[37m/%s \x1b[36m%d \x1b[%dm%s\x1b[0m\n", version, resp.statuscode,
                 color, resp.status);
@@ -346,7 +346,7 @@ bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_cod
       auto k = bela::StripAsciiWhitespace(ln.substr(0, pos));
       auto v = bela::StripAsciiWhitespace(ln.substr(pos + 1));
       if (baulk::IsDebugMode) {
-        bela::FPrintF(stderr, L"\x1b[33m< \x1b[36m%s: \x1b[01;34m%s\x1b[0m\n", k, v);
+        bela::FPrintF(stderr, L"\x1b[33m< \x1b[36m%s: \x1b[34m%s\x1b[0m\n", k, v);
       }
       resp.hkv.emplace(k, v);
     }
