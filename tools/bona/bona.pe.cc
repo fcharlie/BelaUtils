@@ -244,16 +244,16 @@ void writeSections(const bela::pe::File &file, Writer &w) {
     auto secs = nlohmann::json::array();
     for (const auto &sec : file.Sections()) {
       secs.push_back(nlohmann::json{
-          {"Name", sec.Header.Name},
-          {"NumberOfLineNumbers", sec.Header.NumberOfLineNumbers},
-          {"NumberOfRelocations", sec.Header.NumberOfRelocations},
-          {"Characteristics", sec.Header.Characteristics},
-          {"Offset", sec.Header.Offset},
-          {"PointerToLineNumbers", sec.Header.PointerToLineNumbers},
-          {"PointerToRelocations", sec.Header.PointerToRelocations},
-          {"Size", sec.Header.Size},
-          {"VirtualAddress", sec.Header.VirtualAddress},
-          {"VirtualSize", sec.Header.VirtualSize},
+          {"Name", sec.Name},
+          {"NumberOfLineNumbers", sec.NumberOfLineNumbers},
+          {"NumberOfRelocations", sec.NumberOfRelocations},
+          {"Characteristics", sec.Characteristics},
+          {"Offset", sec.Offset},
+          {"PointerToLineNumbers", sec.PointerToLineNumbers},
+          {"PointerToRelocations", sec.PointerToRelocations},
+          {"Size", sec.Size},
+          {"VirtualAddress", sec.VirtualAddress},
+          {"VirtualSize", sec.VirtualSize},
       });
     }
     j->emplace("section", std::move(secs));
@@ -264,33 +264,35 @@ void writeSections(const bela::pe::File &file, Writer &w) {
   const int colors[] = {34, 35, 36};
   size_t i = 0;
   for (const auto &sec : file.Sections()) {
-    const auto &s = sec.Header;
-    bela::FPrintF(stdout, format, colors[i % std::size(colors)], s.Name, s.NumberOfLineNumbers, s.NumberOfRelocations,
-                  s.Characteristics, s.Offset, s.PointerToLineNumbers, s.PointerToRelocations, s.Size, s.VirtualAddress,
-                  s.VirtualSize);
+    bela::FPrintF(stdout, format, colors[i % std::size(colors)], sec.Name, sec.NumberOfLineNumbers,
+                  sec.NumberOfRelocations, sec.Characteristics, sec.Offset, sec.PointerToLineNumbers,
+                  sec.PointerToRelocations, sec.Size, sec.VirtualAddress, sec.VirtualSize);
     i++;
   }
 }
 
-bool AnalysisPE(bela::File &fd, Writer &w) {
+bool AnalysisPE(bela::io::FD &fd, Writer &w) {
   bela::pe::File file;
   bela::error_code ec;
-  if (!file.NewFile(fd.FD(), bela::SizeUnInitialized, ec)) {
+  if (!file.NewFile(fd.NativeFD(), bela::SizeUnInitialized, ec)) {
     w.WriteError(ec);
     bela::FPrintF(stderr, L"PE NewFile: %s\n", ec.message);
     return false;
   }
   w.Write(L"Machine", Machine(file.Fh().Machine));
   w.WriteBool(L"Is64Bit", file.Is64Bit());
-  auto fullPath = fd.FullPath();
+  std::wstring fullPath;
+  if (auto fullPath_ = bela::RealPathByHandle(fd.NativeFD(), ec); fullPath_) {
+    fullPath = std::move(*fullPath_);
+  }
   bela::pe::SymbolSearcher sse(fullPath, file.Machine());
   w.Write(L"Subsystem", Subsystem(static_cast<uint32_t>(file.Subsystem())));
-  auto dc = file.Is64Bit() ? file.Oh64()->DllCharacteristics : file.Oh32()->DllCharacteristics;
-  auto cs = Characteristics(file.Fh().Characteristics, dc);
+  auto cs = Characteristics(file.Fh().Characteristics, file.Header().DllCharacteristics);
   w.Write(L"Characteristic", cs);
   std::string clrver;
-  if (file.LookupClrVersion(clrver, ec) && !clrver.empty()) {
-    w.Write(L"CLRVersion", clrver);
+  if (auto meta = file.LookupDotNetMetadata(ec); meta) {
+    w.Write(L"CLRVersion", meta->version);
+    w.Write(L"CLRFlags", meta->flags);
   }
   // show overlay bytes
   if (auto overlayLen = file.OverlayLength(); overlayLen > 0) {

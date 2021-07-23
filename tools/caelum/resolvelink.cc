@@ -2,56 +2,44 @@
 #include "caelum.hpp"
 #include <bela/path.hpp>
 #include <bela/endian.hpp>
-#include <bela/mapview.hpp>
+#include <bela/buffer.hpp>
+#include <bela/io.hpp>
 #include "shl.hpp"
 
 namespace caelum {
-std::wstring fromascii(std::string_view sv) {
-  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
-  std::wstring output;
-  output.resize(sz);
-  // C++17 must output.data()
-  MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), output.data(), sz);
-  return output;
-}
 
-class shl_memview {
+class shl_bytes_view {
 public:
-  shl_memview(const char *data__, size_t size__) : data_(data__), size_(size__) {
-    //
-  }
+  shl_bytes_view(bela::bytes_view bv_) : bv(bv_) {}
   // --> perpare shl memview
   bool prepare() {
-    constexpr uint8_t shuuid[] = {0x1, 0x14, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0xc0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x46};
-    if (size_ < sizeof(shl::shell_link_t)) {
+    if (bv.size() < sizeof(shl::shell_link_t)) {
       return false;
     }
-    auto dwSize = bela::cast_fromle<uint32_t>(data_);
+    auto dwSize = bv.cast_fromle<uint32_t>(0);
     if (dwSize != 0x0000004C) {
       return false;
     }
-    if (memcmp(data_ + 4, shuuid, std::size(shuuid)) != 0) {
+    constexpr uint8_t shuuid[] = {0x1, 0x14, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0xc0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x46};
+    if (!bv.match_bytes_with(4, shuuid)) {
       return false;
     }
-    linkflags_ = bela::cast_fromle<uint32_t>(data_ + 20);
+    linkflags_ = bv.cast_fromle<uint32_t>(20);
     IsUnicode = (linkflags_ & shl::IsUnicode) != 0;
     return true;
   }
 
-  const char *data() const { return data_; }
-  size_t size() const { return size_; }
+  const char *data() const { return reinterpret_cast<const char *>(bv.data()); }
+  size_t size() const { return bv.size(); }
 
-  template <typename T> const T *cast(size_t off) const {
-    if (off + sizeof(T) >= size_) {
-      return nullptr;
-    }
-    return reinterpret_cast<const T *>(data_ + off);
-  }
+  template <typename T>
+  requires bela::standard_layout<T>
+  const T *cast(size_t off) const { return bv.direct_cast<T>(off); }
 
   uint32_t linkflags() const { return linkflags_; }
 
   bool stringdata(size_t pos, std::wstring &sd, size_t &sdlen) const {
-    if (pos + 2 > size_) {
+    if (pos + 2 > bv.size()) {
       return false;
     }
     // CountCharacters (2 bytes): A 16-bit, unsigned integer that specifies
@@ -62,13 +50,13 @@ public:
     // default code page, or a Unicode string with a length specified by the
     // CountCharacters field. This string MUST NOT be NULL-terminated.
 
-    auto len = bela::cast_fromle<uint16_t>(data_ + pos); /// Ch
+    auto len = bv.cast_fromle<uint16_t>(pos); /// Ch
     if (IsUnicode) {
       sdlen = len * 2 + 2;
-      if (sdlen + pos >= size_) {
+      if (sdlen + pos >= bv.size()) {
         return false;
       }
-      auto *p = reinterpret_cast<const uint16_t *>(data_ + pos + 2);
+      auto *p = reinterpret_cast<const uint16_t *>(bv.data() + pos + 2);
       sd.clear();
       for (size_t i = 0; i < len; i++) {
         // Winodws UTF16LE
@@ -78,30 +66,23 @@ public:
     }
 
     sdlen = len + 2;
-    if (sdlen + pos >= size_) {
+    if (sdlen + pos >= bv.size()) {
       return false;
     }
-    auto w = fromascii(std::string_view(data_ + pos + 2, len));
+    auto w = bela::fromascii(bv.make_cstring_view(pos + 2, len));
     return true;
   }
 
   bool stringvalue(size_t pos, bool isu, std::wstring &su) {
-    if (pos >= size_) {
+    if (pos >= bv.size()) {
       return false;
     }
     if (!isu) {
-      auto begin = data_ + pos;
-      auto end = data_ + size_;
-      for (auto it = begin; it != end; it++) {
-        if (*it == 0) {
-          su = fromascii(std::string_view(begin, it - begin));
-          return true;
-        }
-      }
-      return false;
+      su = bela::fromascii(bv.make_cstring_view(pos));
+      return true;
     }
-    auto it = (const wchar_t *)(data_ + pos);
-    auto end = it + (size_ - pos) / 2;
+    auto it = (const wchar_t *)(bv.data() + pos);
+    auto end = it + (bv.size() - pos) / 2;
     for (; it != end; it++) {
       if (*it == 0) {
         return true;
@@ -112,8 +93,7 @@ public:
   }
 
 private:
-  const char *data_{nullptr};
-  size_t size_{0};
+  bela::bytes_view bv;
   uint32_t linkflags_;
   bool IsUnicode{false};
 };
@@ -138,12 +118,20 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code
   if (sv.size() < 4 || sv.compare(sv.size() - 4, 4, L".lnk") != 0) {
     return std::make_optional(std::wstring(sv));
   }
-  bela::MapView mv;
-  if (!mv.MappingView(sv, ec, sizeof(shl::shell_link_t), 64 * 1024)) {
+  auto fd = bela::io::NewFile(sv, ec);
+  if (!fd) {
     return std::nullopt;
   }
-  auto mmv = mv.subview();
-  shl_memview shm(reinterpret_cast<const char *>(mmv.data()), mmv.size());
+  auto size = fd->Size(ec);
+  if (size == bela::SizeUnInitialized) {
+    return std::nullopt;
+  }
+  auto minSize = (std::min)(static_cast<size_t>(64 * 1024), static_cast<size_t>(size));
+  bela::Buffer buffer(minSize);
+  if (!fd->ReadFull(buffer, minSize, ec)) {
+    return std::nullopt;
+  }
+  shl_bytes_view shm(buffer.as_bytes_view());
   if (!shm.prepare()) {
     return std::make_optional(std::wstring(sv));
   }

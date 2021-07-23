@@ -57,22 +57,12 @@ bool Window::InquisitivePE() {
   tables.Append(L"Subsystem:", caelum::Subsystem(static_cast<uint32_t>(file.Subsystem())));
 
   uint16_t dllcharacteristics{0};
-  if (file.Is64Bit()) {
-    auto oh = file.Oh64();
-    dllcharacteristics = oh->DllCharacteristics;
-    tables.Append(L"OS Version:",
-                  bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
-    tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
-  } else {
-    auto oh = file.Oh64();
-    dllcharacteristics = oh->DllCharacteristics;
-    tables.Append(L"OS Version:",
-                  bela::StringCat(oh->MajorOperatingSystemVersion, L".", oh->MinorOperatingSystemVersion));
-    tables.Append(L"Link Version:", bela::StringCat(oh->MajorLinkerVersion, L".", oh->MajorLinkerVersion));
-  }
-  std::string clrver;
-  if (file.LookupClrVersion(clrver, ec) && !clrver.empty()) {
-    tables.Append(L"CLR Details:", bela::ToWide(clrver));
+  auto &oh = file.Header();
+  dllcharacteristics = oh.DllCharacteristics;
+  tables.Append(L"OS Version:", bela::StringCat(oh.MajorOperatingSystemVersion, L".", oh.MinorOperatingSystemVersion));
+  tables.Append(L"Link Version:", bela::StringCat(oh.MajorLinkerVersion, L".", oh.MajorLinkerVersion));
+  if (auto meta = file.LookupDotNetMetadata(ec); meta) {
+    tables.Append(L"CLR Details:", bela::ToWide(meta->version));
   }
   tables.Append(L"Characteristics:");
   tables.Append(L"Depends:");

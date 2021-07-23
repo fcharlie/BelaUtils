@@ -354,10 +354,10 @@ private:
   size_t alen{0};
 };
 
-bool AnalysisPE(bela::File &fd, Writer &w);
-bool AnalysisZIP(bela::File &fd, Writer &w);
-bool AnalysisELF(bela::File &fd, Writer &w);
-bool AnalysisMachO(bela::File &fd, Writer &w);
+bool AnalysisPE(bela::io::FD &fd, Writer &w);
+bool AnalysisZIP(bela::io::FD &fd, Writer &w);
+bool AnalysisELF(bela::io::FD &fd, Writer &w);
+bool AnalysisMachO(bela::io::FD &fd, Writer &w);
 
 } // namespace bona
 

@@ -54,10 +54,10 @@ bool AnalysisMachO(hazel::macho::File &file, Writer &w) {
   return true;
 }
 
-bool AnalysisMachO(bela::File &fd, Writer &w) {
+bool AnalysisMachO(bela::io::FD &fd, Writer &w) {
   hazel::macho::FatFile fatfile;
   bela::error_code ec;
-  if (fatfile.NewFile(fd.FD(), bela::SizeUnInitialized, ec)) {
+  if (fatfile.NewFile(fd.NativeFD(), bela::SizeUnInitialized, ec)) {
     auto j = w.Raw();
     if (j == nullptr) {
       for (auto &a : fatfile.Arches()) {
@@ -94,7 +94,7 @@ bool AnalysisMachO(bela::File &fd, Writer &w) {
   }
   ec.clear();
   hazel::macho::File file;
-  if (!file.NewFile(fd.FD(), bela::SizeUnInitialized, ec)) {
+  if (!file.NewFile(fd.NativeFD(), bela::SizeUnInitialized, ec)) {
     w.WriteError(ec);
     bela::FPrintF(stderr, L"unable new Mach-O file %s\n", ec.message);
     return false;

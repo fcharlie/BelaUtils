@@ -294,10 +294,10 @@ bool writeSymbols(hazel::elf::File &file, Writer &w) {
   return true;
 }
 
-bool AnalysisELF(bela::File &fd, Writer &w) {
+bool AnalysisELF(bela::io::FD &fd, Writer &w) {
   hazel::elf::File file;
   bela::error_code ec;
-  if (!file.NewFile(fd.FD(), bela::SizeUnInitialized, ec)) {
+  if (!file.NewFile(fd.NativeFD(), bela::SizeUnInitialized, ec)) {
     w.WriteError(ec);
     bela::FPrintF(stderr, L"unable new ELF file %s\n", ec.message);
     return false;

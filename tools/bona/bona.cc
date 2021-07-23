@@ -22,14 +22,14 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
       realPath = bela::PathAbsolute(it->second);
     }
   }
-  bela::File fd;
-  if (!fd.Open(realPath, ec)) {
+  auto fd = bela::io::NewFile(realPath, ec);
+  if (!fd) {
     AppenError(j, file, ec);
     bela::FPrintF(stderr, L"Open file %s error: %s\n", file, ec.message);
     return false;
   }
   hazel::hazel_result hr;
-  if (!hazel::LookupFile(fd, hr, ec)) {
+  if (!hazel::LookupFile(*fd, hr, ec)) {
     AppenError(j, file, ec);
     bela::FPrintF(stderr, L"Lookup file %s error: %s\n", file, ec.message);
     return false;
@@ -68,16 +68,16 @@ bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
     w->WriteVariant(k, v);
   }
   if (hr.LooksLikePE()) {
-    return AnalysisPE(fd, *w);
+    return AnalysisPE(*fd, *w);
   }
   if (hr.LooksLikeELF()) {
-    return AnalysisELF(fd, *w);
+    return AnalysisELF(*fd, *w);
   }
   if (hr.LooksLikeMachO()) {
-    return AnalysisMachO(fd, *w);
+    return AnalysisMachO(*fd, *w);
   }
   if (hr.LooksLikeZIP()) {
-    return AnalysisZIP(fd, *w);
+    return AnalysisZIP(*fd, *w);
   }
   return true;
 }
