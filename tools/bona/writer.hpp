@@ -111,7 +111,7 @@ public:
   void Write(std::wstring_view k, std::uint16_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
 
   void Write(std::wstring_view k, bela::Time val) {
-    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), bela::FormatUniversalTimeNarrow(val));
+    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), bela::FormatUniversalTime<char>(val));
   }
   void Write(std::wstring_view k, std::string_view val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
   void Write(std::wstring_view k, std::wstring_view val) {

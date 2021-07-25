@@ -91,7 +91,7 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
             {"flags", file.flags},
             {"comment", file.comment},
             {"crc32", file.crc32sum},
-            {"time", bela::FormatUniversalTimeNarrow(file.time)},
+            {"time", bela::FormatUniversalTime<char>(file.time)},
             {"mode", hazel::zip::String(file.mode)},
             {"aesversion", file.aesVersion},
         });
@@ -107,7 +107,7 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
           {"flags", file.flags},
           {"comment", file.comment},
           {"crc32", file.crc32sum},
-          {"time", bela::FormatUniversalTimeNarrow(file.time)},
+          {"time", bela::FormatUniversalTime<char>(file.time)},
           {"mode", hazel::zip::String(file.mode)},
       });
       continue;
@@ -124,7 +124,7 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
           {"flags", file.flags},
           {"comment", file.comment},
           {"crc32", file.crc32sum},
-          {"time", bela::FormatUniversalTimeNarrow(file.time)},
+          {"time", bela::FormatUniversalTime<char>(file.time)},
           {"mode", hazel::zip::String(file.mode)},
           {"aesversion", file.aesVersion},
       });
@@ -140,7 +140,7 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
         {"flags", file.flags},
         {"comment", file.comment},
         {"crc32", file.crc32sum},
-        {"time", bela::FormatUniversalTimeNarrow(file.time)},
+        {"time", bela::FormatUniversalTime<char>(file.time)},
         {"mode", hazel::zip::String(file.mode)},
     });
   }

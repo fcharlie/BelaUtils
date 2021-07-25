@@ -34,7 +34,7 @@ public:
 
   template <typename T>
   requires bela::standard_layout<T>
-  const T *cast(size_t off) const { return bv.direct_cast<T>(off); }
+  const T *checked_cast(size_t off) const { return bv.checked_cast<T>(off); }
 
   uint32_t linkflags() const { return linkflags_; }
 
@@ -150,7 +150,7 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code
   // LinkINFO https://msdn.microsoft.com/en-us/library/dd871404.aspx
 
   if ((flag & shl::HasLinkInfo) != 0) {
-    auto li = shm.cast<shl::shl_link_infow_t>(offset);
+    auto li = shm.checked_cast<shl::shl_link_infow_t>(offset);
     if (li == nullptr) {
       return std::make_optional(std::wstring(sv));
     }
