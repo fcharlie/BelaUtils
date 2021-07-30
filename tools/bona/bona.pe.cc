@@ -190,19 +190,32 @@ bool writeFuctionTableFull(const bela::pe::FunctionTable &ft, bela::pe::SymbolSe
   if (auto j = w.Raw(); j != nullptr) {
     auto av = nlohmann::json::array();
     for (const auto &d : ft.exports) {
+      if (d.ForwardName.empty()) {
+        av.push_back(nlohmann::json{{"address", d.Address},
+                                    {"hint", d.Hint},
+                                    {"name", d.Name},
+                                    {"ordinal", d.Ordinal},
+                                    {"undecoratedname", bela::demangle(d.Name)}});
+        continue;
+      }
       av.push_back(nlohmann::json{{"address", d.Address},
-                                  {"forwardname", d.ForwardName},
+                                  {"forwardname", bela::encode_into<wchar_t, char>(bela::fromascii(d.ForwardName))},
                                   {"hint", d.Hint},
                                   {"name", d.Name},
                                   {"ordinal", d.Ordinal},
-                                  {"undecoratedname", d.UndecoratedName}});
+                                  {"undecoratedname", bela::demangle(d.Name)}});
     }
     j->emplace("export", std::move(av));
     return true;
   }
   for (const auto &d : ft.exports) {
-    bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d)\x1b[0m\n", d.Ordinal, d.Address, bela::demangle(d.Name),
-                  d.Hint);
+    if (d.ForwardName.empty()) {
+      bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d)\x1b[0m\n", d.Ordinal, d.Address, bela::demangle(d.Name),
+                    d.Hint);
+      continue;
+    }
+    bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d) --> %s\x1b[0m\n", d.Ordinal, d.Address,
+                  bela::demangle(d.Name), d.Hint, d.ForwardName);
   }
   return true;
 }
