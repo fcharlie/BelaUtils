@@ -171,6 +171,13 @@ inline std::wstring_view Subsystem(uint32_t index) {
   return L"UNKNOWN";
 }
 
+std::string checkedDemangle(const std::string_view MangledName) {
+  if (MangledName.empty()) {
+    return "(unnamed)";
+  }
+  return bela::demangle(MangledName);
+}
+
 bool writeFuctionTableFull(const bela::pe::FunctionTable &ft, bela::pe::SymbolSearcher &sse, Writer &w) {
   if (!ft.imports.empty()) {
     w.Write(L"\x1b[36mDepends\x1b[0m");
@@ -210,12 +217,12 @@ bool writeFuctionTableFull(const bela::pe::FunctionTable &ft, bela::pe::SymbolSe
   }
   for (const auto &d : ft.exports) {
     if (d.ForwardName.empty()) {
-      bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d)\x1b[0m\n", d.Ordinal, d.Address, bela::demangle(d.Name),
-                    d.Hint);
+      bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d)\x1b[0m\n", d.Ordinal, d.Address,
+                    checkedDemangle(d.Name), d.Hint);
       continue;
     }
     bela::FPrintF(stdout, L"\x1b[35mE %5d %08X %s  (Hint: %d) --> %s\x1b[0m\n", d.Ordinal, d.Address,
-                  bela::demangle(d.Name), d.Hint, d.ForwardName);
+                  checkedDemangle(d.Name), d.Hint, d.ForwardName);
   }
   return true;
 }
@@ -236,7 +243,7 @@ bool writeFuctionTable(const bela::pe::FunctionTable &ft, Writer &w) {
   if (!ft.exports.empty()) {
     std::vector<std::string> exports;
     for (const auto &e : ft.exports) {
-      exports.emplace_back(bela::demangle(e.Name));
+      exports.emplace_back(checkedDemangle(e.Name));
     }
     if (!exports.empty()) {
       w.Write(L"Exports", exports);
