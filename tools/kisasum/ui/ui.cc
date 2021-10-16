@@ -178,7 +178,7 @@ LRESULT Window::InitializeWindow() {
   hr = GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &dpix, &dpiy);
 
   if (hr != S_OK) {
-    ::MessageBox(NULL, (LPCWSTR)L"GetDpiForMonitor failed", (LPCWSTR)L"Notification", MB_OK);
+    ::MessageBoxW(NULL, (LPCWSTR)L"GetDpiForMonitor failed", (LPCWSTR)L"Notification", MB_OK);
     return FALSE;
   }
   dpi_->SetScale(dpix);

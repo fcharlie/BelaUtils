@@ -30,6 +30,10 @@ struct WINHTTP_SECURITY_INFO_X {
 #define WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3 0x00002000
 #endif
 
+#ifndef WINHTTP_PROTOCOL_FLAG_HTTP3
+#define WINHTTP_PROTOCOL_FLAG_HTTP3 0x2
+#endif
+
 namespace baulk::net {
 
 inline bela::error_code make_net_error_code(std::wstring_view prefix = L"") {
@@ -157,16 +161,19 @@ inline void EnableTlsProxy(HINTERNET hSession) {
     proxy.lpszProxyBypass = nullptr;
     WinHttpSetOption(hSession, WINHTTP_OPTION_PROXY, &proxy, sizeof(proxy));
   }
+  // ENABLE TLS 1.3
   DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3);
   if (WinHttpSetOption(hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols)) !=
       TRUE) {
     secure_protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
     WinHttpSetOption(hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
   }
-  // Enable HTTP2
-  DWORD dwFlags = WINHTTP_PROTOCOL_FLAG_HTTP2;
-  DWORD dwSize = sizeof(dwFlags);
-  WinHttpSetOption(hSession, WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL, &dwFlags, sizeof(dwFlags));
+  // ENABLE HTTP2 and HTTP3
+  DWORD all_protocols(WINHTTP_PROTOCOL_FLAG_HTTP2 | WINHTTP_PROTOCOL_FLAG_HTTP3);
+  if (WinHttpSetOption(hSession, WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL, &all_protocols, sizeof(all_protocols)) != TRUE) {
+    all_protocols = WINHTTP_PROTOCOL_FLAG_HTTP2;
+    WinHttpSetOption(hSession, WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL, &all_protocols, sizeof(all_protocols));
+  }
 }
 
 inline bool BodyLength(HINTERNET hReq, uint64_t &len) {
@@ -307,7 +314,9 @@ bool resolve_response_header(HINTERNET hRequest, Response &resp, bela::error_cod
   DWORD dwOption = 0;
   DWORD dwlen = sizeof(dwOption);
   WinHttpQueryOption(hRequest, WINHTTP_OPTION_HTTP_PROTOCOL_USED, &dwOption, &dwlen);
-  if ((dwOption & WINHTTP_PROTOCOL_FLAG_HTTP2) != 0) {
+  if ((dwOption & WINHTTP_PROTOCOL_FLAG_HTTP3) != 0) {
+    resp.protocol = Protocol::HTTP30;
+  } else if ((dwOption & WINHTTP_PROTOCOL_FLAG_HTTP2) != 0) {
     resp.protocol = Protocol::HTTP20;
   }
   DWORD dwSize = sizeof(resp.statuscode);
