@@ -160,8 +160,8 @@ LRESULT Window::InitializeWindow() {
       }
       return false;
     }
-    ws.profile = bela::StringCat(be.BaulkRoot(), L"\\bin\\etc\\kisasum-ui.json");
-    ws.posfile = bela::StringCat(be.BaulkRoot(), L"\\bin\\etc\\kisasum.pos.json");
+    ws.profile = bela::StringCat(be.AppData(), L"\\kisasum\\ui.json");
+    ws.posfile = bela::StringCat(be.AppData(), L"\\kisasum\\pos.json");
     return true;
   };
   initializer();

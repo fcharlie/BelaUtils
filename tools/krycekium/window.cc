@@ -188,7 +188,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
     if (!baulkenv.Initialize()) {
       return false;
     }
-    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\krycekium.pos.json");
+    auto posfile = bela::StringCat(baulkenv.AppData(), L"\\krycekium\\pos.json");
     return belautils::LoadPlacement(posfile, placement);
   };
   auto w = MulDiv(700, dpiX, 96);
@@ -252,8 +252,8 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 }
 
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
-  if (!baulkenv.BaulkRoot().empty()) {
-    auto posfile = bela::StringCat(baulkenv.BaulkRoot(), L"\\bin\\etc\\krycekium.pos.json");
+  if (!baulkenv.AppData().empty()) {
+    auto posfile = bela::StringCat(baulkenv.AppData(), L"\\krycekium\\pos.json");
     WINDOWPLACEMENT placement;
     placement.length = sizeof(WINDOWPLACEMENT);
     if (::GetWindowPlacement(m_hWnd, &placement) == TRUE) {

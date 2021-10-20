@@ -24,17 +24,22 @@ public:
     if (baulkroot_.empty()) {
       return false;
     }
+    auto baulkenv = bela::StringCat(baulkroot_, L"\\baulk.env");
+    if (PathFileIsExists(baulkenv)) {
+      appData = bela::StringCat(baulkroot_, L"\\appdata");
+      return true;
+    }
     auto baulkexe = bela::StringCat(baulkroot_, L"\\bin\\baulk.exe");
     if (!PathFileIsExists(baulkexe)) {
       return false;
     }
-    baulkroot = baulkroot_;
+    appData = bela::StringCat(baulkroot_, L"\\bin\\etc");
     return true;
   }
-  std::wstring_view BaulkRoot() const { return baulkroot; }
+  std::wstring_view AppData() const { return appData; }
 
 private:
-  std::wstring baulkroot;
+  std::wstring appData;
 };
 
 } // namespace belautils
