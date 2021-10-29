@@ -265,10 +265,6 @@ HRESULT Window::OnRender() {
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
   renderTarget->Clear(ws.contentcolor);
   renderTarget->FillRectangle(RectF(0, areaheight, size.width, size.height), AppPageBackgroundThemeBrush);
-  constexpr std::wstring_view uppercase = L"Uppercase";
-  renderTarget->DrawTextW(uppercase.data(), static_cast<UINT32>(uppercase.size()), lableTextFormat,
-                          RectF(40, areaheight + 28.0f, 200.0f, areaheight + 50.0f), AppPageTextBrush,
-                          D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT, DWRITE_MEASURING_MODE_NATURAL);
   if (!filetext.empty()) {
     constexpr std::wstring_view name = L"Name:";
     renderTarget->DrawTextW(name.data(), static_cast<UINT32>(name.size()), lableTextFormat,
@@ -408,8 +404,8 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
   wcscpy_s(logFont.lfFaceName, L"Segoe UI");
 
   hFont = CreateFontIndirectW(&logFont);
-  auto LambdaCreateWindow = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth,
-                                int nHeight, HMENU hMenu) -> HWND {
+  auto MakeWidget = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
+                        HMENU hMenu) -> HWND {
     auto hw = CreateWindowExW(KWS_WINDOWEX, lpClassName, lpWindowName, dwStyle, dpi_->Scale(X), dpi_->Scale(Y),
                               dpi_->Scale(nWidth), dpi_->Scale(nHeight), m_hWnd, hMenu, HINST_THISCOMPONENT, nullptr);
     if (hw) {
@@ -417,8 +413,8 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
     }
     return hw;
   };
-  auto LambdaCreateWindowEdge = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth,
-                                    int nHeight, HMENU hMenu) -> HWND {
+  auto MakeWidgetEdge = [&](LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth,
+                            int nHeight, HMENU hMenu) -> HWND {
     auto hw = CreateWindowExW(KWS_WINDOWEX | WS_EX_CLIENTEDGE, lpClassName, lpWindowName, dwStyle, dpi_->Scale(X),
                               dpi_->Scale(Y), dpi_->Scale(nWidth), dpi_->Scale(nHeight), m_hWnd, hMenu,
                               HINST_THISCOMPONENT, nullptr);
@@ -430,15 +426,15 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
   RECT rect;
   GetWindowRect(&rect);
 
-  hCheck = LambdaCreateWindow(WC_BUTTONW, L"", KWS_CHECKBOX, 20, areaheight + 30, 20, 20, nullptr);
+  hCheck = MakeWidget(WC_BUTTONW, L" 🔠", KWS_CHECKBOX, 20, areaheight + 30, 100, 20, nullptr);
 
-  hCombo = LambdaCreateWindow(WC_COMBOBOXW, L"", KWS_COMBOBOX, width - 427, areaheight + 25, 127, 27, nullptr);
+  hCombo = MakeWidget(WC_COMBOBOXW, L"", KWS_COMBOBOX, width - 427, areaheight + 25, 127, 27, nullptr);
 
-  hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Clear", KWS_BUTTON, width - 290, areaheight + 25, 120, 27,
-                                   HMENU(IDC_CLEAR_BUTTON));
+  hOpenButton =
+      MakeWidget(WC_BUTTONW, L"Clear", KWS_BUTTON, width - 290, areaheight + 25, 120, 27, HMENU(IDC_CLEAR_BUTTON));
 
-  hOpenButton = LambdaCreateWindow(WC_BUTTONW, L"Open", KWS_BUTTON, width - 160, areaheight + 25, 120, 27,
-                                   HMENU(IDC_FILEOPEN_BUTTON));
+  hOpenButton =
+      MakeWidget(WC_BUTTONW, L"Open", KWS_BUTTON, width - 160, areaheight + 25, 120, 27, HMENU(IDC_FILEOPEN_BUTTON));
 
   InitializeComboHash(hCombo);
   hBrush = CreateSolidBrush(ws.panelcolor);
