@@ -13,9 +13,10 @@ void resolovecolor(nlohmann::json &j, const char *name, bela::color &value) {
     return;
   }
   auto s = it->get<std::string_view>();
-  bela::color c;
-  if (bela::color::Decode(s, c)) {
-    value = c;
+  bela::color defaults;
+  defaults.abgr = (std::numeric_limits<uint32_t>::max)();
+  if (auto z = bela::color::decode(s, defaults); z != defaults) {
+    value = z;
   }
 }
 
@@ -59,13 +60,13 @@ bool WindowSettings::Flush(bela::error_code &ec) {
   try {
     nlohmann::json j;
     nlohmann::json cj;
-    cj["panel"] = panelcolor.NarrowEncode();
-    cj["text"] = textcolor.NarrowEncode();
-    cj["content"] = contentcolor.NarrowEncode();
-    cj["label"] = labelcolor.NarrowEncode();
+    cj["panel"] = panelcolor.encode<char>();
+    cj["text"] = textcolor.encode<char>();
+    cj["content"] = contentcolor.encode<char>();
+    cj["label"] = labelcolor.encode<char>();
     j["color"] = cj;
-    j["font"] = bela::ToNarrow(font);
-    j["title"] = bela::ToNarrow(title);
+    j["font"] = bela::encode_into<wchar_t, char>(font);
+    j["title"] = bela::encode_into<wchar_t, char>(title);
     auto s = j.dump(4);
     if (!bela::io::WriteTextAtomic(s, profile, ec)) {
       return false;
