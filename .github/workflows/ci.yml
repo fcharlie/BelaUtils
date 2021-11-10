@@ -23,40 +23,25 @@ jobs:
         BelaUtils_target: [BelaUtils-win64, BelaUtils-win32, BelaUtils-arm64]
         include:
           - BelaUtils_target: BelaUtils-win64
-            msvc_arch: amd64
-            build_dir: build
+            short_target: win64
           - BelaUtils_target: BelaUtils-win32
-            msvc_arch: amd64_x86
-            build_dir: build.win32
+            short_target: win32
           - BelaUtils_target: BelaUtils-arm64
-            msvc_arch: amd64_arm64
-            build_dir: build.arm64
+            short_target: arm64
     steps:
       - uses: lukka/get-cmake@latest
       - uses: actions/checkout@v2
         with:
           fetch-depth: 1
       - name: compile-BelaUtils
-        shell: cmd
-        env:
-          vc_arch: ${{ matrix.msvc_arch }}
-          workdir: ${{ matrix.build_dir }}
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %vc_arch%
-          set BELAUTILS_REFNAME=${{ github.ref }}
-          mkdir %workdir%
-          cd %workdir%
-          set CC=cl
-          set CXX=cl
-          cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
-          ninja all
+        run: pwsh -NoProfile -NoLogo -ExecutionPolicy unrestricted -File "./build.ps1" -Target "${{ matrix.short_target }}"
 
       - name: Package release
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         # create package and show sha256 hash
         run: |
-          Set-Location ${{ matrix.build_dir }}
+          Set-Location build
           # cleanup zip files
           Remove-Item -Force *.zip
           cpack -G ZIP
@@ -69,6 +54,6 @@ jobs:
         with:
           file_glob: true
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ matrix.build_dir}}/BelaUtils-*.zip
+          file: build/BelaUtils-*.zip
           tag: ${{ github.ref }}
           overwrite: true
