@@ -6,12 +6,14 @@ on:
       - "docs/**"
       - '**.md'
       - '**.txt'
+      - "!CMakeLists.txt"
       - 'LICENSE'
   pull_request:
     paths-ignore:
       - "docs/**"
       - '**.md'
       - '**.txt'
+      - "!CMakeLists.txt"
       - 'LICENSE'
 jobs:
   build:
