@@ -61,9 +61,9 @@ inline void to_json(nlohmann::json &j, const bela::pe::Function &func) {
   j = nlohmann::json{{"name", func.Name}, {"index", func.Index}, {"ordinal", func.Ordinal}};
 }
 
-inline std::string demangle(std::string_view name) {
+inline std::string demangle(const std::string &name) {
   if (name.empty()) {
-    return std::string(name);
+    return name;
   }
   return bela::demangle(name);
 }
@@ -355,9 +355,9 @@ private:
 };
 
 bool AnalysisPE(bela::io::FD &fd, Writer &w);
-bool AnalysisZIP(bela::io::FD &fd, Writer &w);
 bool AnalysisELF(bela::io::FD &fd, Writer &w);
 bool AnalysisMachO(bela::io::FD &fd, Writer &w);
+bool AnalysisZIP(bela::io::FD &fd, Writer &w, int64_t offset = 0);
 
 } // namespace bona
 

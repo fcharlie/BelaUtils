@@ -148,10 +148,10 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
   return true;
 }
 
-bool AnalysisZIP(bela::io::FD &fd, Writer &w) {
+bool AnalysisZIP(bela::io::FD &fd, Writer &w, int64_t offset) {
   hazel::zip::Reader r;
   bela::error_code ec;
-  if (!r.OpenReader(fd.NativeFD(), bela::SizeUnInitialized, ec)) {
+  if (!r.OpenReader(fd.NativeFD(), bela::SizeUnInitialized, offset, ec)) {
     w.WriteError(ec);
     bela::FPrintF(stderr, L"ZIP OpenReader: %s\n", ec.message);
     return false;

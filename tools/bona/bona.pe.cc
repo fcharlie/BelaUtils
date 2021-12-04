@@ -224,7 +224,7 @@ bool writeFuctionTableFull(const bela::pe::FunctionTable &ft, bela::pe::SymbolSe
   return true;
 }
 
-std::string checkedDemangle(const std::string_view MangledName) {
+std::string checkedDemangle(const std::string &MangledName) {
   if (MangledName.empty()) {
     return "(unnamed)";
   }
@@ -295,6 +295,19 @@ void writeSections(const bela::pe::File &file, Writer &w) {
   }
 }
 
+bool AnalysisOverlay(bela::io::FD &fd, int64_t overlayOffset, Writer &w) {
+  hazel::hazel_result hr;
+  bela::error_code ec;
+  if (!hazel::LookupFile(fd, hr, ec, overlayOffset)) {
+    return false;
+  }
+  w.Write(L"Overlay", hr.description());
+  if (hr.LooksLikeZIP()) {
+    AnalysisZIP(fd, w, overlayOffset);
+  }
+  return true;
+}
+
 bool AnalysisPE(bela::io::FD &fd, Writer &w) {
   bela::pe::File file;
   bela::error_code ec;
@@ -320,7 +333,10 @@ bool AnalysisPE(bela::io::FD &fd, Writer &w) {
   }
   // show overlay bytes
   if (auto overlayLen = file.OverlayLength(); overlayLen > 0) {
-    w.Write(L"Overlay", overlayLen);
+    w.Write(L"OverlayLen", overlayLen);
+    if (overlayLen > 512) {
+      AnalysisOverlay(fd, file.OverlayOffset(), w);
+    }
   }
   if (IsFullMode) {
     writeSections(file, w);
