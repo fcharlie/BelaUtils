@@ -215,6 +215,8 @@ static constexpr const intName machines[] = {
     {EM_LANAI, "EM_LANAI"},
     {EM_BPF, "EM_BPF"},
     {EM_VE, "NEC SX-Aurora Vector Engine"},
+    {EM_CSKY, "C-SKY 32-bit processor"},
+    {EM_LOONGARCH, "LoongArch"},
 };
 
 } // namespace internal
