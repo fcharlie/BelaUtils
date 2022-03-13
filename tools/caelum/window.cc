@@ -242,15 +242,14 @@ LRESULT Window::MessageHandler(UINT const message, WPARAM const wparam, LPARAM c
     // send WM_DESTORY and WM_NCDESTROY
     DestroyWindow(hWnd);
     return S_OK;
-  case WM_DESTROY:
-    if (!baulkenv.AppData().empty()) {
-      auto posfile = bela::StringCat(baulkenv.AppData(), L"\\caelum\\pos.json");
-      WINDOWPLACEMENT placement;
-      placement.length = sizeof(WINDOWPLACEMENT);
-      if (::GetWindowPlacement(hWnd, &placement) == TRUE) {
-        belautils::SavePlacement(posfile, placement);
-      }
+  case WM_DESTROY: {
+    auto posfile = belautils::PathSearcher::Instance().JoinAppData(L"BelaUtils\\caelum.pos.json");
+    WINDOWPLACEMENT placement;
+    placement.length = sizeof(WINDOWPLACEMENT);
+    if (::GetWindowPlacement(hWnd, &placement) == TRUE) {
+      belautils::SavePlacement(posfile, placement);
     }
+  }
     PostQuitMessage(0);
     return S_OK;
   case WM_SYSCOMMAND:
@@ -275,10 +274,7 @@ LRESULT Window::OnCreate(WPARAM const wparam, LPARAM const lparam) noexcept {
 
   WINDOWPLACEMENT placement;
   auto initializer = [&]() {
-    if (!baulkenv.Initialize()) {
-      return false;
-    }
-    auto posfile = bela::StringCat(baulkenv.AppData(), L"\\caelum\\pos.json");
+    auto posfile = belautils::PathSearcher::Instance().JoinAppData(L"BelaUtils\\caelum.pos.json");
     return belautils::LoadPlacement(posfile, placement);
   };
   auto w = MulDiv(720, dpiX, 96);

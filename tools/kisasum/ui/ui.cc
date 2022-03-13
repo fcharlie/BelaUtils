@@ -150,21 +150,8 @@ Window::~Window() {
 #define WS_NORESIZEWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN | WS_MINIMIZEBOX)
 
 LRESULT Window::InitializeWindow() {
-  auto initializer = [&]() {
-    belautils::BaulkEnv be;
-    if (!be.Initialize()) {
-      bela::error_code ec;
-      if (auto parent = bela::ExecutableFinalPathParent(ec); parent) {
-        ws.profile = bela::StringCat(*parent, L"\\kisasum-ui.json");
-        ws.posfile = bela::StringCat(*parent, L"\\kisasum.pos.json");
-      }
-      return false;
-    }
-    ws.profile = bela::StringCat(be.AppData(), L"\\kisasum\\ui.json");
-    ws.posfile = bela::StringCat(be.AppData(), L"\\kisasum\\pos.json");
-    return true;
-  };
-  initializer();
+  ws.profile = belautils::PathSearcher::Instance().JoinAppData(L"BelaUtils\\kisasum-ui.json");
+  ws.posfile = belautils::PathSearcher::Instance().JoinAppData(L"BelaUtils\\kisasum-ui.pos.json");
   ws.Update();
   HMONITOR hMonitor;
   POINT pt;

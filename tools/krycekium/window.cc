@@ -185,10 +185,7 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
   dpiX = GetDpiForWindow(m_hWnd);
   WINDOWPLACEMENT placement;
   auto initializer = [&]() {
-    if (!baulkenv.Initialize()) {
-      return false;
-    }
-    auto posfile = bela::StringCat(baulkenv.AppData(), L"\\krycekium\\pos.json");
+    auto posfile = belautils::PathSearcher::Instance().JoinAppData(L"BelaUtils\\krycekium.pos.json");
     return belautils::LoadPlacement(posfile, placement);
   };
   auto w = MulDiv(700, dpiX, 96);
@@ -252,13 +249,11 @@ LRESULT Window::OnCreate(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle)
 }
 
 LRESULT Window::OnDestroy(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandle) {
-  if (!baulkenv.AppData().empty()) {
-    auto posfile = bela::StringCat(baulkenv.AppData(), L"\\krycekium\\pos.json");
-    WINDOWPLACEMENT placement;
-    placement.length = sizeof(WINDOWPLACEMENT);
-    if (::GetWindowPlacement(m_hWnd, &placement) == TRUE) {
-      belautils::SavePlacement(posfile, placement);
-    }
+  auto posfile = belautils::PathSearcher::Instance().JoinAppData(L"BelaUtils\\krycekium.pos.json");
+  WINDOWPLACEMENT placement;
+  placement.length = sizeof(WINDOWPLACEMENT);
+  if (::GetWindowPlacement(m_hWnd, &placement) == TRUE) {
+    belautils::SavePlacement(posfile, placement);
   }
   PostQuitMessage(0);
   return S_OK;
