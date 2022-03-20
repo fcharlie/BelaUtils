@@ -77,72 +77,32 @@ void ZipAssginMethods(const hazel::zip::Reader &r, Writer &w) {
 
 bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
   auto fv = nlohmann::json::array();
-
   for (const auto &file : r.Files()) {
-    if (file.IsFileNameUTF8()) {
-      if (file.IsEncrypted()) {
-        fv.push_back(nlohmann::json{
-            {"name", file.name},
-            {"method", file.method},
-            {"uncompressed_size", file.uncompressed_size},
-            {"compressed_size", file.compressed_size},
-            {"reader_version", file.reader_version},
-            {"position", file.position},
-            {"flags", file.flags},
-            {"comment", file.comment},
-            {"crc32", file.crc32_value},
-            {"time", bela::FormatUniversalTime<char>(file.time)},
-            {"mode", hazel::zip::String(file.mode)},
-            {"aes_version", file.aes_version},
-        });
-        continue;
-      }
-      fv.push_back(nlohmann::json{
-          {"name", file.name},
-          {"method", file.method},
-          {"uncompressed_size", file.uncompressed_size},
-          {"compressed_size", file.compressed_size},
-          {"reader_version", file.reader_version},
-          {"position", file.position},
-          {"flags", file.flags},
-          {"comment", file.comment},
-          {"crc32", file.crc32_value},
-          {"time", bela::FormatUniversalTime<char>(file.time)},
-          {"mode", hazel::zip::String(file.mode)},
-      });
-      continue;
-    }
-    auto name = bela::ToNarrow(FileNameRecoding(file.name));
-    if (file.IsEncrypted()) {
-      fv.push_back(nlohmann::json{
-          {"name", name},
-          {"method", file.method},
-          {"uncompressed_size", file.uncompressed_size},
-          {"compressed_size", file.compressed_size},
-          {"reader_version", file.reader_version},
-          {"position", file.position},
-          {"flags", file.flags},
-          {"comment", file.comment},
-          {"crc32", file.crc32_value},
-          {"time", bela::FormatUniversalTime<char>(file.time)},
-          {"mode", hazel::zip::String(file.mode)},
-          {"aesversion", file.aes_version},
-      });
-      continue;
-    }
-    fv.push_back(nlohmann::json{
-        {"name", name},
+    nlohmann::json item{
+        {"name", file.name},
         {"method", file.method},
         {"uncompressed_size", file.uncompressed_size},
         {"compressed_size", file.compressed_size},
-        {"reader_version", file.reader_version},
+        {"version_needed", file.version_needed},
         {"position", file.position},
         {"flags", file.flags},
-        {"comment", file.comment},
         {"crc32", file.crc32_value},
         {"time", bela::FormatUniversalTime<char>(file.time)},
         {"mode", hazel::zip::String(file.mode)},
-    });
+    };
+    if (file.IsEncrypted()) {
+      item["aes_version"] = file.aes_version;
+    }
+    if (file.IsFileNameUTF8()) {
+      item["name"] = bela::ToNarrow(FileNameRecoding(file.name));
+    }
+    if (!file.linkname.empty()) {
+      item["name"] = file.linkname;
+    }
+    if (!file.comment.empty()) {
+      item["comment"] = file.comment;
+    }
+    fv.emplace_back(std::move(item));
   }
   j->emplace("files", std::move(fv));
   return true;
