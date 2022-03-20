@@ -84,29 +84,29 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
         fv.push_back(nlohmann::json{
             {"name", file.name},
             {"method", file.method},
-            {"uncompressedsize", file.uncompressedSize},
-            {"compressedsize", file.compressedSize},
-            {"version", file.rversion},
+            {"uncompressed_size", file.uncompressed_size},
+            {"compressed_size", file.compressed_size},
+            {"reader_version", file.reader_version},
             {"position", file.position},
             {"flags", file.flags},
             {"comment", file.comment},
-            {"crc32", file.crc32sum},
+            {"crc32", file.crc32_value},
             {"time", bela::FormatUniversalTime<char>(file.time)},
             {"mode", hazel::zip::String(file.mode)},
-            {"aesversion", file.aesVersion},
+            {"aes_version", file.aes_version},
         });
         continue;
       }
       fv.push_back(nlohmann::json{
           {"name", file.name},
           {"method", file.method},
-          {"uncompressedsize", file.uncompressedSize},
-          {"compressedsize", file.compressedSize},
-          {"version", file.rversion},
+          {"uncompressed_size", file.uncompressed_size},
+          {"compressed_size", file.compressed_size},
+          {"reader_version", file.reader_version},
           {"position", file.position},
           {"flags", file.flags},
           {"comment", file.comment},
-          {"crc32", file.crc32sum},
+          {"crc32", file.crc32_value},
           {"time", bela::FormatUniversalTime<char>(file.time)},
           {"mode", hazel::zip::String(file.mode)},
       });
@@ -117,29 +117,29 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
       fv.push_back(nlohmann::json{
           {"name", name},
           {"method", file.method},
-          {"uncompressedsize", file.uncompressedSize},
-          {"compressedsize", file.compressedSize},
-          {"version", file.rversion},
+          {"uncompressed_size", file.uncompressed_size},
+          {"compressed_size", file.compressed_size},
+          {"reader_version", file.reader_version},
           {"position", file.position},
           {"flags", file.flags},
           {"comment", file.comment},
-          {"crc32", file.crc32sum},
+          {"crc32", file.crc32_value},
           {"time", bela::FormatUniversalTime<char>(file.time)},
           {"mode", hazel::zip::String(file.mode)},
-          {"aesversion", file.aesVersion},
+          {"aesversion", file.aes_version},
       });
       continue;
     }
     fv.push_back(nlohmann::json{
         {"name", name},
         {"method", file.method},
-        {"uncompressedsize", file.uncompressedSize},
-        {"compressedsize", file.compressedSize},
-        {"version", file.rversion},
+        {"uncompressed_size", file.uncompressed_size},
+        {"compressed_size", file.compressed_size},
+        {"reader_version", file.reader_version},
         {"position", file.position},
         {"flags", file.flags},
         {"comment", file.comment},
-        {"crc32", file.crc32sum},
+        {"crc32", file.crc32_value},
         {"time", bela::FormatUniversalTime<char>(file.time)},
         {"mode", hazel::zip::String(file.mode)},
     });
@@ -176,11 +176,11 @@ bool AnalysisZIP(bela::io::FD &fd, Writer &w, int64_t offset) {
     // good UTF-8
     if (file.IsFileNameUTF8()) {
       bela::FPrintF(stdout, L"%s\t%s\t%d\t%s\t%s\n", hazel::zip::String(file.mode), hazel::zip::Method(file.method),
-                    file.uncompressedSize, bela::FormatTime(file.time), file.name);
+                    file.uncompressed_size, bela::FormatTime(file.time), file.name);
       continue;
     }
     bela::FPrintF(stdout, L"%s\t%s\t%d\t%s\t%s(*)\n", hazel::zip::String(file.mode), hazel::zip::Method(file.method),
-                  file.uncompressedSize, bela::FormatTime(file.time), FileNameRecoding(file.name));
+                  file.uncompressed_size, bela::FormatTime(file.time), FileNameRecoding(file.name));
   }
   return true;
 }
