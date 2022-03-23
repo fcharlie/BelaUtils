@@ -1,35 +1,37 @@
 //
 #include <bela/base.hpp>
 #include <bela/terminal.hpp>
+#include <atomic>
+#include <thread>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "net.hpp"
+#include <baulk/net/tcp.hpp>
 
 namespace baulk::net {
 // WSAConnectByName
 // https://docs.microsoft.com/zh-cn/windows/win32/api/winsock2/nf-winsock2-wsaconnectbynamew
 // RIO
 // https://docs.microsoft.com/zh-cn/windows/win32/api/mswsock/ns-mswsock-rio_extension_function_table
-class Winsock {
+class winsock_initializer {
 public:
-  Winsock() {
+  winsock_initializer() {
     WORD wVersionRequested = MAKEWORD(2, 2);
     WSADATA wsaData;
     if (auto err = WSAStartup(wVersionRequested, &wsaData); err != 0) {
       auto ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"BUGS WSAStartup %s\n", ec.message);
+      bela::FPrintF(stderr, L"BUGS WSAStartup %s\n", ec);
       return;
     }
     initialized = true;
   }
-  ~Winsock() {
+  ~winsock_initializer() {
     if (initialized) {
       WSACleanup();
     }
   }
 
 private:
-  bool initialized{false};
+  std::atomic_bool initialized{false};
 };
 
 inline constexpr bool InProgress(int rv) { return rv == WSAEWOULDBLOCK || rv == WSAEINPROGRESS; }
@@ -43,7 +45,7 @@ inline bela::error_code make_wsa_error_code(int code, std::wstring_view prefix =
 
 typedef struct _QueryContext {
   OVERLAPPED QueryOverlapped;
-  PADDRINFOEX QueryResults{nullptr};
+  PADDRINFOEXW QueryResults{nullptr};
   HANDLE CompleteEvent{nullptr};
 } QUERY_CONTEXT, *PQUERY_CONTEXT;
 
@@ -58,10 +60,11 @@ void WINAPI QueryCompleteCallback(_In_ DWORD Error, _In_ DWORD Bytes, _In_ LPOVE
   //  Notify caller that the query completed
   //
   SetEvent(QueryContext->CompleteEvent);
-  return;
 }
 // query dns timeout use IOCP
+// https://docs.microsoft.com/en-us/windows/win32/api/ws2def/ns-ws2def-ADDRINFOEX4
 // https://github.com/microsoft/Windows-Classic-Samples/blob/master/Samples/DNSAsyncNetworkNameResolution/cpp/ResolveName.cpp
+// ADDRINFOEX6 support Windows 11 sdk or later
 bool ResolveName(std::wstring_view host, int port, PADDRINFOEX4 *rhints, bela::error_code &ec) {
   ADDRINFOEX4 hints = {0};
   hints.ai_family = AF_UNSPEC;
@@ -69,15 +72,15 @@ bool ResolveName(std::wstring_view host, int port, PADDRINFOEX4 *rhints, bela::e
   hints.ai_version = ADDRINFOEX_VERSION_4;
   DWORD QueryTimeout = 5 * 1000; // 5 seconds
   QUERY_CONTEXT QueryContext;
-  HANDLE CancelHandle = NULL;
+  HANDLE CancelHandle = nullptr;
   ZeroMemory(&QueryContext, sizeof(QueryContext));
   if (QueryContext.CompleteEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr); QueryContext.CompleteEvent == nullptr) {
     ec = bela::make_system_error_code(L"ResolveName.CreateEvent() ");
     return false;
   }
   auto closer = bela::finally([&] { CloseHandle(QueryContext.CompleteEvent); });
-  if (auto error = GetAddrInfoExW(host.data(), bela::AlphaNum(port).data(), NS_DNS, NULL,
-                                  reinterpret_cast<const ADDRINFOEXW *>(&hints), &QueryContext.QueryResults, NULL,
+  if (auto error = GetAddrInfoExW(host.data(), bela::AlphaNum(port).data(), NS_DNS, nullptr,
+                                  reinterpret_cast<const ADDRINFOEXW *>(&hints), &QueryContext.QueryResults, nullptr,
                                   &QueryContext.QueryOverlapped, QueryCompleteCallback, &CancelHandle);
       error != WSA_IO_PENDING) {
     ec = make_wsa_error_code(WSAGetLastError(), L"GetAddrInfoExW() ");
@@ -90,11 +93,11 @@ bool ResolveName(std::wstring_view host, int port, PADDRINFOEX4 *rhints, bela::e
     if (QueryContext.QueryResults != nullptr) {
       FreeAddrInfoExW(QueryContext.QueryResults);
     }
-    ec = bela::make_error_code(1, L"GetAddrInfoEx() timeout");
+    ec = bela::make_error_code(bela::ErrGeneral, L"GetAddrInfoEx() timeout");
     return false;
   }
   if (QueryContext.QueryResults == nullptr) {
-    ec = bela::make_error_code(1, L"GetAddrInfoEx() failed");
+    ec = bela::make_error_code(bela::ErrGeneral, L"GetAddrInfoEx() failed");
     return false;
   }
   *rhints = reinterpret_cast<PADDRINFOEX4>(QueryContext.QueryResults);
@@ -106,12 +109,6 @@ void Conn::Close() {
     closesocket(sock);
     sock = BAULK_INVALID_SOCKET;
   }
-}
-
-void Conn::Move(Conn &&other) {
-  Close();
-  sock = other.sock;
-  other.sock = BAULK_INVALID_SOCKET;
 }
 
 ssize_t Conn::WriteTimeout(const void *data, uint32_t len, int timeout) {
@@ -186,11 +183,11 @@ bool DialTimeoutInternal(BAULKSOCK sock, const ADDRINFOEX4 *hi, int timeout, bel
   return true;
 }
 
-std::optional<baulk::net::Conn> DialTimeout(std::wstring_view address, int port, int timeout, bela::error_code &ec) {
-  static Winsock winsock_;
+std::optional<Conn> DialTimeout(std::wstring_view address, int port, int timeout, bela::error_code &ec) {
+  static winsock_initializer initializer_;
   PADDRINFOEX4 rhints = nullptr;
   if (!ResolveName(address, port, &rhints, ec)) {
-    bela::FPrintF(stderr, L"GetAddrInfoExW %s\n", ec.message);
+    bela::FPrintF(stderr, L"GetAddrInfoExW %s\n", ec);
     return std::nullopt;
   }
   auto hi = rhints;
@@ -209,8 +206,8 @@ std::optional<baulk::net::Conn> DialTimeout(std::wstring_view address, int port,
   } while ((hi = hi->ai_next) != nullptr);
 
   if (sock == BAULK_INVALID_SOCKET) {
-    if (!ec) {
-      ec = bela::make_error_code(1, L"connect to ", address, L" timeout");
+    if (ec) {
+      ec = bela::make_error_code(bela::ErrGeneral, L"connect to ", address, L" timeout");
     }
     FreeAddrInfoExW(reinterpret_cast<ADDRINFOEXW *>(rhints)); /// Release
     return std::nullopt;

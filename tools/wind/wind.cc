@@ -1,13 +1,12 @@
 // A simple program download network resource
 #include <bela/parseargv.hpp>
 #include <filesystem>
+#include <baulk/net/client.hpp>
+#include <belautilsversion.h>
 #include "wind.hpp"
-#include "net.hpp"
-#include "resource.h"
 
 namespace baulk {
 bool IsDebugMode = false;
-bool IsInsecureMode = false;
 wchar_t UserAgent[UerAgentMaximumLength] = L"Wget/5.0 (Baulk)";
 } // namespace baulk
 
@@ -38,13 +37,14 @@ void Version() {
 
 struct Whirlwind {
   std::vector<std::wstring> urls;
-  std::wstring workdir;
-  std::wstring outfile;
-  bool nocache{false};
+  std::filesystem::path cwd;
+  std::filesystem::path dest;
   bool force{false};
 };
 
+
 bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
+  using namespace baulk::net;
   bela::ParseArgv pa(argc, argv);
   pa.Add(L"help", bela::no_argument, L'h')
       .Add(L"version", bela::no_argument, L'v')
@@ -68,30 +68,28 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
           exit(0);
         case 'V':
           baulk::IsDebugMode = true;
+          HttpClient::DefaultClient().DebugMode() = true;
           break;
         case 'f':
           ww.force = true;
           break;
         case 'k':
-          baulk::IsInsecureMode = true;
+          HttpClient::DefaultClient().InsecureMode() = true;
           break;
         case 'd':
-          ww.nocache = true;
+          // ww.nocache = true;
           break;
         case 'w':
-          ww.workdir = oa;
+          ww.cwd = oa;
           break;
         case 'o':
-          ww.outfile = oa;
+          ww.dest = oa;
           break;
         case 'A':
-          if (auto len = wcslen(oa); len < 256) {
-            wmemcmp(baulk::UserAgent, oa, len);
-            baulk::UserAgent[len] = 0;
-          }
+          HttpClient::DefaultClient().UserAgent() = oa;
           break;
         case 1001:
-          SetEnvironmentVariableW(L"HTTPS_PROXY", oa);
+          HttpClient::DefaultClient().ProxyURL() = oa;
           break;
         default:
           break;
@@ -109,18 +107,18 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
     return false;
   }
   for (const auto p : pa.UnresolvedArgs()) {
-    ww.urls.emplace_back(std::wstring(p));
+    ww.urls.emplace_back(std::wstring{p});
   }
-  if (ww.workdir.empty()) {
+  if (ww.cwd.empty()) {
     std::error_code e;
-    auto cwd = std::filesystem::current_path(e);
+    ww.cwd = std::filesystem::current_path(e);
     if (e) {
       ec = bela::from_std_error_code(e);
       bela::FPrintF(stderr, L"unable resolve current path: %s\n", ec.message);
       return false;
     }
-    ww.workdir = cwd.wstring();
   }
+  HttpClient::DefaultClient().InitializeProxyFromEnv();
   return true;
 }
 
@@ -129,21 +127,22 @@ int wmain(int argc, wchar_t **argv) {
   if (!ParseArgv(argc, argv, ww)) {
     return 1;
   }
+
   bela::error_code ec;
-  if (ww.urls.size() == 1 && !ww.outfile.empty()) {
+  if (ww.urls.size() == 1 && !ww.dest.empty()) {
     auto u = ww.urls[0];
-    auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ww.nocache, ec);
+    auto file = baulk::net::WinGet(u, ww.cwd.native(), L"", ww.force, ec);
     if (!file) {
       bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       return 1;
     }
-    if (MoveFileExW(file->data(), ww.outfile.data(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != TRUE) {
+    if (MoveFileExW(file->data(), ww.dest.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != TRUE) {
       ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"unable move %s to %s error: \x1b[31m%s\x1b[0m\n", *file, ww.outfile, ec.message);
+      bela::FPrintF(stderr, L"unable move %s to %s error: \x1b[31m%s\x1b[0m\n", *file, ww.dest.native(), ec.message);
       return 1;
     }
     std::error_code e;
-    auto p = std::filesystem::absolute(ww.outfile, e);
+    auto p = std::filesystem::absolute(ww.dest, e);
     if (e) {
       ec = bela::from_std_error_code(e);
       bela::FPrintF(stderr, L"unable resolve absolute path: \x1b[31m%s\x1b[0m\n", ec.message);
@@ -154,7 +153,7 @@ int wmain(int argc, wchar_t **argv) {
   }
   size_t success = 0;
   for (const auto &u : ww.urls) {
-    auto file = baulk::net::WinGet(u, ww.workdir, ww.force, ww.nocache, ec);
+    auto file = baulk::net::WinGet(u, ww.cwd.native(), L"", ww.force, ec);
     if (!file) {
       bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
       continue;
