@@ -1,6 +1,7 @@
 #ifndef BAULK_NET_CLIENT_HPP
 #define BAULK_NET_CLIENT_HPP
 #include "types.hpp"
+#include <filesystem>
 #include <bela/terminal.hpp>
 
 namespace baulk::net {
@@ -43,8 +44,8 @@ public:
   std::optional<Response> Get(std::wstring_view url, bela::error_code &ec) {
     return WinRest(L"GET", url, L"", L"", ec);
   }
-  std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view cwd, std::wstring_view hash_value,
-                                     bool force_overwrite, bela::error_code &ec);
+  std::optional<std::filesystem::path> WinGet(std::wstring_view url, const std::filesystem::path &cwd,
+                                              std::wstring_view hash_value, bool force_overwrite, bela::error_code &ec);
   //
   std::wstring &UserAgent() { return userAgent; }
   std::wstring_view UserAgent() const { return userAgent; }
@@ -105,8 +106,9 @@ inline std::optional<Response> RestGet(std::wstring_view url, bela::error_code &
 }
 
 // WinGet download file
-inline std::optional<std::wstring> WinGet(std::wstring_view url, std::wstring_view cwd, std::wstring_view hash_value,
-                                          bool force_overwrite, bela::error_code &ec) {
+inline std::optional<std::filesystem::path> WinGet(std::wstring_view url, const std::filesystem::path &cwd,
+                                                   std::wstring_view hash_value, bool force_overwrite,
+                                                   bela::error_code &ec) {
   return HttpClient::DefaultClient().WinGet(url, cwd, hash_value, force_overwrite, ec);
 }
 

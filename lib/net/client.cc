@@ -164,9 +164,9 @@ inline bool make_unqiue_name(std::filesystem::path &p) {
 }
 
 // WinGet download file
-std::optional<std::wstring> HttpClient::WinGet(std::wstring_view url, std::wstring_view cwd,
-                                               std::wstring_view hash_value, bool force_overwrite,
-                                               bela::error_code &ec) {
+std::optional<std::filesystem::path> HttpClient::WinGet(std::wstring_view url, const std::filesystem::path &cwd,
+                                                        std::wstring_view hash_value, bool force_overwrite,
+                                                        bela::error_code &ec) {
   auto u = native::crack_url(url, ec);
   if (!u) {
     return std::nullopt;
@@ -218,7 +218,7 @@ std::optional<std::wstring> HttpClient::WinGet(std::wstring_view url, std::wstri
     response_trace(*mr);
   }
   if (auto newName = native::extract_filename(mr->headers); newName) {
-    destination = bela::PathCat(cwd, *newName);
+    destination = cwd / *newName;
     filePart->RenameTo(destination.native());
   }
   std::error_code e;

@@ -1,6 +1,7 @@
 // A simple program download network resource
 #include <bela/parseargv.hpp>
 #include <filesystem>
+#include <baulk/hash.hpp>
 #include <baulk/net/client.hpp>
 #include <belautilsversion.h>
 #include "wind.hpp"
@@ -41,7 +42,6 @@ struct Whirlwind {
   std::filesystem::path dest;
   bool force{false};
 };
-
 
 bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
   using namespace baulk::net;
@@ -122,6 +122,19 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
   return true;
 }
 
+void verify_file(const std::filesystem::path &file) {
+  std::wstring sha256sum;
+  std::wstring blake3sum;
+  bela::error_code ec;
+  auto filename = file.filename();
+  if (!baulk::hash::HashVerify(file.native(), sha256sum, blake3sum, ec)) {
+    bela::FPrintF(stderr, L"unable check %s checksum: %v\n", filename.native(), ec);
+    return;
+  }
+  bela::FPrintF(stderr, L"\x1b[34mSHA256:%s %s\x1b[0m\n", sha256sum, filename.native());
+  bela::FPrintF(stderr, L"\x1b[34mBLAKE3:%s %s\x1b[0m\n", blake3sum, filename.native());
+}
+
 int wmain(int argc, wchar_t **argv) {
   Whirlwind ww;
   if (!ParseArgv(argc, argv, ww)) {
@@ -133,32 +146,28 @@ int wmain(int argc, wchar_t **argv) {
     auto u = ww.urls[0];
     auto file = baulk::net::WinGet(u, ww.cwd.native(), L"", ww.force, ec);
     if (!file) {
-      bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
-      return 1;
-    }
-    if (MoveFileExW(file->data(), ww.dest.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != TRUE) {
-      ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"unable move %s to %s error: \x1b[31m%s\x1b[0m\n", *file, ww.dest.native(), ec.message);
+      bela::FPrintF(stderr, L"download failed: \x1b[31m%v\x1b[0m\n", ec);
       return 1;
     }
     std::error_code e;
-    auto p = std::filesystem::absolute(ww.dest, e);
-    if (e) {
+    if (std::filesystem::rename(*file, ww.dest, e); e) {
       ec = bela::from_std_error_code(e);
-      bela::FPrintF(stderr, L"unable resolve absolute path: \x1b[31m%s\x1b[0m\n", ec.message);
+      bela::FPrintF(stderr, L"rename target failed: \x1b[31m%v\x1b[0m\n", ec);
       return 1;
     }
-    bela::FPrintF(stdout, L"\x1b[32m'%s' saved\x1b[0m\n", p.wstring());
+    verify_file(ww.dest);
+    bela::FPrintF(stdout, L"\x1b[32m'%s' saved\x1b[0m\n", ww.dest.native());
     return 0;
   }
   size_t success = 0;
   for (const auto &u : ww.urls) {
     auto file = baulk::net::WinGet(u, ww.cwd.native(), L"", ww.force, ec);
     if (!file) {
-      bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec.message);
+      bela::FPrintF(stderr, L"download failed: \x1b[31m%s\x1b[0m\n", ec);
       continue;
     }
-    bela::FPrintF(stdout, L"\x1b[32m'%s' saved\x1b[0m\n", *file);
+    verify_file(*file);
+    bela::FPrintF(stdout, L"\x1b[32m'%s' saved\x1b[0m\n", file->native());
   }
   return success == ww.urls.size() ? 0 : 1;
 }
