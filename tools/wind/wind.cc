@@ -113,7 +113,7 @@ bool ParseArgv(int argc, wchar_t **argv, Whirlwind &ww) {
     std::error_code e;
     ww.cwd = std::filesystem::current_path(e);
     if (e) {
-      ec = bela::from_std_error_code(e);
+      ec = bela::make_error_code_from_std(e);
       bela::FPrintF(stderr, L"unable resolve current path: %s\n", ec.message);
       return false;
     }
@@ -151,7 +151,7 @@ int wmain(int argc, wchar_t **argv) {
     }
     std::error_code e;
     if (std::filesystem::rename(*file, ww.dest, e); e) {
-      ec = bela::from_std_error_code(e);
+      ec = bela::make_error_code_from_std(e);
       bela::FPrintF(stderr, L"rename target failed: \x1b[31m%v\x1b[0m\n", ec);
       return 1;
     }
