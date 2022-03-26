@@ -63,8 +63,8 @@ inline void AppenError(nlohmann::json *j, std::wstring_view file, const bela::er
   try {
     nlohmann::json j2;
     j2.emplace("code", ec.code);
-    j2.emplace("file", bela::ToNarrow(file));
-    j2.emplace("message", bela::ToNarrow(ec.message));
+    j2.emplace("file", bela::encode_into<wchar_t, char>(file));
+    j2.emplace("message", bela::encode_into<wchar_t, char>(ec.message));
     j->push_back(std::move(j2));
   } catch (const std::exception &) {
   }

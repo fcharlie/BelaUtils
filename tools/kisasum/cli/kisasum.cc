@@ -149,7 +149,7 @@ bool kisasum_execute_json(const kisasum_options &opt, belautils::algorithm::hash
         continue;
       }
       nlohmann::json sj;
-      sj["name"] = bela::ToNarrow(result->filename);
+      sj["name"] = bela::encode_into<wchar_t, char>(result->filename);
       sj["hash"] = belautils::string_cast(result->hashhex);
       jfiles.emplace_back(std::move(sj));
     }

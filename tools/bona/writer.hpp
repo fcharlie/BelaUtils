@@ -72,10 +72,10 @@ class JsonWriter : public Writer {
 public:
   JsonWriter(nlohmann::json *j_) : j(j_) {}
   void WriteVariant(std::wstring_view key, const bona_value_t &val) {
-    auto nk = bela::ToNarrow(bela::AsciiStrToLower(key));
+    auto nk = bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(key));
     std::visit(hazel::overloaded{
                    [](auto arg) {}, // ignore
-                   [&](const std::wstring &sv) { j->emplace(nk, bela::ToNarrow(sv)); },
+                   [&](const std::wstring &sv) { j->emplace(nk, bela::encode_into<wchar_t, char>(sv)); },
                    [&](const std::string &sv) { j->emplace(nk, sv); },
                    [&](int16_t i) { j->emplace(nk, i); },
                    [&](int32_t i) { j->emplace(nk, i); },
@@ -83,11 +83,11 @@ public:
                    [&](uint16_t i) { j->emplace(nk, i); },
                    [&](uint32_t i) { j->emplace(nk, i); },
                    [&](uint64_t i) { j->emplace(nk, i); },
-                   [&](bela::Time t) { j->emplace(nk, bela::ToNarrow(bela::FormatTime(t))); },
+                   [&](bela::Time t) { j->emplace(nk, bela::encode_into<wchar_t, char>(bela::FormatTime(t))); },
                    [&](const std::vector<std::wstring> &v) {
                      auto av = nlohmann::json::array();
                      for (const auto s : v) {
-                       av.emplace_back(bela::ToNarrow(s));
+                       av.emplace_back(bela::encode_into<wchar_t, char>(s));
                      }
                      j->emplace(nk, std::move(av));
                    },
@@ -97,35 +97,51 @@ public:
   }
   void WriteError(const bela::error_code &ec) {
     j->emplace("code", ec.code);
-    j->emplace("message", bela::ToNarrow(ec.message));
+    j->emplace("message", bela::encode_into<wchar_t, char>(ec.message));
   }
   void WriteAddress(std::wstring_view k, std::ptrdiff_t val) {
-    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val);
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
   }
-  void WriteBool(std::wstring_view k, bool val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
-  void Write(std::wstring_view k, std::int64_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
-  void Write(std::wstring_view k, std::uint64_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
-  void Write(std::wstring_view k, std::int32_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
-  void Write(std::wstring_view k, std::uint32_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
-  void Write(std::wstring_view k, std::int16_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
-  void Write(std::wstring_view k, std::uint16_t val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
+  void WriteBool(std::wstring_view k, bool val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
+  void Write(std::wstring_view k, std::int64_t val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
+  void Write(std::wstring_view k, std::uint64_t val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
+  void Write(std::wstring_view k, std::int32_t val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
+  void Write(std::wstring_view k, std::uint32_t val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
+  void Write(std::wstring_view k, std::int16_t val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
+  void Write(std::wstring_view k, std::uint16_t val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
 
   void Write(std::wstring_view k, bela::Time val) {
-    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), bela::FormatUniversalTime<char>(val));
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), bela::FormatUniversalTime<char>(val));
   }
-  void Write(std::wstring_view k, std::string_view val) { j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val); }
+  void Write(std::wstring_view k, std::string_view val) {
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
+  }
   void Write(std::wstring_view k, std::wstring_view val) {
-    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), bela::ToNarrow(val));
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), bela::encode_into<wchar_t, char>(val));
   }
   void Write(std::wstring_view k, const std::vector<std::string> &val) {
-    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), val);
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), val);
   }
   void Write(std::wstring_view k, const std::vector<std::wstring> &val) {
     std::vector<std::string> av;
     for (const auto &v : val) {
-      av.emplace_back(bela::ToNarrow(v));
+      av.emplace_back(bela::encode_into<wchar_t, char>(v));
     }
-    j->emplace(bela::ToNarrow(bela::AsciiStrToLower(k)), std::move(av));
+    j->emplace(bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k)), std::move(av));
   }
   void Write(std::wstring_view /*name*/) {}
   void Write(std::wstring_view k, std::string_view d, const std::vector<bela::pe::Function> &funs,
@@ -142,7 +158,7 @@ public:
         }
         o.push_back(nlohmann::json{{"name", demangle(n.Name)}, {"index", n.Index}, {"ordinal", n.Ordinal}});
       }
-      auto lk = bela::ToNarrow(bela::AsciiStrToLower(k));
+      auto lk = bela::encode_into<wchar_t, char>(bela::AsciiStrToLower(k));
       if (auto it = j->find(lk); it != j->end()) {
         it.value().emplace(d, std::move(o));
         return;

@@ -94,7 +94,7 @@ bool AssginFiles(const hazel::zip::Reader &r, nlohmann::json *j) {
       item["aes_version"] = file.aes_version;
     }
     if (file.IsFileNameUTF8()) {
-      item["name"] = bela::ToNarrow(FileNameRecoding(file.name));
+      item["name"] = bela::encode_into<wchar_t, char>(FileNameRecoding(file.name));
     }
     if (!file.linkname.empty()) {
       item["name"] = file.linkname;
