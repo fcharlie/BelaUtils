@@ -6,7 +6,7 @@
 #include <bela/ascii.hpp>
 #include <bela/codecvt.hpp>
 #include <bela/terminal.hpp>
-#include <bela/str_cat_narrow.hpp>
+#include <bela/str_cat.hpp>
 #include <bela/pe.hpp>
 #include <bela/und.hpp>
 #include <hazel/hazel.hpp>
@@ -25,7 +25,7 @@ inline std::string stringNameInternal(uint32_t val, const intName *in, size_t le
       return in[i].val;
     }
   }
-  return std::string(bela::narrow::AlphaNum(val).Piece());
+  return std::string(bela::AlphaNumNarrow(val).Piece());
 }
 
 template <typename T, size_t N> std::string stringName(T v, const intName (&in)[N]) {

@@ -2,6 +2,7 @@
 #include "caelum.hpp"
 #include "window.hpp"
 #include <bela/picker.hpp>
+#include <bela/str_cat.hpp>
 #include <CommCtrl.h>
 #include "pe.hpp"
 
@@ -60,7 +61,8 @@ bool Window::InquisitivePE() {
   auto &oh = file.Header();
   dllcharacteristics = oh.DllCharacteristics;
   tables.Append(L"OS Version:", bela::StringCat(oh.MajorOperatingSystemVersion, L".", oh.MinorOperatingSystemVersion));
-  tables.Append(L"Link Version:", bela::StringCat(oh.MajorLinkerVersion, L".", oh.MajorLinkerVersion));
+  tables.Append(L"Link Version:", bela::StringCat(static_cast<int>(oh.MajorLinkerVersion), L".",
+                                                  static_cast<int>(oh.MajorLinkerVersion)));
   if (auto meta = file.LookupDotNetMetadata(ec); meta) {
     tables.Append(L"CLR Details:", bela::encode_into<char, wchar_t>(meta->version));
   }

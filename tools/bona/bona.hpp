@@ -2,6 +2,7 @@
 #ifndef bona_HPP
 #define bona_HPP
 #include <bela/terminal.hpp>
+#include <bela/str_cat.hpp>
 #include <json.hpp>
 
 namespace bona {

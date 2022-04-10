@@ -2,6 +2,7 @@
 #include "krycekium.hpp"
 #include "executor.hpp"
 #include <bela/picker.hpp>
+#include <bela/str_cat.hpp>
 #include <windowsx.h>
 #include <CommCtrl.h>
 #include <Msi.h>
