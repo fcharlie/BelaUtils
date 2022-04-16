@@ -18,4 +18,8 @@ target_link_libraries(
   Shell32
   Msi)
 
-  install(TARGETS krycekium DESTINATION bin)
+install(TARGETS krycekium DESTINATION bin)
+
+if(BELAUTILS_ENABLE_LTO)
+  set_property(TARGET krycekium PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()

@@ -73,10 +73,10 @@ bool Window::InquisitivePE() {
   auto charsv = caelum::Characteristics(file.Fh().Characteristics, dllcharacteristics);
   // depends lab append
   std::wstring depends;
-  for (auto &im : ft.imports) {
+  for (const auto &im : ft.imports) {
     bela::StrAppend(&depends, bela::encode_into<char, wchar_t>(im.first), L" (", im.second.size(), L")\r\n");
   }
-  for (auto &im : ft.delayimprots) {
+  for (const auto &im : ft.delayimprots) {
     bela::StrAppend(&depends, L"(Delay) ", bela::encode_into<char, wchar_t>(im.first), L" (", im.second.size(),
                     L")\r\n");
   }
