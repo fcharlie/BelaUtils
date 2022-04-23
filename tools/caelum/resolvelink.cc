@@ -98,7 +98,7 @@ private:
   bool IsUnicode{false};
 };
 
-inline std::wstring PathAbsolute(std::wstring_view sv) {
+inline std::wstring FullPath(std::wstring_view sv) {
   //::GetFullPathNameW()
   std::wstring ws(0x8000, L'\0');
   auto N = GetFullPathNameW(sv.data(), 0x8000, ws.data(), nullptr);
@@ -189,7 +189,7 @@ std::optional<std::wstring> ResolveShLink(std::wstring_view sv, bela::error_code
     offset += sdlen;
   }
 
-  auto target = PathAbsolute(bela::StringCat(sv, L"\\", placeholder));
+  auto target = FullPath(bela::StringCat(sv, L"\\", placeholder));
   if (target.empty()) {
     return std::make_optional(std::wstring(sv));
   }

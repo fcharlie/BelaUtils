@@ -13,13 +13,13 @@ bool IsDebugMode = false;
 bool IsFullMode = false;
 bool AnalysisFile(std::wstring_view file, nlohmann::json *j) {
   bela::error_code ec;
-  auto absPath = bela::PathAbsolute(file);
+  auto absPath = bela::FullPath(file);
   auto realPath = absPath;
   hazel::fs::FileReparsePoint frp;
   bool areRsp = false;
   if (areRsp = hazel::fs::LookupReparsePoint(absPath, frp, ec); areRsp) {
     if (auto it = frp.attributes.find(L"Target"); it != frp.attributes.end()) {
-      realPath = bela::PathAbsolute(it->second);
+      realPath = bela::FullPath(it->second);
     }
   }
   auto fd = bela::io::NewFile(realPath, ec);
