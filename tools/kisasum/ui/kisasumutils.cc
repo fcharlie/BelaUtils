@@ -34,10 +34,10 @@ bool WindowSettings::Update() {
     /* code */
     auto j = nlohmann::json::parse(fd, nullptr, true, true);
     if (auto it = j.find("title"); it != j.end()) {
-      title = bela::encode_into<char,wchar_t>(it->get<std::string_view>());
+      title = bela::encode_into<char, wchar_t>(it->get<std::string_view>());
     }
     if (auto it = j.find("font"); it != j.end()) {
-      font = bela::encode_into<char,wchar_t>(it->get<std::string_view>());
+      font = bela::encode_into<char, wchar_t>(it->get<std::string_view>());
     }
     if (auto it = j.find("color"); it != j.end()) {
       resolovecolor(it.value(), "panel", panelcolor);
@@ -67,12 +67,11 @@ bool WindowSettings::Flush(bela::error_code &ec) {
     j["color"] = cj;
     j["font"] = bela::encode_into<wchar_t, char>(font);
     j["title"] = bela::encode_into<wchar_t, char>(title);
-    auto s = j.dump(4);
-    if (!bela::io::WriteTextAtomic(s, profile, ec)) {
+    if (!bela::io::AtomicWriteText(profile, bela::io::as_bytes<char>(j.dump(4)), ec)) {
       return false;
     }
   } catch (const std::exception &e) {
-    ec = bela::make_error_code(1, L"flush color: ", bela::encode_into<char,wchar_t>(e.what()));
+    ec = bela::make_error_code(1, L"flush color: ", bela::encode_into<char, wchar_t>(e.what()));
     return false;
   }
   return true;
