@@ -47,9 +47,8 @@ inline void SavePlacement(std::wstring_view file, const WINDOWPLACEMENT &placeme
   j["rcNormalPosition.left"] = placement.rcNormalPosition.left;
   j["rcNormalPosition.right"] = placement.rcNormalPosition.right;
   j["rcNormalPosition.top"] = placement.rcNormalPosition.top;
-  auto s = j.dump(4);
   bela::error_code ec;
-  bela::io::WriteTextAtomic(s, file, ec);
+  bela::io::AtomicWriteText(file, bela::io::as_bytes<char>(j.dump(4)), ec);
 }
 } // namespace belautils
 
