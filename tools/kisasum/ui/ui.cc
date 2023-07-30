@@ -680,11 +680,19 @@ LRESULT Window::Filesum(std::wstring_view file) {
 
 LRESULT Window::OnDropfiles(UINT nMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandled) {
   HDROP hDrop = (HDROP)wParam;
-  WCHAR file[32267];
-  UINT nfilecounts = DragQueryFileW(hDrop, 0, file, sizeof(file));
+  std::wstring file;
+  file.resize(bela::PathMax);
+
+  UINT result = DragQueryFileW(hDrop, 0, file.data(), static_cast<UINT>(file.size()));
   DragFinish(hDrop);
-  if (nfilecounts == 0) {
+  if (result <= 0) {
     return S_OK;
+  }
+  file.resize(result);
+  if (!bela::PathFileIsExists(file)) {
+    auto message = bela::StrFormat(L"file '%s' not regular file", file);
+    bela::BelaMessageBox(m_hWnd, L"Not regular file", message.data(), nullptr, bela::mbs_t::WARN);
+    return S_FALSE;
   }
   return Filesum(file);
 }
