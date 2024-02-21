@@ -31,7 +31,6 @@ jobs:
           - BelaUtils_target: BelaUtils-arm64
             short_target: arm64
     steps:
-      - uses: lukka/get-cmake@latest
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
