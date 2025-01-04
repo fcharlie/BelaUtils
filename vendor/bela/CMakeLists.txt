@@ -1,7 +1,9 @@
 # bela sources
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.27)
 
 project(bela CXX C ASM)
+
+include(FeatureSummary)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE)
   message(
@@ -21,11 +23,11 @@ option(BELA_ENABLE_ASSEMBLY_FILES "bela enable assembly files" OFF)
 message(STATUS "CMAKE_ASM_COMPILER_ID ${CMAKE_ASM_COMPILER_ID}")
 
 if(NOT (DEFINED CMAKE_CXX_STANDARD))
-  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 23)
 endif()
 
-if(CMAKE_CXX_STANDARD LESS 20 OR CMAKE_CXX_STANDARD STREQUAL "98")
-  message(FATAL_ERROR "Bela requires C++20 or later")
+if(CMAKE_CXX_STANDARD LESS 23 OR CMAKE_CXX_STANDARD STREQUAL "98")
+  message(FATAL_ERROR "Bela requires C++23 or later")
 endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED YES)

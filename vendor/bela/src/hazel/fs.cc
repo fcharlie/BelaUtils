@@ -10,8 +10,7 @@ struct resparse_point_tagname_t {
   const wchar_t *tagName;
 };
 
-#define DEFINED_NAME_RESP(X)                                                                                           \
-  { static_cast<reparse_point_t>(X), L#X }
+#define DEFINED_NAME_RESP(X) {static_cast<reparse_point_t>(X), L#X}
 
 // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/c8e77b37-3909-4fe6-a4ea-2b9d423b1ee4
 
@@ -96,9 +95,9 @@ static bool DecodeMountPoint(const REPARSE_DATA_BUFFER *p, FileReparsePoint &frp
   /* but that's confusing for programs since they wouldn't be able to */
   /* actually understand such a path when returned by uv_readlink(). */
   /* UNC paths are never valid for junctions so we don't care about them. */
-  if (!(wlen >= 6 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' && wstr[3] == L'\\' &&
-        ((wstr[4] >= L'A' && wstr[4] <= L'Z') || (wstr[4] >= L'a' && wstr[4] <= L'z')) && wstr[5] == L':' &&
-        (wlen == 6 || wstr[6] == L'\\'))) {
+  if (wlen < 6 || wstr[0] != L'\\' || wstr[1] != L'?' || wstr[2] != L'?' || wstr[3] != L'\\' ||
+        ((wstr[4] < L'A' || wstr[4] > L'Z') && (wstr[4] < L'a' || wstr[4] > L'z')) || wstr[5] != L':' ||
+        (wlen != 6 && wstr[6] != L'\\')) {
     ec = bela::make_error_code(bela::ErrGeneral, L"Unresolved reparse point MountPoint'");
     return false;
   }
