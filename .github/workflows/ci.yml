@@ -22,12 +22,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        BelaUtils_target: [BelaUtils-win64, BelaUtils-win32, BelaUtils-arm64]
+        BelaUtils_target: [BelaUtils-win64, BelaUtils-arm64]
         include:
           - BelaUtils_target: BelaUtils-win64
             short_target: win64
-          - BelaUtils_target: BelaUtils-win32
-            short_target: win32
           - BelaUtils_target: BelaUtils-arm64
             short_target: arm64
     steps:

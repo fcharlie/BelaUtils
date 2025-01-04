@@ -3,7 +3,7 @@
 #include <bela/match.hpp>
 #include "sumizer.hpp"
 #include "blake2.hpp"
-#include "KangarooTwelve.hpp"
+#include "k12.hpp"
 
 namespace belautils {
 
@@ -30,8 +30,7 @@ inline void HashEncodeEx(const uint8_t *b, size_t len, std::wstring &hv, bool up
 class sha256sumizer : public Sumizer {
 public:
   int Initialize(int w) {
-    hasher.Initialize(w == 224 ? bela::hash::sha256::HashBits::SHA224
-                               : bela::hash::sha256::HashBits::SHA256);
+    hasher.Initialize(w == 224 ? bela::hash::sha256::HashBits::SHA224 : bela::hash::sha256::HashBits::SHA256);
     return 0;
   }
   int Update(const uint8_t *b, size_t len) {
@@ -52,8 +51,7 @@ private:
 class sha512sumizer : public Sumizer {
 public:
   int Initialize(int w) {
-    hasher.Initialize(w == 384 ? bela::hash::sha512::HashBits::SHA384
-                               : bela::hash::sha512::HashBits::SHA512);
+    hasher.Initialize(w == 384 ? bela::hash::sha512::HashBits::SHA384 : bela::hash::sha512::HashBits::SHA512);
     return 0;
   }
   int Update(const uint8_t *b, size_t len) {
@@ -176,7 +174,8 @@ class k12sumizer : public Sumizer {
 public:
   int Initialize(int w) {
     (void)w;
-    return KangarooTwelve_Initialize(&instance, 33);
+    // KT256
+    return KT256_Initialize(&instance, 256);
   }
   int Update(const uint8_t *b, size_t len) { return KangarooTwelve_Update(&instance, b, len); }
   int Final(std::wstring &hex, bool uc) {
