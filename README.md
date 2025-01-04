@@ -67,18 +67,6 @@ A faster hex dumper fork from [https://github.com/skeeto/hastyhex](https://githu
 
 ![](./docs/images/hastyhex.png)
 
-## Wind
-
-Wind - Interesting download tool. Auto use system proxy when download files from network.
-
-![](./docs/images/wind.png)
-
-Download success:
-
-![](./docs/images/wind2.png)
-
-<!--![](https://s1.ax1x.com/2020/08/05/a6UlnK.png)-->
-
 ## Download
 
 Download the latest version of Baulk: [https://github.com/fcharlie/belautils/releases/latest](https://github.com/fcharlie/belautils/releases/latest)
