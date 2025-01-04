@@ -13,9 +13,8 @@
 #include <belautilsversion.h>
 
 static const constexpr char hex[] = "0123456789abcdef";
-
 static int color(int b) {
-  constexpr unsigned char CN = 0x37; /* null    */
+  constexpr unsigned char CN = 0x90; /* null    */
   constexpr unsigned char CS = 0x92; /* space   */
   constexpr unsigned char CP = 0x96; /* print   */
   constexpr unsigned char CC = 0x95; /* control */
@@ -216,7 +215,7 @@ Example:
   printf("%s", ua);
 }
 
-bool ParseArgv(int argc, wchar_t **argv, Options &bo) {
+bool ParseArgv(int argc, wchar_t **argv, Options &opts) {
   bela::ParseArgv pv(argc, argv);
   pv.Add(L"help", bela::no_argument, L'h')
       .Add(L"version", bela::no_argument, 'v')
@@ -235,20 +234,20 @@ bool ParseArgv(int argc, wchar_t **argv, Options &bo) {
           bela::FPrintF(stdout, L"%s\n", BELAUTILS_VERSION);
           exit(0);
         case 'o':
-          bo.out = oa;
+          opts.out = oa;
           break;
         case 'n':
           if (int64_t n = 0; bela::SimpleAtoi(oa, &n)) {
-            bo.length = n;
+            opts.length = n;
           }
           break;
         case 's':
           if (int64_t n = 0; bela::SimpleAtoi(oa, &n)) {
-            bo.seek = n;
+            opts.seek = n;
           }
           break;
         case 'p':
-          bo.plaintext = true;
+          opts.plaintext = true;
           break;
         default:
           return false;
@@ -265,7 +264,7 @@ bool ParseArgv(int argc, wchar_t **argv, Options &bo) {
     bela::FPrintF(stderr, L"Too few arguments\n");
     return false;
   }
-  bo.file = pv.UnresolvedArgs()[0];
+  opts.file = pv.UnresolvedArgs()[0];
   return true;
 }
 
@@ -273,13 +272,13 @@ int wmain(int argc, wchar_t *argv[]) {
   enablevtmode();
   FILE *in = stdin;
   FILE *out = stdout;
-  Options bo;
-  if (!ParseArgv(argc, argv, bo)) {
+  Options opts;
+  if (!ParseArgv(argc, argv, opts)) {
     return 1;
   }
-  if (_wfopen_s(&in, bo.file.data(), L"rb") != 0) {
+  if (_wfopen_s(&in, opts.file.data(), L"rb") != 0) {
     auto ec = bela::make_system_error_code();
-    bela::FPrintF(stderr, L"hastyhex: open '%s' for read: %s\n", bo.file, ec.message);
+    bela::FPrintF(stderr, L"hastyhex: open '%s' for read: %s\n", opts.file, ec.message);
     return 1;
   }
   auto closer = bela::finally([&] {
@@ -290,20 +289,20 @@ int wmain(int argc, wchar_t *argv[]) {
       fclose(out);
     }
   });
-  if (!bo.out.empty()) {
-    if (_wfopen_s(&out, bo.out.data(), L"wb") != 0) {
+  if (!opts.out.empty()) {
+    if (_wfopen_s(&out, opts.out.data(), L"wb") != 0) {
       auto ec = bela::make_system_error_code();
-      bela::FPrintF(stderr, L"hastyhex: open '%s' for write: %s\n", bo.out, ec.message);
+      bela::FPrintF(stderr, L"hastyhex: open '%s' for write: %s\n", opts.out, ec.message);
       return 1;
     }
   }
   if (in != stdin) {
-    _fseeki64(in, bo.seek, SEEK_SET);
+    _fseeki64(in, opts.seek, SEEK_SET);
   }
-  if (bo.plaintext) {
-    process_plain(in, out, bo.length);
+  if (opts.plaintext) {
+    process_plain(in, out, opts.length);
     return 0;
   }
-  process_color(in, out, bo.length);
+  process_color(in, out, opts.length);
   return 0;
 }
