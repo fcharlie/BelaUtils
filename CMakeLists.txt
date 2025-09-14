@@ -1,7 +1,7 @@
 # BelaUtils cmake
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.31)
 
-project(BelaUtils CXX C)
+project(BelaUtils)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE)
   message(
