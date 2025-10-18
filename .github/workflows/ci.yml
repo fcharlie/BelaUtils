@@ -27,21 +27,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 1
-      - name: compile-BelaUtils
+      - name: Compile
         run: pwsh -NoProfile -NoLogo -ExecutionPolicy unrestricted -File "./build.ps1" -Target "${{ matrix.target }}"
-
-      - name: Package release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        # create package and show sha256 hash
-        run: |
-          Set-Location build
-          # cleanup zip files
-          Remove-Item -Force *.zip
-          cpack -G ZIP
-          $obj=Get-FileHash -Algorithm SHA256 BelaUtils*.zip
-          Split-Path -Leaf $obj.Path
-          $obj.Algorithm +":"+$obj.Hash.ToLower()
       - name: Upload release
         uses: svenstaro/upload-release-action@v2
         if: startsWith(github.ref, 'refs/tags/')

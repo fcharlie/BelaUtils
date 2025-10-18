@@ -130,3 +130,7 @@ $ExitCode = Execute -FilePath "ninja" -WD $WD -Arguments "all"
 if ($ExitCode -ne 0) {
     exit $ExitCode
 }
+$ExitCode = Execute -FilePath "cpack" -WD $WD -Arguments "-G ZIP"
+if ($ExitCode -ne 0) {
+    exit $ExitCode
+}
