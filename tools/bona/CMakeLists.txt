@@ -23,7 +23,3 @@ target_link_libraries(
   ced)
 
 install(TARGETS bona DESTINATION bin)
-
-if(BELAUTILS_ENABLE_LTO)
-  set_property(TARGET bona PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()

@@ -28,8 +28,3 @@ target_include_directories(kisasum PRIVATE "../../lib/hashlib")
 
 install(TARGETS kisasum-ui DESTINATION bin)
 install(TARGETS kisasum DESTINATION bin)
-
-if(BELAUTILS_ENABLE_LTO)
-  set_property(TARGET kisasum-ui PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-  set_property(TARGET kisasum PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()

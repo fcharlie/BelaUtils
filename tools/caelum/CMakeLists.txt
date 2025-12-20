@@ -18,7 +18,3 @@ target_link_libraries(
   Shell32)
 
 install(TARGETS caelum DESTINATION bin)
-
-if(BELAUTILS_ENABLE_LTO)
-  set_property(TARGET caelum PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
